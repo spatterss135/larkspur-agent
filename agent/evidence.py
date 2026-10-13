@@ -14,7 +14,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from agent.dates import resolve_date
+from agent.dates import DAY_ONLY, ISO, NAMED, NUMERIC, resolve_date
 from agent.pricing import SHEET
 
 
@@ -68,8 +68,17 @@ TENS = {
 SCALES = {"hundred": 100, "thousand": 1000}
 NUMBER_WORD = set(UNITS) | set(TENS) | set(SCALES)
 DIGITS = re.compile(r"\b\d{1,3}(?:,\d{3})+\b|\b\d+\b")
-GUEST_WORD = re.compile(r"^\s*(?:guests?|people|persons?|ppl|pax|attendees|adults|heads)\b")
-RANGE = re.compile(r"\d\s*(?:-|–|to)\s*\d|\bbetween\b.+\band\b|\bor\s+(?:so\s+)?\d", re.I)
+PERSON_WORD = re.compile(
+    r"^\s*(?:guests?|people|persons?|ppl|pax|attendees|adults?|heads|kids?|children|child"
+    r"|infants?|babies|baby|seniors?|teens?)\b"
+)
+NEXT_WORD = re.compile(r"^\s*([a-z]+)")
+# Words that can follow a count without saying what it counts ("150 or so", "abt 90 max").
+FILLER = set("or so and maybe please total ish max tops for with at in on now of to plus".split())
+RANGE = re.compile(
+    r"\d\s*(?:-|\u2013|to)\s*\d|\bbetween\b.+\band\b|\bor\s+(?:so\s+)?\d|\d\s*\+", re.I
+)
+SCALED_DIGITS = re.compile(r"\b(\d+)\s+(hundred|thousand)\b")
 
 
 def _words_to_numbers(text: str) -> list[tuple[int, int]]:
@@ -112,6 +121,9 @@ def guests_from(fragments: list[str], customer_texts: list[str]) -> Evidence:
     if bad:
         return bad
     text = normalize(" ".join(fragments))
+    text = SCALED_DIGITS.sub(lambda m: str(int(m[1]) * SCALES[m[2]]), text)
+    for pattern in (ISO, NAMED, NUMERIC, DAY_ONLY):  # a date's numbers aren't counts
+        text = pattern.sub(lambda m: " " * len(m[0]), text)
     if RANGE.search(text):
         return Evidence(
             "needs_input",
@@ -122,13 +134,24 @@ def guests_from(fragments: list[str], customer_texts: list[str]) -> Evidence:
     numbers += _words_to_numbers(text)
     if not numbers:
         return Evidence("needs_input", reason="no_number", message="Ask how many guests.")
-    named = {n for n, end in numbers if GUEST_WORD.match(text[end:])}
-    if len(named) == 1:
-        return Evidence("ok", named.pop())
-    if len({n for n, _ in numbers}) == 1 and not named:
-        return Evidence("ok", numbers[0][0])
+    people, bare = set(), set()
+    for n, end in numbers:
+        after = text[end:]
+        if PERSON_WORD.match(after):
+            people.add(n)
+        else:
+            word = NEXT_WORD.match(after)
+            if not word or word[1] in FILLER:
+                bare.add(n)
+            # otherwise it counts something else ("12 tables") and is ignored
+    if len(people) == 1 and not bare:
+        return Evidence("ok", people.pop())
+    if not people and len(bare) == 1:
+        return Evidence("ok", bare.pop())
     return Evidence(
-        "needs_input", reason="ambiguous", message="It isn't clear which number is the guest count."
+        "needs_input",
+        reason="ambiguous",
+        message="It isn't clear what the total guest count is; ask for one number.",
     )
 
 
@@ -145,12 +168,14 @@ def date_from(fragments: list[str], customer_texts: list[str], today: dt.date) -
 
 def _aliases(table: dict[str, Any]) -> dict[str, re.Pattern[str]]:
     return {
-        key: re.compile(r"\b(?:" + "|".join(re.escape(a) for a in spec["aliases"]) + r")\b")
+        # "s?" so plurals match: "snacks", "extra hours"
+        key: re.compile(r"\b(?:" + "|".join(re.escape(a) for a in spec["aliases"]) + r")s?\b")
         for key, spec in table.items()
     }
 
 
 PACKAGES = _aliases(SHEET["packages"])
+NO_ADD_ONS = re.compile(r"\b(?:no|without)\s+(?:add-?ons?|extras)\b|^\s*none\b")
 ADD_ONS = _aliases(SHEET["add_ons"])
 
 
@@ -179,6 +204,8 @@ def add_ons_from(fragments: list[str], customer_texts: list[str]) -> Evidence:
         return bad
     chosen = set()
     for f in fragments:
+        if NO_ADD_ONS.search(normalize(f)):
+            continue
         hits = {k for k, pattern in ADD_ONS.items() if pattern.search(normalize(f))}
         if not hits:
             names = ", ".join(a["name"] for a in SHEET["add_ons"].values())
