@@ -279,6 +279,7 @@ def run_experiment(
         convos = [
             e for s in splits for e in client.list_examples(dataset_name=CONVERSATIONS, splits=[s])
         ]
+        convos = convos[:limit] if limit else convos
         res = evaluate(
             conversation_target(lambda: models, retriever, name),
             data=convos,
@@ -340,6 +341,7 @@ def main(argv: list[str] | None = None) -> int:
         splits=tuple(args.split or ("dev", "holdout")),
         conversations=not args.no_conversations,
         concurrency=args.concurrency,
+        limit=args.limit,
     )
     print(f"cases: {len(saved['cases'])} runs, conversations: {len(saved['conversations'])} runs")
     print(f"saved to reports/{args.name}.json")
