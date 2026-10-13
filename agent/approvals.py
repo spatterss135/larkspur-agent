@@ -149,6 +149,13 @@ class Approvals:
         edited_text: str | None = None,
         reviewer: str = "coordinator",
     ) -> Result:
+        # Validate before resuming: an error inside a node would leave the thread half-resumed.
+        if decision not in ("approve", "edit", "reject"):
+            raise ValueError(f"unknown decision: {decision}")
+        if decision == "reject" and not (note or "").strip():
+            raise ValueError("a reject needs a note")
+        if decision == "edit" and not (edited_args if kind == "action" else edited_text):
+            raise ValueError("an edit needs the edited " + ("args" if kind == "action" else "text"))
         config = {"configurable": {"thread_id": f"{kind}:{item_id}"}}
         snap = self.graph.get_state(config)
         if not snap.values:

@@ -48,7 +48,8 @@ def test_approve_executes_once_and_says_so_the_second_time(tmp_path, capsys):
 def test_reject_needs_a_note(tmp_path, capsys):
     path, pid = seeded(tmp_path)
     assert main(["--db", path, "reject", "action", str(pid)]) == 2
-    assert main(["--db", path, "reject", "action", str(pid), "--note", "Date is taken."]) == 0
+    now = "2026-03-02T17:00:00+00:00"  # the request expires 48 hours after March 2
+    assert main(["--db", path, "--now", now, "reject", "action", str(pid), "--note", "Taken."]) == 0
     assert "rejected" in capsys.readouterr().out
 
 
