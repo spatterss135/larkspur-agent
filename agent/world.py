@@ -80,7 +80,8 @@ CREATE TABLE IF NOT EXISTS idempotency (
 def _ts(t: dt.datetime) -> str:
     if t.tzinfo is None:
         raise ValueError("times must be timezone-aware")
-    return t.astimezone(dt.UTC).isoformat()
+    # One fixed format, so SQL string comparisons order times correctly.
+    return t.astimezone(dt.UTC).isoformat(timespec="microseconds")
 
 
 def _calendar(room: str) -> str:
