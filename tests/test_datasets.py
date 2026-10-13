@@ -2,6 +2,7 @@
 
 import json
 
+from evals.code_evaluators import evaluate
 from evals.datasets import (
     Example,
     case_examples,
@@ -12,6 +13,7 @@ from evals.datasets import (
     sync,
 )
 from evals.schema import Expected, load_known_bad, load_suite
+from tests.test_labels_satisfiable import ideal_run
 
 SUITE = load_suite()
 LABEL_KEYS = {"expected", "must_call", "must_not_call", "end_state", "outcome", "expect"}
@@ -51,10 +53,14 @@ def test_labels_never_reach_the_agent_inputs():
         assert not keys(e.inputs) & LABEL_KEYS, e.metadata["id"]
 
 
-def test_inputs_and_outputs_are_plain_json_and_labels_round_trip():
+def test_inputs_and_outputs_are_plain_json_and_labels_grade_the_same_after_upload():
+    # Free-form tool args come back from JSON with dates as strings, so compare what
+    # matters: the uploaded label grades the ideal run exactly like the YAML label.
     for e, case in zip(case_examples(SUITE), SUITE.cases, strict=True):
         json.dumps(e.inputs), json.dumps(e.outputs), json.dumps(e.metadata)
-        assert Expected.model_validate(e.outputs["expected"]) == case.expected
+        uploaded = Expected.model_validate(e.outputs["expected"])
+        run = ideal_run(case.expected, case.expected.end_state)
+        assert evaluate(uploaded, run) == evaluate(case.expected, run), case.id
         assert e.metadata["bucket"] == case.bucket and e.metadata["id"] == case.id
 
 
