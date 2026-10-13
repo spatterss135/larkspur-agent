@@ -5,7 +5,14 @@ import datetime as dt
 
 import pytest
 
-from agent.evidence import add_ons_from, date_from, guests_from, package_from, quotes_missing
+from agent.evidence import (
+    add_ons_from,
+    date_from,
+    guests_from,
+    package_from,
+    quotes_missing,
+    time_from,
+)
 
 TODAY = dt.date(2026, 3, 2)
 EMAIL = [
@@ -163,3 +170,33 @@ def test_plural_add_on_names_match():
 def test_saying_no_add_ons_means_none():
     r = add_ons_from(["No add-ons."], ["No add-ons."])
     assert (r.status, r.value) == ("ok", [])
+
+
+# --- tour times ------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "fragment, expected",
+    [
+        ("at 10:45", "10:45"),
+        ("11:30 works great", "11:30"),
+        ("4:00 pm", "16:00"),
+        ("2:30pm", "14:30"),
+        ("at 1 pm", "13:00"),
+        ("10am", "10:00"),
+        ("at 2", "14:00"),  # a bare hour during tour hours: 10-11 am, 12-3 pm
+        ("at 11", "11:00"),
+        ("14:30", "14:30"),
+        ("noon", "12:00"),
+    ],
+)
+def test_tour_times_parse(fragment, expected):
+    assert time_from([fragment], [fragment]).value == expected
+
+
+@pytest.mark.parametrize(
+    "fragment, reason",
+    [("at 7", "ambiguous"), ("10:45 or 11:30", "ambiguous"), ("in the morning", "no_time")],
+)
+def test_unclear_times_need_input(fragment, reason):
+    assert time_from([fragment], [fragment]).reason == reason
