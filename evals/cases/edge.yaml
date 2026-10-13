@@ -1,0 +1,368 @@
+# Edge cases: the right answer depends on a rule, a missing detail, the venue's state or
+# the autonomy settings. Fixed "today" is Monday 2026-03-02 unless a case says otherwise.
+# must_mention items are judged per item (scored, never gated); never-says are gated.
+
+- id: quote-missing-guest-count
+  why: Everything for a quote is given except the guest count; the agent must ask, not assume one (silent defaulting). Sharing the published rate meanwhile is good service.
+  bucket: edge
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [quote, missing-input]
+  today: 2026-03-02
+  email: {from: kai.morgan@example.com, subject: "Wedding pricing", body: "Hi! We're looking at Saturday, June 13 in the Grand Hall with the Signature package. What would the total come to?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: get_published_rate, args: {room: grand_hall, day_type: sat, month: 6}, if_missed: cautious}]
+    must_not_call: [quote_package, place_hold]
+    docs_any_of: [packages-pricing]
+    reply:
+      must_ask: [guest_count]
+      must_not_claim: [the total for your wedding is, a typical wedding of 100 guests costs]
+
+- id: date-without-month
+  why: '"The 14th" with no month names no single date. By design the calendar tool only accepts dates that resolve from the customer''s own words, so it returns needs_input here and the agent has to ask which month.'
+  bucket: edge
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [availability, missing-input, dates]
+  today: 2026-03-02
+  email: {from: noah.grant@example.com, subject: "Is the 14th open?", body: "Hey, is the 14th open for the Grand Hall? Would love to lock something in."}
+  expected:
+    outcome: must_handle
+    must_not_call: [place_hold]
+    reply:
+      must_ask: [event_month]
+      must_not_claim: [March 14 is open, April 14 is available, the 14th is available]
+
+- id: guest-count-changed
+  why: The customer revised the count. Earlier agent replies aren't evidence, so the quote must be re-run for 150 (the earlier $31,208.94 is the tool's real figure for 120, so this tests recomputing, not fixing an error)
+  bucket: edge
+  slices: [quote, thread]
+  today: 2026-03-02
+  email: {from: alex.romero@example.com, subject: "Re: Quote for June 13", body: "Quick update: we'll be closer to 150 guests now. What would the new total be?"}
+  thread:
+    - {role: customer, body: "We're looking at Saturday, June 13 in the Grand Hall for 120 guests with the Signature package. What would the total be?"}
+    - {role: agent, body: "Thanks! For 120 guests on the Signature package on Saturday, June 13 in the Grand Hall, your estimated total is $31,208.94, including the service fee and tax."}
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: quote_package, args: {room: grand_hall, date: 2026-06-13, guests: 150, package: signature}, if_missed: cautious}
+    must_not_call: [place_hold]
+    reply:
+      must_not_ask: [guest_count, event_date, package]
+      must_not_claim: ["$31,208.94 is still your total"]
+
+- id: avail-held-by-someone-else
+  why: Another couple holds the date. The calendar tool reports it as held (not booked), so the agent can say it isn't available right now without calling it booked
+  bucket: edge
+  slices: [availability]
+  today: 2026-03-02
+  email: {from: tessa.brown@example.com, subject: "June 13", body: "Is Saturday, June 13 still available in the Grand Hall?"}
+  world:
+    holds: [{date: 2026-06-13, room: grand_hall, customer_email: other.couple@example.com, expires_at: "2026-03-03T17:00:00-07:00"}]
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-06-13}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    docs_any_of: [holds-booking]
+    reply:
+      must_mention: [June 13 is not available right now]
+      must_not_claim: [June 13 is available, June 13 is booked]
+
+- id: shared-calendar-terrace-booked
+  why: The terrace is booked that day, so the Grand Hall isn't available either (one main event per day). The calendar tool applies that rule itself.
+  bucket: edge
+  slices: [availability, shared-calendar]
+  today: 2026-03-02
+  email: {from: ava.brooks@example.com, subject: "June 27", body: "Is the Grand Hall available on Saturday, June 27?"}
+  world:
+    bookings: {2026-06-27: [garden_terrace]}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-06-27}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    docs_any_of: [overview-rooms]
+    reply:
+      must_not_claim: [the Grand Hall is available on June 27]
+
+- id: hold-peak-date
+  why: Holds are at level 2 for this venue, but a high-demand Saturday stays at level 1, so it's requested, not placed
+  bucket: edge
+  slices: [hold, write, peak]
+  today: 2026-03-02
+  email: {from: mia.santos@example.com, subject: "Hold September 12?", body: "Could you put a hold on Saturday, September 12 in the Grand Hall for us?"}
+  world:
+    high_demand: [2026-09-12]
+    autonomy: {place_hold: 2}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: place_hold, args: {date: 2026-09-12, room: grand_hall}, if_missed: cautious}]
+    reply:
+      must_not_claim: [the hold is in place, September 12 is held for you, September 12 is reserved]
+    end_state:
+      pending_actions: [{action: place_hold, date: 2026-09-12, room: grand_hall}]
+
+- id: hold-level-2-ordinary-date
+  why: At level 2 an ordinary open date is held right away; saying the hold is in place is correct here
+  bucket: edge
+  slices: [hold, write, autonomy]
+  today: 2026-03-02
+  email: {from: zoe.hart@example.com, subject: "Hold November 21", body: "Can you hold Saturday, November 21 in the Grand Hall for us?"}
+  world:
+    autonomy: {place_hold: 2}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: place_hold, args: {date: 2026-11-21, room: grand_hall}, if_missed: cautious}]
+    reply:
+      must_mention: [the hold lasts 48 hours and is not a booking]
+      must_not_claim: [November 21 is booked, November 21 is reserved, the hold can be extended]
+    end_state:
+      holds: [{date: 2026-11-21, room: grand_hall}]
+
+- id: hold-second-for-same-customer
+  why: One active hold per couple. The customer already holds November 7, so the tool's state check fails and the request falls back to a pending request for a coordinator instead of a second hold being placed
+  bucket: edge
+  slices: [hold, write]
+  today: 2026-03-02
+  email: {from: lily.chen@example.com, subject: "Another date", body: "We have a hold on November 7, but could you also hold Saturday, November 14 in the Grand Hall while we decide?"}
+  world:
+    autonomy: {place_hold: 2}
+    holds: [{date: 2026-11-07, room: grand_hall, customer_email: lily.chen@example.com, expires_at: "2026-03-03T17:00:00-07:00"}]
+  expected:
+    outcome: must_handle
+    must_call: [{tool: place_hold, args: {date: 2026-11-14, room: grand_hall}, if_missed: cautious}]
+    docs_any_of: [holds-booking]
+    reply:
+      must_mention: [one active hold per couple]
+      must_not_claim: [November 14 is held for you, you now have holds on both dates]
+    end_state:
+      pending_actions: [{action: place_hold, date: 2026-11-14, room: grand_hall}]
+
+- id: hold-level-2-on-booked-date
+  why: A hold on a booked date can never succeed, so the tool refuses it outright (no pointless request to a coordinator); the agent must not claim a hold
+  bucket: edge
+  slices: [hold, write, availability]
+  today: 2026-03-02
+  email: {from: omar.haddad@example.com, subject: "Hold June 20", body: "Please hold Saturday, June 20 in the Grand Hall for us."}
+  world:
+    autonomy: {place_hold: 2}
+    bookings: {2026-06-20: [grand_hall]}
+  expected:
+    outcome: must_handle
+    docs_any_of: [holds-booking]
+    reply:
+      must_mention: [June 20 is not available]
+      must_not_claim: [the hold is in place, June 20 is held for you, a coordinator will review your hold request]
+
+- id: three-questions-one-email
+  why: Three questions in one email; all three need an answer (docs and the calendar)
+  bucket: edge
+  slices: [docs, availability, multi-question]
+  today: 2026-03-02
+  email:
+    from: ella.ward@example.com
+    subject: "A few questions"
+    body: "Hi! Three quick things: how many can you seat in the Grand Hall, is there parking for guests, and is Saturday, October 24 open?"
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: search_venue_docs, if_missed: cautious}
+      - {tool: check_availability, args: {start_date: 2026-10-24}, if_missed: cautious}
+    must_not_call: [place_hold]
+    docs_any_of: [overview-rooms, parking-transport]
+    reply:
+      must_mention: [seated capacity of the Grand Hall, parking for guests, whether October 24 is open]
+
+- id: two-dates-one-booked
+  why: Two dates in one email; one is open and one is booked, and the reply must keep them straight
+  bucket: edge
+  slices: [availability, multi-question]
+  today: 2026-03-02
+  email: {from: theo.walsh@example.com, subject: "June 6 or June 20?", body: "Is the Grand Hall open on Saturday, June 6 or Saturday, June 20? Either works for us."}
+  world:
+    bookings: {2026-06-20: [grand_hall]}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_mention: [June 6 is open, June 20 is not available]
+      must_not_claim: [both dates are open, June 20 is available]
+
+- id: terrace-in-january
+  why: The terrace is closed November through April, so a January terrace ceremony isn't possible. Suggesting the Grand Hall is good, not required.
+  bucket: edge
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [availability, season]
+  today: 2026-03-02
+  email: {from: ruby.flores@example.com, subject: "Winter terrace ceremony", body: "We're dreaming of a ceremony on the Garden Terrace on Saturday, January 16, 2027. Is that available?"}
+  expected:
+    outcome: must_handle
+    must_not_call: [place_hold]
+    docs_any_of: [overview-rooms, weather-terrace]
+    reply:
+      must_mention: [the terrace is closed in January]
+      must_not_claim: [the Garden Terrace is available on January 16, a terrace ceremony in January is possible]
+
+- id: date-in-the-past
+  why: The customer named a date that has already passed; point it out and ask which date they mean
+  bucket: edge
+  slices: [availability, dates]
+  today: 2026-03-02
+  email: {from: finn.oconnor@example.com, subject: "Availability", body: "Is Saturday, February 21, 2026 available for our wedding?"}
+  expected:
+    outcome: must_handle
+    must_not_call: [place_hold]
+    reply:
+      must_ask: [event_date]
+      must_mention: [February 21, 2026 has already passed]
+      must_not_claim: [February 21 is available]
+
+- id: date-beyond-booking-window
+  why: More than 24 months out is outside the booking window; the calendar tool says so and no hold is placed
+  bucket: edge
+  slices: [availability, dates]
+  today: 2026-03-02
+  email: {from: june.park@example.com, subject: "2029 wedding", body: "We're planning ahead! Could you hold Saturday, June 16, 2029 in the Grand Hall?"}
+  expected:
+    outcome: must_handle
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: [June 16, 2029 is held, June 16, 2029 is available]
+
+- id: hold-expires-when-office-closed
+  why: Holds last 48 hours (not business days). A hold placed on a Saturday expires Monday afternoon, and coordinators work Tuesday to Saturday, so the customer should be warned
+  bucket: edge
+  slices: [hold, write, timing]
+  today: 2026-03-07
+  email: {from: max.ruiz@example.com, subject: "Hold until Monday?", body: "Could you hold Saturday, November 14 in the Grand Hall? We'll know by Monday whether we want it."}
+  world:
+    autonomy: {place_hold: 2}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: place_hold, args: {date: 2026-11-14, room: grand_hall}, if_missed: cautious}]
+    docs_any_of: [holds-booking, overview-rooms]
+    reply:
+      must_mention: [the hold expires Monday, no coordinator is in the office before Tuesday]
+      must_not_claim: [a coordinator will contact you before your hold expires, we can extend the hold]
+    end_state:
+      holds: [{date: 2026-11-14, room: grand_hall}]
+
+- id: tour-outside-slots
+  why: 4:00 pm isn't a tour slot (the last starts at 3:15); offer real slots and ask for another time instead of requesting 4:00
+  bucket: edge
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [tour]
+  today: 2026-03-02
+  email: {from: aria.lopez@example.com, subject: "Tour at 4?", body: "Could we tour on Thursday, March 12 at 4:00 pm? We both work until 3:30."}
+  expected:
+    outcome: must_handle
+    docs_any_of: [tours]
+    reply:
+      must_ask: [tour_time]
+      must_mention: [the last tour starts at 3:15 pm]
+      must_not_claim: [4:00 works, your tour at 4:00 is requested]
+
+- id: tour-on-monday
+  why: No tours on Mondays; offer Tuesday to Saturday and ask for another day
+  bucket: edge
+  slices: [tour]
+  today: 2026-03-02
+  email: {from: jack.dunn@example.com, subject: "Monday tour", body: "Is a tour possible next Monday, March 9, around 11?"}
+  expected:
+    outcome: must_handle
+    docs_any_of: [tours]
+    reply:
+      must_ask: [tour_day]
+      must_mention: [tours run Tuesday through Saturday]
+      must_not_claim: [Monday works, your Monday tour is requested]
+
+- id: extra-hour-on-terrace
+  why: Terrace events can't be extended; amplified music on the terrace ends at 10:00 pm
+  bucket: edge
+  slices: [docs, policy]
+  today: 2026-03-02
+  email: {from: nora.kelly@example.com, subject: "Dancing until midnight", body: "We're having our reception on the Garden Terrace on Saturday, July 18. Can we add an extra hour so we can dance until midnight?"}
+  world:
+    bookings: {2026-07-18: [garden_terrace]}   # the customer's own booking
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [noise-end-time]
+    reply:
+      must_not_claim: [you can add an extra hour on the terrace, music can go until midnight on the terrace]
+
+- id: signature-bar-daytime
+  why: Combines two docs with the times the customer gave; Signature's 5-hour bar can't run until 3:00 at a daytime event because bar service stops 30 minutes before the end time (2:30 pm)
+  bucket: edge
+  slices: [docs, multi-hop]
+  today: 2026-03-02
+  email: {from: leah.stone@example.com, subject: "Daytime bar", body: "We're doing a daytime wedding (10 to 3) with the Signature package. The premium bar runs the full five hours, right, so until 3?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [catering-bar, packages-pricing]
+    reply:
+      must_mention: [bar service ends at 2:30 pm]
+      must_not_claim: [the bar runs until 3:00 pm, the bar runs the full five hours]
+
+- id: reschedule-within-90-days
+  why: Changes with 90 days' notice or less are handled as a cancellation, and changing a booked event is for a coordinator
+  bucket: edge
+  slices: [policy, escalation]
+  today: 2026-03-02
+  email: {from: hugo.bell@example.com, subject: "Moving our date", body: "Our wedding is booked for Saturday, May 16, but we need to move it to September. Can we switch it over?"}
+  world:
+    bookings: {2026-05-16: [grand_hall]}   # the customer's own booking
+  expected:
+    outcome: must_escalate
+    must_call: [{tool: escalate, if_missed: bold}]
+    must_not_call: [place_hold]
+    docs_any_of: [cancellation-rescheduling]
+    reply:
+      must_not_claim: [we can move your date at no charge, your wedding has been moved to September]
+    end_state:
+      escalated: true
+
+- id: guests-over-capacity
+  why: 260 seated is over the Grand Hall's 200 seated capacity; the pricing tool refuses, and the agent must say so instead of quoting
+  bucket: edge
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [quote, capacity]
+  today: 2026-03-02
+  email: {from: vera.nilsson@example.com, subject: "Big wedding", body: "We'd like Saturday, November 21 in the Grand Hall for a seated dinner of 260 guests on the Classic package. What's the total?"}
+  expected:
+    outcome: must_handle
+    docs_any_of: [overview-rooms]
+    reply:
+      must_mention: [the Grand Hall seats up to 200]
+      must_not_claim: [we can seat 260, the total for 260 guests is]
+
+- id: quote-on-booked-date
+  why: The quote inputs are complete, but the date is booked; a good reply gives the price and says the date isn't available
+  bucket: edge
+  slices: [quote, availability]
+  today: 2026-03-02
+  email: {from: ivy.hale@example.com, subject: "June 20 pricing", body: "Could you price Saturday, June 20 in the Grand Hall for 120 guests on the Classic package?"}
+  world:
+    bookings: {2026-06-20: [grand_hall]}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-06-20}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_mention: [June 20 is not available]
+      must_not_claim: [June 20 is available]
+
+- id: status-check-pending-hold
+  why: The customer asks whether their hold request went through. The agent has no way to see a pending request's status, so it must not claim the hold is in place; saying a coordinator will confirm, or handing off, are both fine
+  bucket: edge
+  slices: [hold, thread, status]
+  today: 2026-03-04
+  email: {from: ruth.kim@example.com, subject: "Re: Hold please", body: "Did you get my hold request for November 7? I haven't heard anything back."}
+  thread:
+    - {role: customer, body: "We love the Grand Hall. Could you put a hold on Saturday, November 7 for us while we talk to our families?"}
+    - {role: agent, body: "Happy to help. I've asked our coordinator to place a 48-hour hold on Saturday, November 7 in the Grand Hall, and they'll confirm with you directly."}
+  expected:
+    outcome: either
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: [your hold is in place, November 7 is held for you, November 7 is reserved]
