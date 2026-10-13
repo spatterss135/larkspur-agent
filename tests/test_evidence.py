@@ -196,7 +196,13 @@ def test_tour_times_parse(fragment, expected):
 
 @pytest.mark.parametrize(
     "fragment, reason",
-    [("at 7", "ambiguous"), ("10:45 or 11:30", "ambiguous"), ("in the morning", "no_time")],
+    [
+        ("at 7", "ambiguous"),
+        ("10:45 or 11:30", "ambiguous"),
+        ("in the morning", "no_time"),
+        ("2 or 3 pm", "ambiguous"),  # found by probing: silently gave 15:00
+        ("between 1 and 2", "ambiguous"),
+    ],
 )
 def test_unclear_times_need_input(fragment, reason):
     assert time_from([fragment], [fragment]).reason == reason
