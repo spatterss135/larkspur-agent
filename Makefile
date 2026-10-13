@@ -1,4 +1,4 @@
-.PHONY: setup test lint ci sync
+.PHONY: setup test lint ci sync eval pending
 
 setup:  ## Install Python and dependencies
 	uv sync
@@ -14,3 +14,9 @@ ci: lint test  ## What CI runs on every push and PR
 
 sync:  ## Push the YAML evals to LangSmith datasets (needs LANGSMITH_API_KEY)
 	uv run python -m evals.datasets
+
+eval:  ## Run cases with the real models: make eval CASE=faq-parking [JUDGE=1]
+	uv run python -m evals.run $(foreach c,$(CASE),--case $(c)) $(if $(JUDGE),--judge,)
+
+pending:  ## What's waiting for a coordinator
+	uv run python -m agent.cli pending

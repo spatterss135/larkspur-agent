@@ -223,6 +223,8 @@ def main(argv: list[str] | None = None) -> int:
     from dotenv import load_dotenv
 
     load_dotenv()
+    os.environ.setdefault("LANGSMITH_TRACING", "true")
+    os.environ.setdefault("LANGSMITH_PROJECT", "larkspur-agent")
     suite = load_suite()
     cases = {c.id: c for c in suite.cases}
     agent_model, triage_model = real_models(args.model)

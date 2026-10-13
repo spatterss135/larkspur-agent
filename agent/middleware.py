@@ -21,6 +21,7 @@ from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import ToolMessage
+from langsmith import traceable
 
 from agent.checks import hold_check
 from agent.context import RunContext
@@ -217,6 +218,15 @@ def _write(name: str, prep, level: int, row: dict[str, Any], ctx: RunContext) ->
     return pending("fell_back", result.failed)
 
 
+@traceable(
+    run_type="tool",
+    process_inputs=lambda inputs: {"args": inputs.get("args")},  # never trace the world object
+)
+def _traced_call(name: str, args: dict[str, Any], ctx: RunContext) -> dict[str, Any]:
+    """One tool span per call in the trace, named after the tool, with its status."""
+    return handle_call(name, args, ctx)
+
+
 class AutonomyMiddleware(AgentMiddleware):
     """Runs every agent tool call through handle_call. Calls to anything else (like the
     structured-output Reply tool) pass through untouched."""
@@ -225,8 +235,11 @@ class AutonomyMiddleware(AgentMiddleware):
         name = request.tool_call["name"]
         if name not in TOOL_NAMES:
             return handler(request)
-        result = handle_call(
-            name, dict(request.tool_call.get("args") or {}), request.runtime.context
+        result = _traced_call(
+            name,
+            dict(request.tool_call.get("args") or {}),
+            request.runtime.context,
+            langsmith_extra={"name": name, "metadata": {"tool": name}},
         )
         result = {k: v for k, v in result.items() if not k.startswith("_")}
         return ToolMessage(
