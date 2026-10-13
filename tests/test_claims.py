@@ -34,4 +34,7 @@ def test_an_availability_claim_needs_a_named_date_to_fire():
 
 
 def test_a_discount_not_in_the_docs_still_fires():
-    assert "discount_claim" in check_reply("We can offer a complimentary bar upgrade.", SEARCHED).guards
+    assert (
+        "discount_claim"
+        in check_reply("We can offer a complimentary bar upgrade.", SEARCHED).guards
+    )

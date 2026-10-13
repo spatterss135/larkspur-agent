@@ -16,7 +16,8 @@ ITEMS = load_known_bad()
 
 
 def view(kb: KnownBad) -> RunView:
-    customer = [kb.email.subject, kb.email.body] + [m.body for m in kb.thread if m.role == "customer"]
+    thread = [m.body for m in kb.thread if m.role == "customer"]
+    customer = [kb.email.subject, kb.email.body, *thread]
     return RunView(
         tool_calls=[c.model_dump() for c in kb.run.tool_calls],
         retrieved=[c.text for c in kb.run.retrieved],
