@@ -52,6 +52,7 @@ def test_the_plan_example_loads_with_defaults():
     assert c.email.message_id == "quote-missing-guest-count@evals"
     assert c.split == "dev"
     assert c.expected.end_state.holds == []  # default: no side effects expected
+    assert c.expected.reply.must_mention == []
 
 
 def test_unknown_tool_is_rejected():

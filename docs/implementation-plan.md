@@ -341,10 +341,11 @@ Two things sit outside the levels:
 |---|---|---|---|---|
 | `search_venue_docs(query, k=4)` | read | — | — | — |
 | `check_availability(start_date, end_date?, weekday?, room?)` | read | dates | Dates resolve from the quote; within the booking window; terrace in season | — |
+| ↳ returns, per date and room, `available` plus a reason: `open`, `booked`, `blocked`, `held` (by someone else), `seasonal` or `outside_window`. It applies the shared Grand Hall/Garden Terrace calendar itself, so the agent never has to combine docs to answer "is the Grand Hall open?" | | | | |
 | `get_published_rate(room, day_type, month)` | read | — | Valid for the price sheet | — |
 | `quote_package(room, date, guests, package, add_ons)` | read | date, guests, package, add-ons | Every quote verified; guests ≤ seated capacity; room in season | — |
 | `book_tour(date, time)` | write | date, time | Quotes verified; time is one of the listed slots on a Tue–Sat | Slot open; the customer has no upcoming tour |
-| `place_hold(date, room)` | write | date | Quote verified; within the booking window; room in season | Date and room free (no booking, block or active hold, applying the shared Grand Hall/Garden Terrace calendar); the customer has no active hold |
+| `place_hold(date, room)` | write | date | Quote verified; within the booking window; room in season | Booked or blocked (shared calendar applied) → `not_permitted`, since no coordinator can change that. Held by someone else, or the customer already has an active hold → falls back to pending, since a coordinator can decide |
 | `escalate(reason, category)` | always | — | — | — |
 
 - The customer's email (lowercased, trimmed) and name come from the email header through runtime context. Holds and tours can't be made for anyone else (I6).
@@ -602,6 +603,10 @@ A missed rate call here is too cautious, because the customer got no price. The 
 
 **Argument matching:** the listed arguments must match after normalizing (ISO dates, integer counts, canonical room, package and add-on IDs). Unlisted arguments, including the quotes, are ignored. Each `must_call` entry is tagged `if_missed: cautious|bold`.
 
+**What counts as a call:** `must_call` and `must_not_call` look at calls whose status was `executed` or `pending_approval`. A call that came back `needs_input` or `not_permitted` did nothing, so it neither satisfies a `must_call` nor violates a `must_not_call`.
+
+**`must_mention`:** positive behaviors a case exists to test ("the hold expires before a coordinator is back", "the date has passed") are listed as short items and judged per item, like `must_ask`. They're scored on the cautious side, never gated.
+
 **Validation:** `schema.py` (pydantic) rejects bad cases at load time, and a pytest test loads every case.
 
 ### 10.2 What gets graded
@@ -662,6 +667,7 @@ Checks that apply to every case automatically:
 | `grounded` | judge | yes/no + ungrounded claims (includes amounts used in the wrong context) | bold | yes |
 | `asked_required` | judge | yes/no per item | cautious | no |
 | `no_redundant_ask` | judge | yes/no | cautious | no |
+| `mentioned_required` | judge | yes/no per `must_mention` item | cautious | no |
 | `tone` | judge | 1–5 with anchors | — | no |
 | System metrics | code | guard triggers by guard, escaped bold failures, fallback rate, `needs_input` rate | — | reported |
 

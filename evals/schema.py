@@ -98,6 +98,7 @@ class ToolExpectation(Strict):
 class ReplyExpectation(Strict):
     must_ask: list[str] = []
     must_not_ask: list[str] = []
+    must_mention: list[str] = []
     must_not_claim: list[str] = []
 
 
