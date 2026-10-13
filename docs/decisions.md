@@ -76,3 +76,15 @@ Added: a headline that matches the contract (reversible actions can be automated
 
 ## D16. Checked against the brief after the freeze
 Added: a dev/holdout split (about 15 cases never looked at during the improvement phase), no eval case ever used as a prompt example, public trace links tested in a logged-out browser, the quickstart tested on a fresh clone, results reported in the brief's three categories, and every regression listed.
+
+## D17. Framework spike findings
+A throwaway spike on branch `spike/framework` (never merged) checked the plan's eight risky assumptions against the real libraries (langchain 1.4.5, langgraph 1.2.15, langsmith 0.14.8) and real models. All eight held. What the build relies on:
+- **Interception works.** A `wrap_tool_call` middleware can return a tool result without calling the tool, and it sees the runtime context. So the autonomy middleware can stop writes, and the sender's identity can come from context instead of model arguments.
+- **Structured output works inside the tool loop** on Claude Sonnet 5.5 and Haiku 5.5 (`response_format`, with `sources`). GPT-6.1 Sol returns the judge schema with `with_structured_output(method="json_schema")`.
+- **A paused approval survives a restart.** `interrupt()` + resume worked across separate processes with the SQLite checkpointer. A second resume on a finished thread doesn't re-run anything. We still check `pending` status ourselves rather than rely on that.
+- **Traces show what debugging needs:** the root run with our metadata and tags, a span per middleware, and each tool call with its output and status. The agent's root run has to be found through its trace (`parent_run_id is None`). The first collected run is a model call, not the root.
+- **Prompt caching works in the loop.** The first model call wrote about 8.9k tokens, and the second read them back. Anthropic reports the write under `ephemeral_5m_input_tokens` (with `cache_creation` showing 0), so the ledger records both that field and `cache_read`.
+- **A scripted fake chat model** (a `GenericFakeChatModel` whose `bind_tools` returns itself) drives `create_agent` tool calls. That makes deterministic graph tests possible in CI.
+- **LangGraph's node `CachePolicy` exists.** Use it only for deterministic steps.
+- **Public sharing works with no credentials.** A shared trace loads in full. A shared dataset lists *every experiment* on it, so the before→after comparison is shared through one dataset link. A person still checks the rendered pages in a logged-out browser before submission.
+- **Worth trying later:** LangChain ships `PIIMiddleware` and a trace policy (`omit_payload`). Phase 9 tries these before writing PII masking by hand. `read_run` / `get_run_url` are deprecated in favor of `client.runs.*`, so new code uses the new calls.
