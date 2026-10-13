@@ -20,6 +20,7 @@ from typing import Any
 
 from agent.checks import SEED, SHARED, Hold, Snapshot, Tour, hold_check, tour_check, tour_slot
 from agent.dates import local_today
+from agent.records import ensure_schema as ensure_ledger
 
 HOLD_HOURS = 48
 PENDING_HOURS = 48
@@ -124,6 +125,7 @@ class World:
         if path != ":memory:":
             self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.executescript(SCHEMA)
+        ensure_ledger(self.conn)  # the ledger shares the file so writes can commit together
         self.autonomy: dict[str, int] = {}
         self.tool_failures: list[str] = []
 
@@ -392,9 +394,10 @@ class World:
         reason: str,
         failed_checks: list[str],
         now: dt.datetime,
+        record: Callable[[sqlite3.Connection, int], None] | None = None,
     ) -> tuple[int, bool]:
         """One pending request per customer, action and date: a repeat returns the existing
-        one. Returns (id, created)."""
+        one. Returns (id, created). `record` writes the ledger row in the same transaction."""
         email = customer_email.strip().lower()
         with self._tx() as c:
             existing = c.execute(
@@ -403,6 +406,8 @@ class World:
                 (email, action, args.get("date")),
             ).fetchone()
             if existing:
+                if record:
+                    record(c, existing["id"])
                 return existing["id"], False
             cur = c.execute(
                 "INSERT INTO pending_actions (run_id, message_id, action, customer_email,"
@@ -423,6 +428,8 @@ class World:
                     _ts(now),
                 ),
             )
+            if record:
+                record(c, cur.lastrowid)
             return cur.lastrowid, True
 
     def decide(
