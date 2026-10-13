@@ -1,6 +1,7 @@
 # Larkspur Hall price sheet. Read only by agent/pricing.py.
 # Formula and rounding: docs/implementation-plan.md §6.2.
-# Seasons: peak = May–Oct, off = Nov–Apr. Day types: mon_thu, fri, sat, sun.
+# Seasons: peak = May–Oct, "off" = Nov–Apr (quoted: YAML 1.1 reads a bare off as false).
+# Day types: mon_thu, fri, sat, sun.
 # Rates and minimums are the same for daytime and evening events.
 version: "2026-10-13"
 
@@ -14,15 +15,15 @@ rooms:
     standing: 250
     open_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     rental:
-      mon_thu: {off: 3500, peak: 4500}
-      fri: {off: 5500, peak: 7000}
-      sat: {off: 6000, peak: 9000}
-      sun: {off: 4000, peak: 5500}
+      mon_thu: {"off": 3500, peak: 4500}
+      fri: {"off": 5500, peak: 7000}
+      sat: {"off": 6000, peak: 9000}
+      sun: {"off": 4000, peak: 5500}
     fnb_minimum:
-      mon_thu: {off: 6000, peak: 8000}
-      fri: {off: 10000, peak: 12000}
-      sat: {off: 12000, peak: 15000}
-      sun: {off: 8000, peak: 10000}
+      mon_thu: {"off": 6000, peak: 8000}
+      fri: {"off": 10000, peak: 12000}
+      sat: {"off": 12000, peak: 15000}
+      sun: {"off": 8000, peak: 10000}
   garden_terrace:
     name: Garden Terrace
     seated: 120
@@ -44,15 +45,15 @@ rooms:
     standing: 60
     open_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     rental:
-      mon_thu: {off: 900, peak: 1200}
-      fri: {off: 1500, peak: 2000}
-      sat: {off: 2000, peak: 2800}
-      sun: {off: 1200, peak: 1500}
+      mon_thu: {"off": 900, peak: 1200}
+      fri: {"off": 1500, peak: 2000}
+      sat: {"off": 2000, peak: 2800}
+      sun: {"off": 1200, peak: 1500}
     fnb_minimum:
-      mon_thu: {off: 1500, peak: 2000}
-      fri: {off: 2500, peak: 3000}
-      sat: {off: 3000, peak: 4000}
-      sun: {off: 2000, peak: 2500}
+      mon_thu: {"off": 1500, peak: 2000}
+      fri: {"off": 2500, peak: 3000}
+      sat: {"off": 3000, peak: 4000}
+      sun: {"off": 2000, peak: 2500}
 
 packages:  # per guest
   classic: {name: Classic, per_guest: 95, aliases: [classic, classic package]}

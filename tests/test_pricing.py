@@ -114,3 +114,14 @@ def test_no_terrace_rate_in_winter():
     with pytest.raises(PricingError) as err:
         published_rate("garden_terrace", "sat", 1)
     assert err.value.reason == "room_out_of_season"
+
+
+def test_every_rate_in_the_sheet_is_keyed_by_a_season_name():
+    # YAML 1.1 reads a bare `off:` as the boolean false; that silently lost every
+    # off-season rate once. Every rate and minimum must be keyed "off" or "peak".
+    from agent.pricing import SHEET
+
+    for room in SHEET["rooms"].values():
+        for table in (room["rental"], room["fnb_minimum"]):
+            for by_season in table.values():
+                assert set(by_season) <= {"off", "peak"}, by_season
