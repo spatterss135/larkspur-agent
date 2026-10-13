@@ -265,3 +265,34 @@ def test_the_outcome_is_json_serializable_for_traces_and_evals(field):
     d = deps([call("search_venue_docs", {"query": "parking"}), reply("Parking is free.")])
     out = process_email(d, email("parking?"), [], "m-12")
     json.dumps(getattr(out, field), default=str)
+
+
+# --- 8. a crash after the world commits but before the checkpoint is saved ---------------------
+
+
+def test_rerunning_the_apply_step_after_a_crash_has_one_effect():
+    # On resume, LangGraph re-runs a node whose checkpoint wasn't saved. The world commit
+    # already happened, so the re-run must find the action executed and change nothing.
+    d = deps(
+        [
+            call("place_hold", HOLD_ARGS),
+            reply("I've asked our coordinator to hold June 13; it isn't confirmed yet."),
+        ]
+    )
+    process_email(d, email("Could you hold Saturday, June 13 in the Grand Hall?"), [], "m-13")
+    (item,) = d.approvals.pending()
+    decision = {
+        "decision": "approve",
+        "now": NOW.isoformat(),
+        "note": None,
+        "edited_args": None,
+        "edited_text": None,
+        "reviewer": "c",
+    }
+    state = {"kind": "action", "id": item["id"], "decision": decision}
+    first = d.approvals._apply_node(state)  # the step that "crashed" before its checkpoint
+    again = d.approvals._apply_node(state)  # the same step, re-run on resume
+    assert first["result"]["status"] == again["result"]["status"] == "executed"
+    assert again["result"]["changed"] is False
+    assert len(d.world.snapshot(NOW).active_holds()) == 1
+    assert len([r for r in outbox(d.world) if r[0] == "follow_up"]) == 1
