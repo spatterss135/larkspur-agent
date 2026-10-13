@@ -19,7 +19,12 @@ Failures found later, during the eval loop, are tagged by source in `docs/findin
 | "One main event per day", but the calendar books per room | "Is June 13 open?" had two defensible answers when only one room was booked | The Grand Hall and Garden Terrace share one calendar; the Library Room is separate |
 | Daytime events were offered, but the price sheet has no daytime rates | "How much for a Saturday daytime wedding?" was arguable | Rates and minimums are the same for daytime and evening events |
 | "Tours between 10:00 and 4:00, about 45 minutes" | "Can I come at 3:45?" was arguable | Back-to-back slots, last at 3:15 pm |
+| Daytime extensions had no limit; the Library Room had no music rule | "Can we extend to 5 pm?" and "Can we have a DJ in the Library Room?" were arguable | One extra hour, for evening Grand Hall or Library Room events only; background music only in the Library Room |
 | An FAQ line priced children at half the package rate | A pricing rule the pricing tool doesn't implement, so the docs and the tool would disagree | Removed; the FAQ refers kids' meals to the coordinator |
+
+## The docs are frozen
+
+After two review passes, the docs are frozen. Any set of written policies can always be probed for one more unanswered question. Real venues have the same gaps, and that's why this agent hands off when something isn't covered. A gap only matters when an eval label depends on it. So from here on, the docs are checked **per case**: if a case's right answer is arguable from the docs, either that one sentence is fixed (in its own commit, before the baseline) or the case is labeled `either`. Ambiguity found after the baseline becomes a finding tagged **corpus**.
 
 ## Kept on purpose (test cases)
 
