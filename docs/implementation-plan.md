@@ -169,7 +169,7 @@ larkspur-agent/
 ├── docs/
 │   ├── decisions.md          # decision records
 │   ├── implementation-plan.md
-│   ├── findings.md           # phase 7: finding → failing cases/traces → fix → rerun
+│   ├── findings.md           # phase 7: finding → source (corpus/agent/label/evaluator) → failing cases/traces → fix → rerun
 │   └── diagram.md
 ├── venue/                    # the client's "system", modeled first (phase 1)
 │   ├── docs/*.md             # ~15 venue documents (RAG corpus)
@@ -851,7 +851,7 @@ This screen is the coordinator's tool. **It is not the labeling tool:** labels g
 | 4 Agent v1 | tools, retrieval, triage, middleware, outer graph, reply gate, approval graph (CLI), notify, ledger, v1 prompt; fake-model integration tests | The acceptance criteria below pass | — |
 | 5 Baseline | experiments (§10.7) | Report generated | tag `v1-baseline` |
 | 6 Judge calibration | annotation queue, labels, `calibrate.py`, judge fixes, known-bad catch rates | Holdout agreement reported | — |
-| 7 Learn → improve | `docs/findings.md`, one fix per commit, rerun after each | v2 experiment + report | tag `v2` |
+| 7 Learn → improve | `docs/findings.md`: each finding tagged by source (corpus, agent, label or evaluator), one fix per commit, rerun after each | v2 experiment + report | tag `v2` |
 | 8 Coordinator screen | API + React (Pending, Review, summary) | Approve, edit, reject, review and undo work end to end | — |
 | 9 Ship | `promote.py`, online evaluator, PII, README, diagram, recording | README story readable in 30 minutes; the quickstart works on a **fresh clone**; **every LangSmith link opens in a logged-out browser**; the recording is 5 minutes or less | — |
 
