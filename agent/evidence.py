@@ -224,6 +224,8 @@ CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\s*([ap])?\.?m?\.?(?![a-z])")
 HOUR_MERIDIEM = re.compile(r"\b(\d{1,2})\s*([ap])\.?m\.?(?![a-z])")
 BARE_HOUR = re.compile(r"\b(?:at|around|about|by)\s+(\d{1,2})\b(?!:)")
 NOON = re.compile(r"\bnoon\b")
+# "2 or 3 pm", "between 1 and 2", "10-11": a choice, not a time.
+TIME_CHOICE = re.compile(r"\b\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\s*(?:or|-|–|to|and)\s*\d{1,2}\b")
 
 
 def _tour_hour(hour: int) -> int | None:
@@ -240,7 +242,7 @@ def time_from(fragments: list[str], customer_texts: list[str]) -> Evidence:
     if bad:
         return bad
     text = normalize(" ".join(fragments))
-    times, unclear = set(), False
+    times, unclear = set(), bool(TIME_CHOICE.search(text))
 
     def add(hour: int | None, minute: int, meridiem: str | None) -> None:
         nonlocal unclear
