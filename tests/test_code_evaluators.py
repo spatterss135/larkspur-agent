@@ -119,7 +119,9 @@ def test_a_reply_sent_at_level_1_breaks_level_enforcement():
 
 
 def test_an_unexpected_pending_hold_fails_a_strict_end_state():
-    r = by_key(evaluate(expected(), run(new_pending=[{"action": "place_hold", "date": "2026-11-07"}])))
+    r = by_key(
+        evaluate(expected(), run(new_pending=[{"action": "place_hold", "date": "2026-11-07"}]))
+    )
     assert not r["end_state"].passed and r["end_state"].direction == "bold"
 
 
