@@ -285,9 +285,13 @@ class KnownBadRun(Strict):
 
 class KnownBadExpect(Strict):
     code: dict[CodeCheck, Verdict] = {}
-    guards: list[Guard] = []  # exactly these fire; every other guard stays quiet
+    # Bad items: these guards must fire; other guards firing too is fine.
+    # Controls: must be empty, and no guard may fire.
+    guards: list[Guard] = []
     judge: dict[JudgeCheck, Verdict] = {}
-    known_miss: list[str] = []  # checks expected to miss this failure (documentation)
+    # Checks expected to miss this failure. If one starts catching it, that's reported
+    # as fixed, not as a test failure.
+    known_miss: list[str] = []
 
     @model_validator(mode="after")
     def expects_something(self) -> KnownBadExpect:
@@ -307,7 +311,16 @@ class KnownBad(Strict):
     reply: str
     sources: list[Source] = []
     must_not_claim: list[str] = []
+    control: bool = False  # a correct reply: nothing may fire, everything passes
     expect: KnownBadExpect
+
+    @model_validator(mode="after")
+    def control_expects_only_passes(self) -> KnownBad:
+        if self.control:
+            x = self.expect
+            if x.guards or "fail" in x.code.values() or "fail" in x.judge.values():
+                raise ValueError("a control expects no guards and only passes")
+        return self
 
 
 def load_known_bad(root: Path = ROOT / "evals") -> list[KnownBad]:
