@@ -48,3 +48,17 @@ def test_a_changed_money_date_or_number_is_substantive(draft, final):
 def test_wording_only_edits_are_left_to_the_reviewer(draft, final):
     assert text_changed(draft, final) is False
     assert substantive_edit(HOLD, HOLD, draft, final) is None  # the reviewer tags it
+
+
+@pytest.mark.parametrize(
+    "draft, final",
+    [
+        # Found by probing after green: each returned None (left to the reviewer).
+        ("See you on the 13th.", "See you on the 20th."),
+        ("Saturday works.", "Sunday works."),
+        ("The Grand Hall is open.", "The Library Room is open."),
+        ("Here is your quote: {{quote:Q1}}", "Here is your quote: {{quote:Q2}}"),
+    ],
+)
+def test_ordinals_weekdays_rooms_and_price_records_are_substantive(draft, final):
+    assert substantive_edit(HOLD, HOLD, draft, final) is True
