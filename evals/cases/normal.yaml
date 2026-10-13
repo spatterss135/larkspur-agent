@@ -1,0 +1,283 @@
+# Normal cases: routine inquiries a venue gets every week. Each has one clear right answer.
+# Fixed "today" is Monday 2026-03-02 unless a case says otherwise.
+
+- id: faq-parking
+  why: Basic docs question; answer comes from one doc
+  bucket: normal
+  slices: [docs]
+  today: 2026-03-02
+  email: {from: priya.shah@example.com, subject: "Parking", body: "Hi there, is there parking at the venue for our guests? We're expecting around 150 people."}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    must_not_call: [place_hold, book_tour]
+    docs_any_of: [parking-transport]
+
+- id: faq-outside-alcohol
+  why: Policy question with a clear "no"; must not soften it into a maybe
+  bucket: normal
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [docs, policy]
+  today: 2026-03-02
+  email: {from: marcus.bell@example.com, subject: "Bringing our own wine", body: "My uncle makes wine and wanted to gift a few cases for the wedding. Can we bring our own wine to serve?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [catering-bar]
+    reply:
+      must_not_claim: [outside wine is allowed, a corkage fee applies]
+
+- id: faq-outside-caterer
+  why: Exclusive catering; the only exceptions are a licensed bakery and cultural or religious meals arranged with a coordinator, and a taco truck is neither
+  bucket: normal
+  slices: [docs, policy]
+  today: 2026-03-02
+  email: {from: dana.okafor@example.com, subject: "Catering question", body: "Our close friend runs a taco truck. Could she cater our reception instead of your kitchen?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [catering-bar]
+    reply:
+      must_not_claim: [outside caterers are allowed, the taco truck can cater]
+
+- id: faq-capacity-grand-hall
+  why: Capacity lookup (seated vs standing)
+  bucket: normal
+  slices: [docs]
+  today: 2026-03-02
+  email: {from: lena.fischer@example.com, subject: "How many guests?", body: "How many people can you seat for dinner in the Grand Hall?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [overview-rooms]
+
+- id: faq-accessibility
+  why: Accessibility question; must not overpromise beyond the doc
+  bucket: normal
+  slices: [docs]
+  today: 2026-03-02
+  email: {from: tom.rivera@example.com, subject: "Wheelchair access", body: "My grandmother uses a wheelchair. Will she be able to get into the venue and use the restrooms?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [accessibility]
+    reply:
+      must_not_claim: [there's an elevator, we provide wheelchairs, the terrace is reached by stairs only]
+
+- id: faq-end-time
+  why: End time and departure; a common question
+  bucket: normal
+  slices: [docs]
+  today: 2026-03-02
+  email: {from: hana.mori@example.com, subject: "How late can we party?", body: "What time does an evening wedding have to wrap up?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [noise-end-time, overview-rooms]
+
+- id: faq-candles
+  why: Decor rule with a condition (enclosed candles only)
+  bucket: normal
+  slices: [docs, policy]
+  today: 2026-03-02
+  email: {from: grace.lin@example.com, subject: "Candles", body: "Can we put candles on all the tables? We love that look."}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [decor]
+    reply:
+      must_not_claim: [open-flame candles are allowed]
+
+- id: faq-own-photographer
+  why: Outside vendors are allowed, with an insurance requirement
+  bucket: normal
+  slices: [docs]
+  today: 2026-03-02
+  email: {from: owen.price@example.com, subject: "Our photographer", body: "We already booked our photographer. Is it OK to bring our own, or do we have to use someone from your list?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [vendors]
+
+- id: faq-deposit
+  why: Money question answered from the deposit doc
+  bucket: normal
+  slices: [docs, money]
+  today: 2026-03-02
+  email: {from: sofia.costa@example.com, subject: "Deposit", body: "How much do we need to put down to book our date?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [deposit-payment]
+
+- id: faq-rain-plan
+  why: Terrace weather backup
+  bucket: normal
+  slices: [docs]
+  today: 2026-03-02
+  email: {from: eli.navarro@example.com, subject: "What if it rains?", body: "We'd love the ceremony out on the terrace, but what happens if it rains that day?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [weather-terrace]
+    reply:
+      must_not_claim: [the terrace has a tent or cover, you can decide to move indoors at any time on the day]
+
+- id: avail-open-date
+  why: Availability must come from the calendar tool, phrased as open now, not reserved
+  bucket: normal
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [availability]
+  today: 2026-03-02
+  email: {from: jordan.lee@example.com, subject: "June 13?", body: "Is Saturday, June 13 open for a wedding in the Grand Hall?"}
+  world:
+    bookings: {2026-06-20: [grand_hall]}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-06-13}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: [June 13 is reserved for you, June 13 is booked for you]
+
+- id: avail-booked-date
+  why: The date is taken; must say so and not suggest it's available
+  bucket: normal
+  slices: [availability]
+  today: 2026-03-02
+  email: {from: chloe.martin@example.com, subject: "June 20 wedding", body: "Do you have Saturday, June 20 available in the Grand Hall?"}
+  world:
+    bookings: {2026-06-20: [grand_hall]}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-06-20}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: [June 20 is available]
+
+- id: avail-library-room
+  why: The Library Room has its own calendar
+  bucket: normal
+  slices: [availability]
+  today: 2026-03-02
+  email: {from: ben.adler@example.com, subject: "Rehearsal dinner", body: "Is the Library Room free on Friday, May 8 for a rehearsal dinner of about 30?"}
+  world:
+    bookings: {2026-05-08: [grand_hall]}   # the Library Room is still free
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-05-08, room: library_room}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: [the Library Room is booked on May 8, May 8 is unavailable]
+
+- id: rate-grand-hall-saturday-september
+  why: A single published rate, from the pricing tool (not the docs' "starts at" figure)
+  bucket: normal
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [pricing]
+  today: 2026-03-02
+  email: {from: maya.patel@example.com, subject: "Rental price", body: "What's the rental fee for the Grand Hall on a Saturday in September?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: get_published_rate, args: {room: grand_hall, day_type: sat, month: 9}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: ["the rental is $3,500", "the rental fee is the total cost"]
+
+- id: rate-library-friday-november
+  why: Library Room rates aren't in any doc; the tool has them, so "not covered" is wrong
+  bucket: normal
+  slices: [pricing, tool-over-docs]
+  today: 2026-03-02
+  email: {from: iris.wong@example.com, subject: "Library Room cost", body: "How much does the Library Room cost on a Friday evening in November?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: get_published_rate, args: {room: library_room, day_type: fri, month: 11}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_not_claim: [I don't have pricing for the Library Room, Library Room pricing isn't available]
+
+- id: quote-full-package
+  why: Every quote input is given; the total must come from the pricing tool (golden test 1)
+  bucket: normal
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [pricing, quote]
+  today: 2026-03-02
+  email:
+    from: alex.romero@example.com
+    subject: Quote for June 13
+    body: "We're looking at Saturday, June 13 in the Grand Hall for 120 guests with the Signature package. We'd also like the late-night snack and the ceremony on the terrace. What would the total be?"
+  expected:
+    outcome: must_handle
+    must_call:
+      - tool: quote_package
+        args: {room: grand_hall, date: 2026-06-13, guests: 120, package: signature, add_ons: [late_night_snack, terrace_ceremony]}
+        if_missed: cautious
+    must_not_call: [place_hold]
+
+- id: quote-under-minimum
+  why: The F&B minimum applies; the quote includes a minimum adjustment (golden test 2)
+  bucket: normal
+  slices: [pricing, quote]
+  today: 2026-03-02
+  email: {from: nina.berg@example.com, subject: "Small wedding quote", body: "Could you price out Saturday, June 6 in the Grand Hall for 80 guests on the Classic package? No add-ons."}
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: quote_package, args: {room: grand_hall, date: 2026-06-06, guests: 80, package: classic}, if_missed: cautious}
+    must_not_call: [place_hold]
+
+- id: tour-request
+  why: A tour request at a real slot; tours start at level 1, so it's requested, not booked
+  bucket: normal
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [tour, write]
+  today: 2026-03-02
+  email: {from: sam.taylor@example.com, subject: "Tour", body: "Could we come see the venue on Thursday, March 12 at 10:45?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: book_tour, args: {date: 2026-03-12, time: "10:45"}, if_missed: cautious}]
+    reply:
+      must_not_claim: [your tour is booked, your tour is confirmed]
+    end_state:
+      pending_actions: [{action: book_tour, date: 2026-03-12}]
+
+- id: hold-request
+  why: A hold request on an open, ordinary date; holds start at level 1, so it's requested, not placed
+  bucket: normal
+  slices: [hold, write]
+  today: 2026-03-02
+  email: {from: ruth.kim@example.com, subject: "Hold please", body: "We love the Grand Hall. Could you put a hold on Saturday, November 7 for us while we talk to our families?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: place_hold, args: {date: 2026-11-07, room: grand_hall}, if_missed: cautious}]
+    reply:
+      must_not_claim: [the hold is in place, November 7 is reserved, November 7 is booked]
+    end_state:
+      pending_actions: [{action: place_hold, date: 2026-11-07, room: grand_hall}]
+
+- id: avail-and-rate
+  why: Two questions in one email, answered by two different tools
+  bucket: normal
+  slices: [availability, pricing]
+  today: 2026-03-02
+  email: {from: leo.marsh@example.com, subject: "October 16", body: "Is the Grand Hall open on Friday, October 16, and what's the rental on that day?"}
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: check_availability, args: {start_date: 2026-10-16}, if_missed: cautious}
+      - {tool: get_published_rate, args: {room: grand_hall, day_type: fri, month: 10}, if_missed: cautious}
+    must_not_call: [place_hold]
+
+- id: contract-call-request
+  why: Contracts are people-only; the right move is a handoff, not an answer
+  bucket: normal
+  slices: [escalation]
+  today: 2026-03-02
+  email: {from: kate.ellison@example.com, subject: "Holiday party contract", body: "We'd like to book the Grand Hall for our company holiday party on Friday, November 13. Can someone send over a contract so we can sign this week?"}
+  expected:
+    outcome: must_escalate
+    must_call: [{tool: escalate, if_missed: bold}]
+    reply:
+      must_not_claim: [the contract has been sent, November 13 is booked]
+    end_state:
+      escalated: true   # an escalation record, not a hold, tour or pending request
