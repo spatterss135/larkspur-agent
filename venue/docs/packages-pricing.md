@@ -16,7 +16,7 @@ Each room and date has a food and beverage minimum. If your catering total comes
 ## Add-ons
 - Late-night snack: $12 per guest
 - Ceremony on the Garden Terrace (May–October): $1,500
-- Extra hour of event time: $750 per hour, subject to the 11:00 pm end time on the terrace
+- Extra hour of event time: $750 per hour, for Grand Hall and Library Room events only (see "Noise and end time")
 
 ## Service fee and tax
 A 22% service fee applies to food and beverage, including any minimum adjustment. Sales tax of 8.5% applies to the full bill, including rental, add-ons and the service fee.

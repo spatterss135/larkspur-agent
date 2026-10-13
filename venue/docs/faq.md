@@ -7,7 +7,7 @@ Yes. Many couples hold the ceremony on the Garden Terrace (May through October) 
 There's no minimum guest count, but each room and date has a food and beverage minimum. See "Packages and pricing".
 
 ## Is there a getting-ready space?
-Yes. The Library Room can be used as a getting-ready suite on the day of a Grand Hall event, starting at your setup time.
+Yes. For evening events in the Grand Hall, the Library Room is yours as a getting-ready suite from 11:00 am on the day of your event.
 
 ## Do you have Wi-Fi?
 Yes, guest Wi-Fi is available throughout the building.

@@ -6,10 +6,10 @@ Your date is reserved only when two things are complete: a signed event contract
 ## Payment schedule
 - 30% deposit at signing (non-refundable)
 - 40% due 120 days before your event
-- Remaining balance due 30 days before your event, based on your final guest count
+- Remaining balance due 30 days before your event, based on your estimated guest count
 
 ## Final guest count
-Your final guest count is due 14 days before your event. You may add guests after that date, subject to kitchen availability. We cannot reduce the count after it is submitted.
+Your final guest count is due 14 days before your event. If it differs from your estimate, we send a final invoice for the difference (or refund it), due 7 days before your event. You may add guests after the 14-day deadline, subject to kitchen availability. We cannot reduce the count after it is submitted.
 
 ## Accepted payment
 We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email.

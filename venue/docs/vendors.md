@@ -11,4 +11,4 @@ These vendors know the building well. We don't take commissions from any of them
 - Rentals: High Plains Party Rental
 
 ## Load-in
-Vendors may load in through the north service door, starting at your setup time. All vendor items must be removed by the end of your event, or by 10:00 am the next morning by arrangement.
+Vendors may load in through the north service door, starting at your setup time. Vendors have one hour after your end time to break down. Items that can't go out that night may be picked up by 10:00 am the next morning, by arrangement.

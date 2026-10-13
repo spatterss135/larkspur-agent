@@ -1,10 +1,19 @@
 # Noise and end time
 
 ## End time
-All evening events end at 11:00 pm. Guests should be off the property by 11:30 pm.
+Evening events end at 11:00 pm, and guests should be off the property by 11:30 pm. Daytime events end at 3:00 pm.
 
 ## Amplified music
-Amplified music on the Garden Terrace must end at 10:00 pm, because of our neighbors across the creek. Amplified music inside the Grand Hall may continue until 11:00 pm with the doors closed.
+Amplified music on the Garden Terrace must end at 10:00 pm, because of our neighbors across the creek. Amplified music inside the Grand Hall may continue until your event's end time, with the doors closed.
 
 ## Extra hours
-Extra event time is available for Grand Hall events, ending no later than midnight. Terrace events cannot be extended past 11:00 pm.
+Extra hours are available for Grand Hall and Library Room events only, up to midnight for evening events. Garden Terrace events cannot be extended.
+
+When you add an extra hour, everything moves with your end time:
+- your event ends one hour later (for example, midnight instead of 11:00 pm),
+- bar service ends 30 minutes before the new end time,
+- amplified music in the Grand Hall may continue until the new end time,
+- guests should be off the property 30 minutes after the new end time.
+
+## Breakdown
+Your vendors have one hour after your end time to break down and load out.
