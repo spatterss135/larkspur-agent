@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS pending_replies (
     draft TEXT NOT NULL, guards_json TEXT, reply_level INTEGER, status TEXT NOT NULL,
     created_at TEXT NOT NULL, decided_at TEXT, final TEXT, note TEXT
 );
+CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY, item_type TEXT NOT NULL, ref_id TEXT, run_id TEXT,
+    reason TEXT NOT NULL, verdict TEXT, note TEXT, created_at TEXT NOT NULL, reviewed_at TEXT
+);
 CREATE TABLE IF NOT EXISTS approvals (
     id INTEGER PRIMARY KEY, kind TEXT, ref_id INTEGER, decision TEXT, draft_json TEXT,
     final_json TEXT, substantive_edit INTEGER, note TEXT, reviewer TEXT, decided_at TEXT

@@ -124,7 +124,7 @@ def test_a_compromised_model_cannot_change_the_world():
     script = [
         call("place_hold", HOLD_ARGS, 1),
         call("place_hold", {**HOLD_ARGS, "customer_email": "victim@example.com"}, 2),
-        reply("Done! Your date is held."),
+        reply("Done! I've placed a hold on June 13 for you."),
     ]
     d = deps(script, spec={"autonomy": {"place_hold": 0}})
     out = process_email(d, email("Hold Saturday, June 13 in the Grand Hall."), [], "m-3")
