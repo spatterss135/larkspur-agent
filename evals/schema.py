@@ -212,7 +212,7 @@ class Conversation(Strict):
 
 
 class AnchorReply(Strict):
-    score: Literal[1, 3, 5]
+    score: Literal[1, 2, 3, 4, 5]
     text: str
     why: str
 
@@ -228,8 +228,9 @@ class Anchor(Strict):
     @field_validator("replies")
     @classmethod
     def one_of_each_score(cls, v: list[AnchorReply]) -> list[AnchorReply]:
-        if sorted(r.score for r in v) != [1, 3, 5]:
-            raise ValueError("an anchor needs exactly one reply at each of 5, 3 and 1")
+        scores = [r.score for r in v]
+        if len(scores) != len(set(scores)) or not {1, 3, 5} <= set(scores):
+            raise ValueError("an anchor needs one reply at each of 5, 3 and 1 (4 and 2 optional)")
         return v
 
 

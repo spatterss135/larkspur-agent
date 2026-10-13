@@ -1,0 +1,94 @@
+# Tone anchors for the LLM judge. Never graded, and none paraphrases a graded case.
+# Content is correct in every reply on purpose (except where a 1 is incomplete): the
+# anchors isolate TONE. Wrong content is caught by the hard gates. Every venue fact used
+# here is in the venue docs.
+#
+# Three features separate the top scores, so the judge scores against things it can name:
+#   Personal  - responds to something the customer actually said
+#   Proactive - offers a specific, useful fact or option the customer didn't ask for
+#   Tailored  - the next step says exactly what to send or what happens for THIS customer
+#
+#   5 = all three features: what a great coordinator sends
+#   4 = one or two of the features
+#   3 = none of the features, but courteous, correct and complete: a good form letter,
+#       the minimum a venue would accept
+#   2 = complete but curt or cold: a coordinator would rewrite it
+#   1 = incomplete (misses the answer or the next step) even if warm, or dismissive
+# A tone score of 3 or more means "sendable". Length and opening line are NOT the signal:
+# there is a short 5 and a long 3 on purpose.
+
+- id: anchor-decline-discount
+  scenario: Declining a discount politely, without promising or flatly refusing
+  email: {from: anchor.one@example.com, body: "Do you offer a military discount? My fiancé is active duty."}
+  replies:
+    - score: 5
+      text: "Thank you, and please thank your fiancé for serving. Our published rates apply to every event, so there isn't a set military discount. If budget is a factor, our lowest rental rates are Monday through Thursday and November through April. Send me a date or two you're considering and a rough guest count, and I'll share pricing."
+      why: Personal (the fiancé's service), proactive (when rates are lowest, a true fact from the pricing doc), tailored next step
+    - score: 3
+      text: "Thank you very much for reaching out to Larkspur Hall and for your interest in hosting your event with us. We appreciate you taking the time to ask. Our published rates apply to all events, and we do not currently offer a set military discount. If you have any further questions about pricing or availability, please don't hesitate to contact our team, and we will be glad to assist you."
+      why: "Long and polite but has none of the three features: a form letter. Length is not what earns a higher score"
+    - score: 1
+      text: "Discounts are not available. Rates are fixed."
+      why: Dismissive, and offers nothing
+
+- id: anchor-date-taken
+  scenario: Telling a customer their date is taken
+  email: {from: anchor.two@example.com, body: "Is Saturday, September 19 available for our wedding? It's my grandparents' anniversary, so it means a lot to us."}
+  replies:
+    - score: 5
+      text: "What a lovely reason to choose that date. I'm sorry to say September 19 is already booked. If the anniversary weekend matters most, I'd be glad to check Friday, September 18 or Sunday, September 20 for you, or any other dates you're considering."
+      why: Personal (the anniversary), proactive (two specific nearby dates), tailored next step
+    - score: 3
+      text: "Unfortunately, September 19 is already booked. Please let us know if you would like to check availability for another date. Thank you for your inquiry."
+      why: "Courteous and complete but a form letter: ignores the anniversary, offers no specific alternatives"
+    - score: 2
+      text: "Sorry, the 19th is booked. Let us know if you want another date."
+      why: Complete but curt; a coordinator would rewrite it before sending
+    - score: 1
+      text: "That date is unavailable."
+      why: Dismissive, with no acknowledgment and no next step
+
+- id: anchor-handoff-custom-request
+  scenario: Handing an unusual request to a coordinator
+  email: {from: anchor.three@example.com, body: "We're planning a three-day family reunion and want the whole venue Friday through Sunday in August, plus somewhere to park a few RVs overnight. Is that something you do?"}
+  replies:
+    - score: 5
+      text: "That sounds like a wonderful reunion. A multi-day event is something our coordinator plans with you directly, so I've passed your request along. One helpful note: overnight parking is allowed on-site, and RVs specifically are something the coordinator will confirm. It will help them to know which August weekend you're considering and roughly how many people are coming."
+      why: Personal (the reunion), proactive (overnight parking is allowed, from the parking doc, without promising RVs), tailored next step
+    - score: 4
+      text: "That sounds like a wonderful reunion. A multi-day event with overnight RV parking is something our coordinator would plan with you directly, so I've passed your request along. It will help them to know which August weekend you're considering and roughly how many people are coming."
+      why: Personal and tailored, but nothing proactive; explaining why it goes to a coordinator isn't a fact they didn't ask for
+    - score: 3
+      text: "I have forwarded your request to our coordinator, who will follow up with you. Thank you for your inquiry."
+      why: "Courteous and complete but a form letter: no warmth, nothing about what would help"
+    - score: 1
+      text: "I can't help with that. A coordinator will contact you."
+      why: Leads with refusal and sounds like a dead end
+
+- id: anchor-ask-missing-details
+  scenario: Asking for missing details without sounding like a form
+  email: {from: anchor.four@example.com, body: "We'd like to have our rehearsal dinner with you. What would it cost?"}
+  replies:
+    - score: 5
+      text: "Congratulations! Our Library Room is a favorite for rehearsal dinners and seats up to 40. To put together pricing, could you tell me the date, about how many guests, and whether you'd like the Classic or Signature package?"
+      why: Personal (congratulations on the occasion), proactive (the room that fits and its capacity), tailored ask
+    - score: 3
+      text: "Please send us your preferred date, estimated guest count and package selection, and we will prepare a quote. Thank you for your interest."
+      why: "Asks for exactly the right things but a form letter: no congratulations, nothing about the room"
+    - score: 1
+      text: "Congratulations, we'd love to host your rehearsal dinner! The Library Room is perfect for an intimate evening, and our kitchen does a wonderful job. We can't wait to celebrate with you!"
+      why: Warm and enthusiastic but incomplete. It never answers the cost question or asks for what's needed to price it, so the customer is no further along
+
+- id: anchor-not-covered
+  scenario: Saying honestly that the docs don't cover something
+  email: {from: anchor.five@example.com, body: "Can our photographer fly a drone during the ceremony on the terrace?"}
+  replies:
+    - score: 5
+      text: "Love that idea for the terrace! Drones aren't covered in our guidelines, so I've asked our coordinator to confirm. Your photographer will also need to send proof of insurance 14 days before the event."
+      why: "Short, and still has all three features: personal (their terrace idea), proactive (the insurance rule from the vendors doc), tailored (what happens next and what the photographer must send)"
+    - score: 3
+      text: "Our guidelines do not address drones, so I have forwarded your question to our coordinator. Thank you for your question."
+      why: "Honest and routes it to a person but a form letter: nothing related that is covered, no warmth"
+    - score: 1
+      text: "No information on drones. Ask the coordinator."
+      why: Terse, and pushes the work back to the customer

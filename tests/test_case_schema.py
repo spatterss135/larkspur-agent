@@ -123,7 +123,7 @@ def test_a_conversation_needs_at_least_two_turns():
         )
 
 
-def test_an_anchor_needs_one_reply_at_each_score():
+def test_an_anchor_needs_a_5_3_and_1_and_no_duplicate_scores():
     with pytest.raises(ValidationError):
         Anchor.model_validate(
             {

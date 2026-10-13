@@ -668,7 +668,7 @@ Checks that apply to every case automatically:
 | `asked_required` | judge | yes/no per item | cautious | no |
 | `no_redundant_ask` | judge | yes/no | cautious | no |
 | `mentioned_required` | judge | yes/no per `must_mention` item | cautious | no |
-| `tone` | judge | 1–5 with anchors | — | no |
+| `tone` | judge | 1–5 with anchors, scored on three named features (personal, proactive, tailored next step): 5 = all three, 4 = one or two, 3 = none but courteous and complete (a good form letter, the minimum a venue would accept), 2 = complete but curt, 1 = incomplete even if warm, or dismissive. Anchors include a short 5 and a long 3 so length and opener aren't the signal; reported as the share of replies scoring 3 or more ("sendable") | — | no |
 | System metrics | code | guard triggers by guard, escaped bold failures, fallback rate, `needs_input` rate | — | reported |
 
 **Run result:** a run fails if any hard gate fails, and passes otherwise. Scored evaluators are reported separately and never averaged into pass/fail.
