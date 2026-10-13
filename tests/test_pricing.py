@@ -125,3 +125,17 @@ def test_every_rate_in_the_sheet_is_keyed_by_a_season_name():
         for table in (room["rental"], room["fnb_minimum"]):
             for by_season in table.values():
                 assert set(by_season) <= {"off", "peak"}, by_season
+
+
+def test_a_repeated_add_on_is_charged_once():
+    # Found by probing after green: the snack was charged twice.
+    once = quote("grand_hall", SAT_PEAK, 120, "signature", ["late_night_snack"])
+    twice = quote("grand_hall", SAT_PEAK, 120, "signature", ["late_night_snack"] * 2)
+    assert twice.total == once.total and twice.add_ons == ("late_night_snack",)
+
+
+@pytest.mark.parametrize("guests", [True, 120.5, "120"])
+def test_the_guest_count_must_be_a_whole_number(guests):
+    with pytest.raises(PricingError) as err:
+        quote("grand_hall", SAT_PEAK, guests, "classic", [])
+    assert err.value.reason == "invalid_guests"
