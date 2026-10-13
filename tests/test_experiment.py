@@ -95,3 +95,26 @@ def test_turns_after_a_failed_turn_are_not_graded():
     assert fb["turn_1_passed"]["score"] == 0
     assert fb["turn_2_passed"]["comment"] == "not_graded_diverged"
     assert fb["conversation_passed"]["score"] == 0
+
+
+def test_the_command_line_passes_every_option_through(monkeypatch):
+    # A --limit that never reached run_experiment once ran the full suite by accident.
+    import evals.experiment as ex
+
+    seen = {}
+    monkeypatch.setattr(
+        ex,
+        "run_experiment",
+        lambda name, **kw: seen.update(kw, name=name) or {"cases": [], "conversations": []},
+    )
+    ex.main(["--name", "x", "--reps", "1", "--limit", "2", "--split", "dev", "--no-conversations"])
+    assert seen == {
+        "name": "x",
+        "reps": 1,
+        "judge": False,
+        "agent": "haiku",
+        "splits": ("dev",),
+        "conversations": False,
+        "concurrency": 4,
+        "limit": 2,
+    }
