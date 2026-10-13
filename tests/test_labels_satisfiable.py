@@ -18,10 +18,12 @@ def ideal_run(exp: Expected, end: EndState, turn: bool = False) -> RunResult:
     pending = {p.action for p in end.pending_actions}
     calls = []
     for want in exp.must_call:
-        status = "executed"
-        if want.tool in WRITES and want.tool in pending:
-            status = "pending_approval"
-        calls.append({"tool": want.tool, "status": status, "args": dict(want.args)})
+        call = {"tool": want.tool, "status": "executed", "args": dict(want.args)}
+        if want.tool in WRITES:
+            held = want.tool in pending
+            call.update(status="pending_approval" if held else "executed")
+            call["effective_level"] = 1 if held else 2
+        calls.append(call)
     docs = [{"doc_id": d} for d in exp.docs_any_of[:1]]
     return RunResult(
         triage=exp.triage,
@@ -40,6 +42,21 @@ def ideal_run(exp: Expected, end: EndState, turn: bool = False) -> RunResult:
 def test_the_ideal_run_passes_every_check(case):
     exp = case.expected
     failed = [r for r in evaluate(exp, ideal_run(exp, exp.end_state)) if not r.passed]
+    assert not failed, [(r.key, r.comment) for r in failed]
+
+
+EITHER = [c for c in SUITE.cases if c.expected.outcome == "either"]
+
+
+@pytest.mark.parametrize("case", EITHER, ids=[c.id for c in EITHER])
+@pytest.mark.parametrize("escalated", [False, True], ids=["handled", "escalated"])
+def test_both_paths_of_an_either_case_pass(case, escalated):
+    # "either" promises that handling and escalating are both acceptable, so the label
+    # must not quietly require one of them (e.g. through its end state).
+    exp = case.expected
+    run = ideal_run(exp, exp.end_state)
+    run.escalated = escalated
+    failed = [r for r in evaluate(exp, run) if not r.passed]
     assert not failed, [(r.key, r.comment) for r in failed]
 
 
