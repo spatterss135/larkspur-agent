@@ -1,0 +1,97 @@
+"""The LangSmith experiment adapters: targets produce plain JSON, evaluators turn a run into
+feedback. Tested with stand-in run/example objects; no LangSmith calls."""
+
+import json
+from types import SimpleNamespace
+
+from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
+from langchain_core.messages import AIMessage
+
+from evals.datasets import case_examples, conversation_examples
+from evals.experiment import case_target, code_evaluator, conversation_evaluator
+from evals.schema import load_suite
+
+SUITE = load_suite()
+CASE_EX = {e.metadata["id"]: e for e in case_examples(SUITE)}
+CONVO_EX = {e.metadata["id"]: e for e in conversation_examples(SUITE)}
+
+
+class Scripted(GenericFakeChatModel):
+    def bind_tools(self, tools, **kw):
+        return self
+
+
+class Triage:
+    def with_structured_output(self, schema, **kw):
+        class B:
+            def invoke(self, messages, config=None):
+                return schema(category="customer", reason="scripted")
+
+        return B()
+
+
+def final(text):
+    return AIMessage(
+        content="",
+        tool_calls=[{"name": "Reply", "args": {"reply": text, "sources": []}, "id": "f"}],
+    )
+
+
+def as_example(e):
+    return SimpleNamespace(outputs=e.outputs, metadata=e.metadata, id=e.id, inputs=e.inputs)
+
+
+def test_the_case_target_returns_plain_json():
+    target = case_target(lambda: (Scripted(messages=iter([final("Hello!")])), Triage()))
+    out = target(CASE_EX["faq-parking"].inputs)
+    json.dumps(out)
+    assert out["result"]["reply"] == "Hello!" and out["error"] is None
+
+
+def test_the_code_evaluator_reports_checks_the_run_result_and_directions():
+    target = case_target(lambda: (Scripted(messages=iter([final("Hello!")])), Triage()))
+    run = SimpleNamespace(outputs=target(CASE_EX["faq-parking"].inputs))
+    fb = {r["key"]: r for r in code_evaluator(run, as_example(CASE_EX["faq-parking"]))["results"]}
+    assert fb["run_passed"]["score"] == 1  # a missed search is cautious, not a gate
+    assert fb["must_call:search_venue_docs"]["score"] == 0
+    assert fb["cautious_misses"]["score"] >= 1 and fb["bold_failures"]["score"] == 0
+
+
+def test_an_escaped_bold_failure_is_one_that_reached_the_customer():
+    target = case_target(
+        lambda: (
+            Scripted(messages=iter([final("Wonderful news, June 13 is all yours!")])),
+            Triage(),
+        )
+    )
+    example = as_example(CASE_EX["hold-request"])
+    run = SimpleNamespace(outputs=target(example.inputs))
+    run.outputs["result"]["tool_calls"] = [
+        {"tool": "place_hold", "status": "executed", "args": {}, "effective_level": 1}
+    ]
+    fb = {r["key"]: r for r in code_evaluator(run, example)["results"]}
+    assert fb["bold_failures"]["score"] >= 1 and fb["escaped_bold_failures"]["score"] >= 1
+
+
+def test_an_infra_error_is_not_graded():
+    run = SimpleNamespace(outputs={"error": "AnthropicInvalidRequestError: 400", "result": {}})
+    (fb,) = code_evaluator(run, as_example(CASE_EX["faq-parking"]))["results"]
+    assert fb["key"] == "infra_error" and fb["score"] == 1
+
+
+def test_turns_after_a_failed_turn_are_not_graded():
+    convo = next(c for c in SUITE.conversations if len(c.turns) >= 2)
+    example = as_example(CONVO_EX[convo.id])
+    turn = {"triage": "non_customer", "skipped": True, "tool_calls": [], "reply": None}
+    good = {"triage": "customer", "tool_calls": [], "reply": "Hi"}
+    run = SimpleNamespace(
+        outputs={
+            "error": None,
+            "turns": [turn] + [good] * (len(convo.turns) - 1),
+            "end": {**good, "new_holds": [], "new_tours": [], "new_pending": []},
+        }
+    )
+    fb = {r["key"]: r for r in conversation_evaluator(run, example)["results"]}
+    assert fb["turn_1_passed"]["score"] == 0
+    assert fb["turn_2_passed"]["comment"] == "not_graded_diverged"
+    assert fb["conversation_passed"]["score"] == 0
