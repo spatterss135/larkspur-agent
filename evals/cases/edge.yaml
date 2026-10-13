@@ -213,7 +213,7 @@
     must_not_call: [place_hold]
     reply:
       must_ask: [event_date]
-      must_mention: [February 21, 2026 has already passed]
+      must_mention: ["February 21, 2026 has already passed"]
       must_not_claim: [February 21 is available]
 
 - id: date-beyond-booking-window
@@ -226,7 +226,7 @@
     outcome: must_handle
     must_not_call: [place_hold]
     reply:
-      must_not_claim: [June 16, 2029 is held, June 16, 2029 is available]
+      must_not_claim: ["June 16, 2029 is held", "June 16, 2029 is available"]
 
 - id: hold-expires-when-office-closed
   why: Holds last 48 hours (not business days). A hold placed on a Saturday expires Monday afternoon, and coordinators work Tuesday to Saturday, so the customer should be warned
