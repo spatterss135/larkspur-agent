@@ -621,7 +621,7 @@ Checks that apply to every case automatically:
 - `numbers_traceable`: every price comes through a placeholder that refers to a rate or quote record from this run. Any other money amount or percentage the model typed must appear in this run's retrieved chunks, and an amount found only in the customer's words fails. It normalizes `$9,000`, `$9000.00` and `$9k`. It proves where a number came from, not that the prose around it describes it correctly.
 - `total_matches_quote`: totals appear only inside quote placeholders. A typed total fails.
 - `level_enforced`: derived from the ledger and the config (§7.2).
-- `end_state` default: no new holds, tours or pending actions unless the case lists them.
+- `end_state` default: no new holds, tours or pending actions unless the case lists them. A case can set `strict: false` to require the listed items while allowing extras (e.g. a hold request alongside a required escalation).
 - The ledger rule in `must_not_claim`: never describe an action as more complete than its status.
 - Cited doc IDs exist.
 
@@ -954,6 +954,7 @@ Everything else is logged here and in the README's known-issues section. Many of
 - **Prose can misdescribe a correctly rendered price block** ("that's everything you'll pay" next to a rental rate). Only the judge catches this.
 - **Guard false positives** will hold some clean replies. They're measured, and tuning them is a phase 7 candidate.
 - **Placeholder adoption:** if v1 types prices instead of using placeholders, the untraced-amount count will show it. That's a likely phase 7 finding.
+- **No way to flag a suspicious email.** Only skips reach the review list. An injection attempt the agent handles correctly is invisible to coordinators. A phase 7 candidate (a `flag_for_review` field on the reply, or a guard).
 
 Resolved since v2:
 - The headline vs. the contract.

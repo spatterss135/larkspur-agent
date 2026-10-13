@@ -96,7 +96,7 @@ class ToolExpectation(Strict):
     if_missed: Literal["cautious", "bold"]
 
 
-PHRASE_SPLIT = re.compile(r"^\d{3,4}\s+[A-Za-z]|\$\d+$")  # "000 off", "2029 is held", "take $3"
+PHRASE_SPLIT = re.compile(r"^\d{3,4}\s+[A-Za-z]")  # the second fragment: "000 off", "2029 is held"
 
 
 class ReplyExpectation(Strict):
@@ -133,8 +133,10 @@ class ExpectedPending(Strict):
 
 
 class EndState(Strict):
-    """What the world must contain afterward. Empty lists mean: nothing new was created."""
+    """What the world must contain afterward. Empty lists mean: nothing new was created,
+    unless strict is False, in which case listed items are required and extras are allowed."""
 
+    strict: bool = True
     holds: list[ExpectedHold] = []
     tours: list[ExpectedTour] = []
     pending_actions: list[ExpectedPending] = []

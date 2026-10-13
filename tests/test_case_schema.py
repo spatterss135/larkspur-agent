@@ -53,6 +53,7 @@ def test_the_plan_example_loads_with_defaults():
     assert c.split == "dev"
     assert c.expected.end_state.holds == []  # default: no side effects expected
     assert c.expected.reply.must_mention == []
+    assert c.expected.end_state.strict is True
 
 
 def test_unknown_tool_is_rejected():
