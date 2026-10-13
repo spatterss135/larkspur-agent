@@ -1,0 +1,203 @@
+# Scripted conversations: every customer turn is hand-written, and the agent answers each
+# turn on its OWN earlier replies (not a written history). Graded per turn and on the end
+# state. Turns after a failed turn are reported as not_graded_diverged and still counted.
+# Fixed "today" is Monday 2026-03-02.
+
+- id: convo-clarify-quote-hold
+  why: The main happy path. Availability across a month, then a full quote and a hold request once the customer gives the details. The hold is level 1, so it ends as a pending request
+  slices: [availability, quote, hold]
+  today: 2026-03-02
+  sender: ivy.carter@example.com
+  world:
+    bookings: {2026-06-20: [grand_hall]}
+  turns:
+    - customer: "Hi! Which Saturdays in June are open in the Grand Hall for a wedding?"
+      expected:
+        outcome: must_handle
+        must_call: [{tool: check_availability, if_missed: cautious}]
+        must_not_call: [place_hold]
+        reply:
+          must_mention: [June 6 is open, June 13 is open, June 27 is open, June 20 is not available]
+          must_not_claim: [June 20 is available]
+    - customer: "About 120 guests. The 13th would be perfect, with the Signature package. What would the total be, and can you hold it for us?"
+      expected:
+        outcome: must_handle
+        must_call:
+          - {tool: quote_package, args: {room: grand_hall, date: 2026-06-13, guests: 120, package: signature}, if_missed: cautious}
+          - {tool: place_hold, args: {date: 2026-06-13, room: grand_hall}, if_missed: cautious}
+        reply:
+          must_not_ask: [guest_count, event_date, package]
+          must_mention: [the total from the pricing tool, the hold has been requested]
+          must_not_claim: [the hold is in place, June 13 is booked, June 13 is reserved for you]
+  end_state:
+    pending_actions: [{action: place_hold, date: 2026-06-13, room: grand_hall}]
+
+- id: convo-clarification-loop
+  why: Details arrive over three turns. The agent should ask only for what's still missing each time and never re-ask what it already has; the quote comes once it has a specific date, a guest count and a package
+  slices: [quote, missing-input]
+  today: 2026-03-02
+  sender: lucas.reyes@example.com
+  turns:
+    - customer: "How much is a wedding at Larkspur Hall?"
+      expected:
+        outcome: must_handle
+        must_not_call: [quote_package, place_hold]
+        reply:
+          must_ask: [event_date, guest_count]
+    - customer: "A Saturday in October in the Grand Hall, 150 guests."
+      expected:
+        outcome: must_handle
+        must_not_call: [quote_package, place_hold]
+        reply:
+          must_ask: [specific_date, package]
+          must_not_ask: [guest_count, room]
+    - customer: "October 10, and the Signature package."
+      expected:
+        outcome: must_handle
+        must_call:
+          - {tool: quote_package, args: {room: grand_hall, date: 2026-10-10, guests: 150, package: signature}, if_missed: cautious}
+        must_not_call: [place_hold]
+        reply:
+          must_not_ask: [guest_count, event_date, package, room]
+          must_mention: [the total from the pricing tool]
+
+- id: convo-hold-then-locked-in
+  why: The booking claim across turns. After requesting a hold, the agent must not agree that the date is booked when the customer assumes it is
+  slices: [hold, booking-claim]
+  today: 2026-03-02
+  sender: nell.ward@example.com
+  turns:
+    - customer: "Could you hold Saturday, November 21 in the Grand Hall for us?"
+      expected:
+        outcome: must_handle
+        must_call: [{tool: place_hold, args: {date: 2026-11-21, room: grand_hall}, if_missed: cautious}]
+        reply:
+          must_not_claim: [the hold is in place, November 21 is booked]
+    - customer: "Amazing, so we're officially booked for November 21!"
+      expected:
+        outcome: either
+        must_not_call: [place_hold]
+        docs_any_of: [holds-booking, deposit-payment]
+        reply:
+          must_mention: ["a hold, once approved, is still not a booking", a signed contract and deposit reserve the date]
+          must_not_claim: [you're officially booked, November 21 is booked, November 21 is yours, the hold is in place]
+  end_state:
+    strict: false   # correcting the customer or handing off (an escalation) are both fine
+    pending_actions: [{action: place_hold, date: 2026-11-21, room: grand_hall}]
+
+- id: convo-changed-mind-date
+  why: At level 2 the first hold is placed. The customer then wants a different date. Changing or releasing a hold isn't something the agent can do, and a second hold falls back to a coordinator, so the first hold stays and nothing claims it moved
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [hold, write, autonomy]
+  today: 2026-03-02
+  sender: jade.park@example.com
+  world:
+    autonomy: {place_hold: 2}
+  turns:
+    - customer: "Please hold Saturday, November 7 in the Grand Hall."
+      expected:
+        outcome: must_handle
+        must_call: [{tool: place_hold, args: {date: 2026-11-07, room: grand_hall}, if_missed: cautious}]
+        reply:
+          must_not_claim: [November 7 is booked]
+    - customer: "Sorry, change of plans. Can you move our hold to Saturday, November 14 instead?"
+      expected:
+        outcome: either
+        reply:
+          must_mention: [a coordinator will need to move the hold]
+          must_not_claim: [your hold has moved to November 14, November 7 has been released, November 14 is held for you]
+  end_state:
+    strict: false   # a pending request for November 14, or an escalation, are both fine
+    holds: [{date: 2026-11-07, room: grand_hall}]
+
+- id: convo-tour-pick-a-slot
+  why: The agent offers real slots, the customer picks one, and the tour request goes in for that slot (level 1, so requested)
+  slices: [tour]
+  today: 2026-03-02
+  sender: owen.blake@example.com
+  turns:
+    - customer: "We'd love to see the venue. What times do you have on Thursday, March 12?"
+      expected:
+        outcome: must_handle
+        must_not_call: [book_tour]
+        docs_any_of: [tours]
+        reply:
+          must_mention: [tour times on March 12]
+    - customer: "11:30 works great for us."
+      expected:
+        outcome: must_handle
+        must_call: [{tool: book_tour, args: {date: 2026-03-12, time: "11:30"}, if_missed: cautious}]
+        reply:
+          must_not_ask: [tour_day, tour_time]
+          must_not_claim: [your tour is booked, your tour is confirmed]
+  end_state:
+    pending_actions: [{action: book_tour, date: 2026-03-12}]
+
+- id: convo-complaint-midthread
+  why: A routine thread turns into a complaint. Turn 2 is escalated with the templated acknowledgment, not a substantive AI answer, even though turn 1 was handled normally
+  slices: [triage, complaint, thread]
+  today: 2026-03-02
+  sender: rosa.mendez@example.com
+  turns:
+    - customer: "Is there parking for about 100 guests?"
+      expected:
+        outcome: must_handle
+        must_call: [{tool: search_venue_docs, if_missed: cautious}]
+        docs_any_of: [parking-transport]
+    - customer: "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all."
+      expected:
+        triage: complaint
+        outcome: must_escalate
+        must_not_call: [place_hold, book_tour]
+        reply:
+          must_mention: [a coordinator will contact you personally]
+          must_not_claim: [here's a discount for the trouble, that was unacceptable on our part]
+  end_state:
+    escalated: true
+
+- id: convo-own-guess-not-evidence
+  why: If the agent guesses a guest count in its own reply, that guess isn't evidence. When the customer says "quote that", the agent must ask for the real count rather than pass its own number to the pricing tool
+  slices: [quote, missing-input, evidence]
+  today: 2026-03-02
+  sender: hazel.quinn@example.com
+  turns:
+    - customer: "Roughly what does a Saturday wedding in the Grand Hall cost in June on the Classic package?"
+      expected:
+        outcome: must_handle
+        must_not_call: [place_hold]
+        reply:
+          must_not_claim: [a wedding of 100 guests costs]
+    - customer: "Great, quote that for Saturday, June 13 and hold the date for us."
+      expected:
+        outcome: must_handle
+        must_call: [{tool: place_hold, args: {date: 2026-06-13, room: grand_hall}, if_missed: cautious}]
+        must_not_call: [quote_package]
+        reply:
+          must_ask: [guest_count]
+          must_not_claim: [the hold is in place, June 13 is booked]
+  end_state:
+    pending_actions: [{action: place_hold, date: 2026-06-13, room: grand_hall}]
+
+- id: convo-shared-calendar-switch
+  why: The customer switches dates mid-thread to one where the Garden Terrace is booked. The Grand Hall shares its calendar with the terrace, so that date isn't available either
+  slices: [availability, shared-calendar]
+  today: 2026-03-02
+  sender: milo.brandt@example.com
+  world:
+    bookings: {2026-06-27: [garden_terrace]}
+  turns:
+    - customer: "Is the Grand Hall open on Saturday, June 13?"
+      expected:
+        outcome: must_handle
+        must_call: [{tool: check_availability, args: {start_date: 2026-06-13}, if_missed: cautious}]
+        must_not_call: [place_hold]
+        reply:
+          must_mention: [June 13 is open]
+    - customer: "Actually, what about Saturday, June 27 instead?"
+      expected:
+        outcome: must_handle
+        must_call: [{tool: check_availability, args: {start_date: 2026-06-27}, if_missed: cautious}]
+        must_not_call: [place_hold]
+        reply:
+          must_mention: [June 27 is not available]
+          must_not_claim: [the Grand Hall is available on June 27]
