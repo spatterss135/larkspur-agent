@@ -216,3 +216,58 @@ def add_ons_from(fragments: list[str], customer_texts: list[str]) -> Evidence:
             )
         chosen |= hits
     return Evidence("ok", sorted(chosen))
+
+
+# --- tour times ------------------------------------------------------------------------------
+
+CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\s*([ap])?\.?m?\.?(?![a-z])")
+HOUR_MERIDIEM = re.compile(r"\b(\d{1,2})\s*([ap])\.?m\.?(?![a-z])")
+BARE_HOUR = re.compile(r"\b(?:at|around|about|by)\s+(\d{1,2})\b(?!:)")
+NOON = re.compile(r"\bnoon\b")
+
+
+def _tour_hour(hour: int) -> int | None:
+    """A time with no am/pm, read within tour hours: 10-11 am, 12 noon, 1-3 pm."""
+    if hour in (10, 11, 12) or 13 <= hour <= 23:
+        return hour
+    if 1 <= hour <= 3:
+        return hour + 12
+    return None
+
+
+def time_from(fragments: list[str], customer_texts: list[str]) -> Evidence:
+    bad = _verify(fragments, customer_texts)
+    if bad:
+        return bad
+    text = normalize(" ".join(fragments))
+    times, unclear = set(), False
+
+    def add(hour: int | None, minute: int, meridiem: str | None) -> None:
+        nonlocal unclear
+        if meridiem == "p" and hour is not None and hour < 12:
+            hour += 12
+        elif meridiem == "a" and hour == 12:
+            hour = 0
+        elif meridiem is None and hour is not None:
+            hour = _tour_hour(hour)
+        if hour is None or not 0 <= hour <= 23 or not 0 <= minute <= 59:
+            unclear = True
+        else:
+            times.add(f"{hour:02d}:{minute:02d}")
+
+    for m in CLOCK.finditer(text):
+        add(int(m[1]), int(m[2]), m[3])
+        text = text[: m.start()] + " " * len(m[0]) + text[m.end() :]
+    for m in HOUR_MERIDIEM.finditer(text):
+        add(int(m[1]), 0, m[2])
+        text = text[: m.start()] + " " * len(m[0]) + text[m.end() :]
+    for m in BARE_HOUR.finditer(text):
+        add(int(m[1]), 0, None)
+    if NOON.search(text):
+        times.add("12:00")
+
+    if unclear or len(times) > 1:
+        return Evidence("needs_input", reason="ambiguous", message="Ask which tour time they want.")
+    if not times:
+        return Evidence("needs_input", reason="no_time", message="Ask which tour time they want.")
+    return Evidence("ok", times.pop())
