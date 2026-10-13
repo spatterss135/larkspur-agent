@@ -124,3 +124,42 @@ def test_no_add_ons_is_an_empty_list_not_a_question():
 def test_an_add_on_the_venue_doesnt_offer_needs_input():
     r = add_ons_from(["a fireworks show"], ["a fireworks show"])
     assert (r.status, r.reason) == ("needs_input", "unknown_add_on")
+
+
+# --- found by probing after green ----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "fragment, reason",
+    [
+        ("120 guests plus 2 kids", "ambiguous"),  # kids are guests too: 120 or 122?
+        ("about 120 adults and 20 children", "ambiguous"),
+        ("120 guests, maybe 130", "ambiguous"),  # a revision in the same breath
+        ("100+ guests", "range"),  # a lower bound, not a count
+    ],
+)
+def test_counts_that_silently_lost_information_now_ask(fragment, reason):
+    r = guests_from([fragment], [fragment])
+    assert (r.status, r.reason) == ("needs_input", reason)
+
+
+@pytest.mark.parametrize(
+    "fragment, expected",
+    [
+        ("for 2 hundred people", 200),
+        ("120 guests and 12 tables", 120),  # tables aren't people
+        ("we expect 150 or so", 150),
+    ],
+)
+def test_more_guest_phrasings_parse(fragment, expected):
+    assert guests_from([fragment], [fragment]).value == expected
+
+
+def test_plural_add_on_names_match():
+    r = add_ons_from(["snacks please", "two extra hours"], ["snacks please", "two extra hours"])
+    assert r.value == ["extra_hour", "late_night_snack"]
+
+
+def test_saying_no_add_ons_means_none():
+    r = add_ons_from(["No add-ons."], ["No add-ons."])
+    assert (r.status, r.value) == ("ok", [])
