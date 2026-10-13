@@ -1,0 +1,48 @@
+# Default world for local runs (`make run`). Eval cases bring their own world.
+timezone: America/Denver
+
+high_demand_dates:
+  # Saturdays in September and October, plus New Year's Eve
+  - 2026-09-05
+  - 2026-09-12
+  - 2026-09-19
+  - 2026-09-26
+  - 2026-10-03
+  - 2026-10-10
+  - 2026-10-17
+  - 2026-10-24
+  - 2026-10-31
+  - 2026-12-31
+  - 2027-09-04
+  - 2027-09-11
+  - 2027-09-18
+  - 2027-09-25
+  - 2027-10-02
+  - 2027-10-09
+  - 2027-10-16
+  - 2027-10-23
+  - 2027-10-30
+  - 2027-12-31
+
+bookings:   # signed contracts (date: rooms)
+  2026-11-07: [grand_hall]
+  2026-11-14: [grand_hall]
+  2026-12-05: [grand_hall, library_room]
+  2026-12-31: [grand_hall]
+  2027-05-22: [grand_hall, garden_terrace]
+  2027-06-12: [grand_hall, garden_terrace]
+  2027-06-19: [grand_hall]
+  2027-09-11: [grand_hall, garden_terrace]
+  2027-10-09: [grand_hall]
+
+blocks:     # unavailable for other reasons
+  2026-11-26: {rooms: [grand_hall, library_room], reason: Thanksgiving closure}
+  2027-01-04: {rooms: [grand_hall], reason: floor refinishing}
+  2027-01-05: {rooms: [grand_hall], reason: floor refinishing}
+
+holds: []   # active holds by other customers: {date, room, customer_email, expires_at}
+
+tours:
+  hours: {start: "10:00", end: "16:00"}
+  days: [tue, wed, thu, fri, sat]
+  slot_minutes: 45

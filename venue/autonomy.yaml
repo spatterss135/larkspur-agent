@@ -1,0 +1,34 @@
+# How much the agent may do on its own, per action. See docs/decisions.md (D5) and
+# docs/implementation-plan.md §7. Levels: 0 never, 1 a person approves first,
+# 2 acts then every one is reviewed, 3 acts and a sample is audited.
+# A level is clamped to its ceiling; a slice can only lower it.
+review:
+  level3_sample_rate: 0.10           # deterministic: hash(run_id)
+
+actions:
+  # Read tools: their level sets the reply's level.
+  answer_from_docs:   {tool: search_venue_docs,  level: 3, ceiling: 3}
+  check_availability: {tool: check_availability, level: 3, ceiling: 3}
+  get_published_rate: {tool: get_published_rate, level: 3, ceiling: 3}
+  quote_package:      {tool: quote_package,      level: 2, ceiling: 2}
+  plain_reply:        {level: 3, ceiling: 3}     # a reply that uses no read tool
+
+  # Write tools: every write waits for a person by default.
+  book_tour:          {tool: book_tour, level: 1, ceiling: 3}
+  place_hold:
+    tool: place_hold
+    level: 1
+    ceiling: 2
+    slices:
+      peak_date: {level: 1, ceiling: 1}
+
+  # Always available.
+  escalate:           {tool: escalate, level: 3, ceiling: 3}
+  triage_skip:        {level: 2, ceiling: 2}
+
+  # Documented, never built: commitments stay with people.
+  modify_hold:        {level: 0, ceiling: 2}
+  follow_up:          {level: 0, ceiling: 2}
+  draft_contract:     {level: 0, ceiling: 1}
+  offer_discount:     {level: 0, ceiling: 1}
+  confirm_booking:    {level: 0, ceiling: 0}
