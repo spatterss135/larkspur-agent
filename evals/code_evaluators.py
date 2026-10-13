@@ -46,6 +46,7 @@ class EvalResult:
     gate: bool = False
     direction: str | None = None  # bold | cautious | None
     comment: str = ""
+    score: float | None = None  # scored checks only (tone 1-5, share of items found)
 
 
 def run_passed(results: list[EvalResult]) -> bool:

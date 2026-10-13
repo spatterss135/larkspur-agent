@@ -93,8 +93,10 @@ def test_earlier_agent_replies_are_marked_as_not_evidence():
         ThreadMessage(role="agent", body="Yes, dogs are welcome!"),
     ]
     text = render_context(simple(thread=thread))
-    agent_part = text[text.index("Yes, dogs are welcome!") - 200 : text.index("Yes, dogs")]
-    assert "not evidence" in agent_part.lower()
+    agent_line = next(line for line in text.splitlines() if "Yes, dogs are welcome!" in line)
+    assert "not evidence" in agent_line.lower()
+    customer_line = next(line for line in text.splitlines() if "Do you allow dogs?" in line)
+    assert "not evidence" not in customer_line.lower()
 
 
 def test_the_context_has_chunks_tool_outputs_sources_and_the_reply():
@@ -117,7 +119,8 @@ def test_every_schema_puts_evidence_before_the_verdict():
             fields = list(
                 criterion.schema.model_fields["items"].annotation.__args__[0].model_fields
             )
-        last = [f for f in fields if f not in ("evidence", "reasoning")]
+        # "item" names which question an entry answers; everything else is a verdict.
+        last = [f for f in fields if f not in ("item", "evidence", "reasoning")]
         assert fields.index("evidence") < min(fields.index(f) for f in last), name
 
 
