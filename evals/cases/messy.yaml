@@ -1,0 +1,197 @@
+# Messy cases: real inboxes aren't clean. Typos, one-line phone replies, forwards,
+# long quoted chains, footers that look like a newsletter, and a tool that fails.
+# Fixed "today" is Monday 2026-03-02 unless a case says otherwise.
+
+- id: typos-and-shorthand
+  why: Typos and shorthand ("4 100 ppl", "teh") still carry a complete request; evidence quotes must parse "100 ppl" as 100 guests
+  bucket: messy
+  slices: [quote, availability, noise]
+  today: 2026-03-02
+  email: {from: tyler.voss@example.com, subject: "june 6??", body: "hi is sat june 6 open in teh grand hall?? and how much 4 100 ppl on the classic pkg. thx"}
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: check_availability, args: {start_date: 2026-06-06}, if_missed: cautious}
+      - {tool: quote_package, args: {room: grand_hall, date: 2026-06-06, guests: 100, package: classic}, if_missed: cautious}
+    must_not_call: [place_hold]
+    reply:
+      must_not_ask: [guest_count, event_date, package]
+      must_mention: [June 6 is open, the total from the pricing tool]
+
+- id: one-line-phone-reply
+  why: A one-line reply only makes sense with the thread. Every quote input is now in the customer's own words across two messages, so the agent quotes without re-asking
+  bucket: messy
+  slices: [quote, thread, noise]
+  today: 2026-03-03
+  email: {from: grace.yoon@example.com, subject: "Re: Saturday June 6", body: "abt 90\n\nSent from my iPhone"}
+  thread:
+    - {role: customer, body: "What would Saturday, June 6 in the Grand Hall cost on the Classic package?"}
+    - {role: agent, body: "Happy to price that out! About how many guests are you expecting?"}
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: quote_package, args: {room: grand_hall, date: 2026-06-06, guests: 90, package: classic}, if_missed: cautious}
+    must_not_call: [place_hold]
+    reply:
+      must_not_ask: [guest_count, event_date, package]
+      must_mention: [the total from the pricing tool, the quote is based on about 90 guests]
+
+- id: forwarded-family-questions
+  why: A forwarded email from a parent carries two real questions; both get answered from the docs
+  bucket: messy
+  slices: [docs, multi-question, noise]
+  today: 2026-03-02
+  email:
+    from: ben.okoro@example.com
+    subject: "Fwd: questions from mom"
+    body: |
+      See below from my mom, can you help?
+
+      ---------- Forwarded message ----------
+      From: Mom
+      Subject: venue questions
+
+      Honey, two things: is there parking close by for the older guests, and will Grandpa be able to get in with his wheelchair? Love you.
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [parking-transport, accessibility]
+    reply:
+      must_mention: [free on-site parking, a ramp at the main entrance]
+      must_not_claim: [there's an elevator, we provide wheelchairs]
+
+- id: customer-with-newsletter-footer
+  why: A real inquiry from someone whose email client adds a marketing-style footer. Skipping it would silently lose a customer (the bold triage failure)
+  bucket: messy
+  slices: [triage, availability, noise]
+  today: 2026-03-02
+  email:
+    from: lena.ortiz@ortizdesignco.example.com
+    name: Lena Ortiz | Ortiz Design Co.
+    subject: "Rehearsal dinner"
+    body: |
+      Hi there, is the Library Room available on Friday, November 13 for a rehearsal dinner of about 35?
+
+      Thanks!
+      Lena
+
+      --
+      Ortiz Design Co. | Interiors that feel like home
+      Sign up for our monthly newsletter: ortizdesignco.example.com/news
+      You're receiving this email because you're a valued contact. Unsubscribe | Update preferences
+  expected:
+    triage: customer
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-11-13, room: library_room}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_mention: [whether the Library Room is open on November 13]
+
+- id: calendar-tool-fails
+  why: When the calendar tool errors, the system fails closed. The agent must still try the calendar (escalating every availability question without checking would pass otherwise); the failed call counts as an attempt. No availability claim, and the run escalates so a coordinator follows up
+  bucket: messy
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [availability, tool-failure]
+  today: 2026-03-02
+  email: {from: anna.kowal@example.com, subject: "October 24", body: "Is Saturday, October 24 open in the Grand Hall?"}
+  world:
+    tool_failures: [check_availability]
+  expected:
+    outcome: must_escalate
+    must_call: [{tool: check_availability, args: {start_date: 2026-10-24}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_mention: [someone will follow up about October 24]
+      must_not_claim: [October 24 is open, October 24 is available, October 24 is booked]
+    end_state:
+      escalated: true
+
+- id: question-buried-in-long-reply
+  why: The real question is a PS above a long quoted chain and a legal footer (which is no reason not to read the email). With an extra hour, Grand Hall music can run to the new end time (midnight). The customer is asking, not adding the hour, so nothing about the booking changes
+  bucket: messy
+  slices: [docs, noise, policy]
+  today: 2026-03-02
+  email:
+    from: dev.patel@example.com
+    subject: "Re: Re: Re: Our October wedding"
+    body: |
+      Thanks so much, that all makes sense!
+
+      PS, can our DJ keep playing until midnight in the Grand Hall if we add the extra hour?
+
+      On Fri, Feb 27, 2026 at 10:14 AM Larkspur Hall <events@larkspurhall.example> wrote:
+      > Hi Dev, great to hear from you. Your coordinator will send the itemized
+      > quote this week. Let us know if anything else comes up.
+      >
+      > On Thu, Feb 26, 2026 at 4:02 PM Dev Patel wrote:
+      >> Hi! Just checking in on the quote for October 10.
+
+      CONFIDENTIALITY NOTICE: This email and any attachments are for the exclusive and confidential use of the intended recipient. If you are not the intended recipient, please do not read, distribute or take action based on this message.
+  world:
+    bookings: {2026-10-10: [grand_hall]}   # the customer's own booking
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [noise-end-time]
+    reply:
+      must_mention: [with an extra hour the event and music can run until midnight in the Grand Hall]
+      must_not_claim: [music must end at 11:00 pm even with an extra hour, I've added the extra hour, your event now runs until midnight]
+
+- id: date-only-in-subject
+  why: The date is only in the subject line. The subject is part of the customer's own words, so it counts as evidence for the date
+  bucket: messy
+  slices: [availability, noise]
+  today: 2026-03-02
+  email: {from: kara.lind@example.com, subject: "Saturday, September 26, Grand Hall?", body: "Is this open? Thanks!"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: check_availability, args: {start_date: 2026-09-26}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_not_ask: [event_date]
+      must_mention: [whether September 26 is open]
+
+- id: question-below-signature
+  why: The customer signs off, then adds the real question below a long signature block. It still gets answered (confetti isn't permitted)
+  bucket: messy
+  slices: [docs, noise, policy]
+  today: 2026-03-02
+  email:
+    from: paul.esposito@example.com
+    subject: "Decor"
+    body: |
+      Thanks for all the info so far!
+
+      Best,
+      Paul Esposito
+      Senior Project Manager | Northgate Engineering
+      303-555-0142 | paul.esposito@example.com
+      1200 Market St, Suite 400, Denver, CO
+
+      Oh wait, one more: can guests throw confetti when we exit?
+  expected:
+    outcome: must_handle
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    docs_any_of: [decor]
+    reply:
+      must_mention: [confetti isn't permitted]
+      must_not_claim: [confetti is allowed]
+
+- id: answer-plus-changed-room
+  why: The customer answers the agent's question and changes a detail in the same line. The quote uses 90 guests and the Garden Terrace (in season in June, seats 120), not the Grand Hall from the first message
+  bucket: messy
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [quote, thread, noise]
+  today: 2026-03-03
+  email: {from: mina.sato@example.com, subject: "Re: Saturday June 6", body: "90 people, and actually make it the Terrace instead"}
+  thread:
+    - {role: customer, body: "What would Saturday, June 6 in the Grand Hall cost on the Classic package?"}
+    - {role: agent, body: "Happy to price that out! About how many guests are you expecting?"}
+  expected:
+    outcome: must_handle
+    must_call:
+      - {tool: quote_package, args: {room: garden_terrace, date: 2026-06-06, guests: 90, package: classic}, if_missed: cautious}
+    must_not_call: [place_hold]
+    reply:
+      must_not_ask: [guest_count, event_date, package]
+      must_mention: [the quote is for the Garden Terrace]
