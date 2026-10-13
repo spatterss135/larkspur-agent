@@ -115,7 +115,8 @@ class Quote:
 
 def quote(room: str, date: dt.date, guests: int, package: str, add_ons: list[str]) -> Quote:
     r = _in_season(room, date.month)
-    if guests < 1:
+    add_ons = sorted(set(add_ons))  # an add-on is bought once, however often it's named
+    if not isinstance(guests, int) or isinstance(guests, bool) or guests < 1:
         raise PricingError("invalid_guests", "the guest count must be at least 1")
     if guests > r["seated"]:
         raise PricingError(
