@@ -5,7 +5,11 @@ description = "An email inquiry agent for a fictional event venue that earns aut
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "langchain>=1.4.5",
+    "langchain-openai>=1.7.1",
+    "langsmith>=0.14.8",
     "pydantic>=2.14.1",
+    "python-dotenv>=1.2.4",
     "pyyaml>=6.0.3",
 ]
 
