@@ -955,6 +955,12 @@ Everything else is logged here and in the README's known-issues section. Many of
 - **Guard false positives** will hold some clean replies. They're measured, and tuning them is a phase 7 candidate.
 - **Placeholder adoption:** if v1 types prices instead of using placeholders, the untraced-amount count will show it. That's a likely phase 7 finding.
 - **No way to flag a suspicious email.** Only skips reach the review list. An injection attempt the agent handles correctly is invisible to coordinators. A phase 7 candidate (a `flag_for_review` field on the reply, or a guard).
+- **Found in phase 4 (logged, not fixed; first real-model runs, before the baseline):**
+  - **Over-escalation.** v1 escalated a plain parking question, twice in one run. A cautious miss, but each escalation is coordinator work. Likely cause: the prompt's "any time you aren't sure". The baseline measures it; a phase 7 candidate.
+  - **A booking-guard false positive on correct hold replies.** "The date is reserved only once the contract is signed" trips `booking_claim` ("reserved" isn't in a safe phrasing), so correct hold replies wait at level 1. Counted as guard triggers on clean drafts; a phase 7 candidate.
+  - **`escalate` can fire more than once per run.** Duplicate escalation rows, no customer impact.
+  - **A follow-up can arrive before a held reply.** Approving a pending hold sends its templated follow-up even while the run's own reply is still waiting at level 1.
+  - **"Your date is held"** is a paraphrase the hold guard misses (like "June 13 is all yours"); it's left to the judge.
 
 Resolved since v2:
 - The headline vs. the contract.
