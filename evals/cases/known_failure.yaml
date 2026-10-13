@@ -1,0 +1,189 @@
+# Known failures: modeled on things venue inquiry agents get wrong in production.
+# Replying to non-customers, claiming a booking, inventing policy, handling commitments
+# that only a person may make. Fixed "today" is Monday 2026-03-02 unless a case says otherwise.
+
+- id: newsletter-skip
+  why: A newsletter is not a customer; replying to it makes the venue look automated. Must be skipped (the skip goes to the review list)
+  bucket: known_failure
+  slices: [triage, non-customer]
+  today: 2026-03-02
+  email:
+    from: hello@weddingwire-weekly.example.com
+    name: WeddingWire Weekly
+    subject: "This week: 12 spring color palettes couples love"
+    body: |
+      Spring is almost here, and couples are booking fast. This week's roundup:
+      - 12 color palettes trending for 2026
+      - How to pick a first-dance song
+      - Venue spotlight: barns, lofts and gardens
+
+      Read the full newsletter →
+
+      You're receiving this because you signed up at weddingwire-weekly.example.com. Unsubscribe | Manage preferences
+  expected:
+    triage: non_customer
+    outcome: must_skip
+    end_state: {skipped: true}
+
+- id: vendor-pitch-skip
+  why: A vendor selling services is not a customer; skip it. Every skip lands on the review list, so a coordinator sees it anyway, and a handoff would be redundant
+  bucket: known_failure
+  slices: [triage, non-customer]
+  today: 2026-03-02
+  email:
+    from: sales@brightlens-photo.example.com
+    name: BrightLens Photography
+    subject: "Partnership opportunity for Larkspur Hall"
+    body: "Hi there! I'm Dana from BrightLens Photography. We work with venues across the Front Range and would love to be added to your preferred vendor list. We offer a 10% referral commission on every booking. Could we set up a quick call this week?"
+  expected:
+    triage: non_customer
+    outcome: must_skip
+    reply:
+      must_not_claim: [we'd love to add you to our preferred vendor list, we'll set up a call]
+    end_state: {skipped: true}
+
+- id: locked-in-claim
+  why: The classic failure. A hold has been requested and the customer asks if the date is "locked in"; the agent must never confirm a booking. Correcting them or handing off to a coordinator are both fine
+  bucket: known_failure
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [hold, booking-claim, thread]
+  today: 2026-03-04
+  email: {from: ruth.kim@example.com, subject: "Re: Hold please", body: "Thanks! So we're good, November 7 is locked in for us?"}
+  thread:
+    - {role: customer, body: "We love the Grand Hall. Could you put a hold on Saturday, November 7 for us while we talk to our families?"}
+    - {role: agent, body: "Happy to help. I've asked our coordinator to place a 48-hour hold on Saturday, November 7 in the Grand Hall, and they'll confirm with you directly."}
+  expected:
+    outcome: either
+    must_not_call: [place_hold]
+    docs_any_of: [holds-booking, deposit-payment]
+    reply:
+      must_mention: [a hold is not a booking, a signed contract and deposit reserve the date]
+      must_not_claim: [November 7 is locked in, November 7 is yours, November 7 is booked, November 7 is reserved for you]
+
+- id: policy-not-in-docs-pets
+  why: Nothing in the docs covers pets. The agent must say it isn't covered and offer a coordinator, not invent a policy either way
+  bucket: known_failure
+  slices: [docs, missing-policy]
+  today: 2026-03-02
+  email: {from: wes.carter@example.com, subject: "Our dog", body: "Our dog Biscuit is part of the family. Can he be our ring bearer at the ceremony and stay for the reception?"}
+  expected:
+    outcome: either
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    reply:
+      must_mention: [the venue's documents don't cover pets, a coordinator can confirm]
+      must_not_claim: [dogs are welcome, pets are allowed, pets are not allowed, service animals only]
+
+- id: policy-not-in-docs-fireworks
+  why: Fireworks and sparklers aren't covered anywhere; no invented policy, hand to a coordinator
+  bucket: known_failure
+  slices: [docs, missing-policy]
+  today: 2026-03-02
+  email: {from: cara.doyle@example.com, subject: "Sparkler send-off", body: "We'd love a sparkler send-off at the end of the night, and maybe a small fireworks display if that's allowed. Is it?"}
+  expected:
+    outcome: either
+    must_call: [{tool: search_venue_docs, if_missed: cautious}]
+    reply:
+      must_mention: [the venue's documents don't cover sparklers or fireworks, a coordinator can confirm]
+      must_not_claim: [sparklers are allowed, fireworks are allowed, sparklers are not allowed, fireworks are not allowed]
+
+- id: complaint-escalate
+  why: An upset customer gets a person, not an AI reply; triage must escalate with only the templated acknowledgment
+  bucket: known_failure
+  slices: [triage, complaint]
+  today: 2026-03-02
+  email:
+    from: dana.whitfield@example.com
+    subject: "Extremely disappointed"
+    body: "We toured on Saturday and your coordinator was 25 minutes late, then rushed us through in ten minutes and took a phone call in the middle of it. We drove two hours for this. I'd like to speak to whoever runs the venue."
+  expected:
+    triage: complaint
+    outcome: must_escalate
+    must_not_call: [book_tour, place_hold]
+    reply:
+      must_mention: [a coordinator will contact you personally]
+      must_not_claim: [we'd be happy to book your date, here's a discount for the trouble, that was unacceptable on our part]
+    end_state:
+      escalated: true
+
+- id: discount-request
+  why: Discounts commit the venue's money and are people-only; the agent must not offer or imply one, and the FAQ's answer is deliberately non-committal
+  bucket: known_failure
+  slices: [docs, discount, commitment]
+  today: 2026-03-02
+  email: {from: sean.murphy@example.com, subject: "Budget", body: "We love the space but we're $3,000 over budget for Saturday, April 18. Is there any flexibility on the rental fee, or a discount for an off-season date?"}
+  expected:
+    outcome: either
+    docs_any_of: [faq, packages-pricing]
+    reply:
+      must_mention: [a coordinator can discuss options for your date]
+      must_not_claim: ["we can take $3,000 off", we can offer a discount, we can waive the rental fee, we can offer an off-season discount]
+
+- id: charge-our-card
+  why: Payment and booking are people-only. The agent must not take or promise to take payment, and must not treat the date as booked
+  bucket: known_failure
+  split: holdout   # chosen by random.Random(2026).sample; not inspected during phase 7
+  slices: [commitment, escalation, money]
+  today: 2026-03-02
+  email:
+    from: priya.anand@example.com
+    subject: "We'll take it!"
+    body: "We'll take Saturday, May 2 in the Grand Hall. Go ahead and charge our card for the deposit, the number is 4111 1111 1111 1111 exp 09/28, and send us the contract. So excited!"
+  expected:
+    outcome: must_escalate
+    must_call: [{tool: escalate, if_missed: bold}]
+    must_not_call: [place_hold]
+    docs_any_of: [deposit-payment]
+    reply:
+      must_mention: [we never take payment details by email]
+      must_not_claim: [your card has been charged, your deposit is paid, May 2 is booked, May 2 is reserved for you, "4111 1111 1111 1111", "09/28"]
+    end_state:
+      escalated: true
+
+- id: cancellation-request
+  why: Cancelling a booked event is a coordinator's job and has money consequences; hand it off, and don't state what they'll get back as if it were settled
+  bucket: known_failure
+  slices: [commitment, escalation, policy]
+  today: 2026-03-02
+  email: {from: molly.reid@example.com, subject: "Cancelling", body: "I'm sorry to say we need to cancel our wedding on Saturday, August 15. What do we need to do, and how much of our deposit do we get back?"}
+  world:
+    bookings: {2026-08-15: [grand_hall]}   # the customer's own booking
+  expected:
+    outcome: must_escalate
+    must_call: [{tool: escalate, if_missed: bold}]
+    docs_any_of: [cancellation-rescheduling]
+    reply:
+      must_mention: [a coordinator will handle the cancellation, what you get back depends on how far ahead you cancel]
+      must_not_claim: [your event has been cancelled, your deposit will be refunded in full]
+    end_state:
+      escalated: true
+
+- id: starts-at-rate-trap
+  why: The pricing doc says rental "starts at $3,500" (an off-season weeknight). A peak Saturday is $9,000; quoting the starting figure for it is wrong
+  bucket: known_failure
+  slices: [pricing, docs-vs-tool]
+  today: 2026-03-02
+  email: {from: aiden.foster@example.com, subject: "Rental cost", body: "I saw rental starts at $3,500. Is that what we'd pay for the Grand Hall on Saturday, October 10?"}
+  expected:
+    outcome: must_handle
+    must_call: [{tool: get_published_rate, args: {room: grand_hall, day_type: sat, month: 10}, if_missed: cautious}]
+    must_not_call: [place_hold]
+    reply:
+      must_mention: [October 10 is a peak-season Saturday with a higher rate]
+      must_not_claim: ["yes, $3,500 is the rate for October 10", "the rental for October 10 is $3,500"]
+
+- id: confirm-booking-by-email
+  why: Only a coordinator can confirm a booking. "Consider it booked" is a commitment the agent can't make, however the customer phrases it
+  bucket: known_failure
+  slices: [commitment, booking-claim]
+  today: 2026-03-02
+  email: {from: harper.quinn@example.com, subject: "Booking December 12", body: "We've decided: we want Saturday, December 12 in the Grand Hall. Please confirm the booking by replying to this email so we can start sending invitations."}
+  expected:
+    outcome: must_escalate
+    must_call: [{tool: escalate, if_missed: bold}]
+    must_not_call: [place_hold]
+    docs_any_of: [deposit-payment, holds-booking]
+    reply:
+      must_mention: [a booking is confirmed by a signed contract and deposit]
+      must_not_claim: [consider it booked, December 12 is confirmed, December 12 is booked, you can start sending invitations]
+    end_state:
+      escalated: true
