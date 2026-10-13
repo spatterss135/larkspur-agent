@@ -234,6 +234,7 @@ def run_experiment(
     splits: tuple[str, ...] = ("dev", "holdout"),
     conversations: bool = True,
     concurrency: int = 4,
+    limit: int | None = None,
 ) -> dict[str, Any]:
     from langsmith import Client, evaluate
 
@@ -260,6 +261,7 @@ def run_experiment(
     saved: dict[str, Any] = {"name": name, "metadata": metadata, "cases": [], "conversations": []}
 
     examples = [e for s in splits for e in client.list_examples(dataset_name=CASES, splits=[s])]
+    examples = examples[:limit] if limit else examples
     res = evaluate(
         case_target(lambda: models, retriever, name),
         data=examples,
@@ -322,6 +324,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--split", action="append", help="dev and/or holdout (default: both)")
     p.add_argument("--no-conversations", action="store_true")
     p.add_argument("--concurrency", type=int, default=4)
+    p.add_argument("--limit", type=int, help="only the first N examples (plumbing checks)")
     args = p.parse_args(argv)
 
     from dotenv import load_dotenv
