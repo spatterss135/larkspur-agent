@@ -27,6 +27,7 @@ from agent.retrieval import Retriever, default_retriever
 from agent.world import World
 from evals.code_evaluators import RunResult, evaluate, run_passed
 from evals.schema import Case, Conversation, Email, ThreadMessage, load_suite
+from evals.schema import World as WorldSpec
 
 MODELS = {"sonnet": "claude-sonnet-5-5", "haiku": "claude-haiku-5-5"}
 
@@ -101,17 +102,22 @@ def _deps(world: World, agent_model: Any, triage_model: Any, now: dt.datetime, *
     )
 
 
-def run_case(
-    case: Case,
+def run_email(
+    email: Email,
+    thread: list[ThreadMessage],
+    world_spec: WorldSpec,
+    today: dt.date,
     agent_model: Any,
     triage_model: Any = None,
     *,
     retriever: Retriever | None = None,
     experiment: str | None = None,
+    case_id: str | None = None,
 ) -> tuple[RunOutcome, RunResult]:
-    now = case_now(case.today)
+    """One email in a fresh, isolated world. Takes only what a case's inputs contain."""
+    now = case_now(today)
     world = World(":memory:")
-    world.seed(case.world, now)
+    world.seed(world_spec, now)
     before = _snapshot_ids(world)
     deps = _deps(
         world,
@@ -120,10 +126,81 @@ def run_case(
         now,
         retriever=retriever,
         experiment=experiment,
+        case_id=case_id,
+    )
+    message_id = email.message_id or f"{case_id or 'email'}@evals"
+    out = process_email(deps, email, thread, message_id, today=today)
+    return out, to_result(out, world, before)
+
+
+def run_case(
+    case: Case,
+    agent_model: Any,
+    triage_model: Any = None,
+    *,
+    retriever: Retriever | None = None,
+    experiment: str | None = None,
+) -> tuple[RunOutcome, RunResult]:
+    return run_email(
+        case.email,
+        case.thread,
+        case.world,
+        case.today,
+        agent_model,
+        triage_model,
+        retriever=retriever,
+        experiment=experiment,
         case_id=case.id,
     )
-    out = process_email(deps, case.email, case.thread, case.email.message_id, today=case.today)
-    return out, to_result(out, world, before)
+
+
+def run_turns(
+    customer_turns: list[str],
+    sender: str,
+    world_spec: WorldSpec,
+    today: dt.date,
+    agent_model: Any,
+    triage_model: Any = None,
+    *,
+    convo_id: str = "conversation",
+    retriever: Retriever | None = None,
+    experiment: str | None = None,
+) -> tuple[list[tuple[RunOutcome, RunResult]], RunResult]:
+    """Each turn runs on the agent's own earlier replies, in one shared world."""
+    world = World(":memory:")
+    world.seed(world_spec, case_now(today))
+    start = _snapshot_ids(world)
+    thread: list[ThreadMessage] = []
+    turns, last = [], None
+    for i, body in enumerate(customer_turns):
+        now = case_now(today, minutes=10 * i)
+        before = _snapshot_ids(world)
+        deps = _deps(
+            world,
+            agent_model,
+            triage_model,
+            now,
+            retriever=retriever,
+            experiment=experiment,
+            case_id=f"{convo_id}#{i + 1}",
+        )
+        email = Email(
+            **{
+                "from": sender,
+                "subject": "Re: our event",
+                "body": body,
+                "message_id": f"{convo_id}-turn-{i + 1}@evals",
+            }
+        )
+        out = process_email(deps, email, list(thread), email.message_id, today=today)
+        turns.append((out, to_result(out, world, before)))
+        thread.append(ThreadMessage(role="customer", body=body))
+        if out.text:
+            thread.append(ThreadMessage(role="agent", body=out.text))
+        last = out
+    end = to_result(last, world, start)
+    end.escalated = any(o.escalated for o, _ in turns)
+    return turns, end
 
 
 def run_conversation(
@@ -134,41 +211,17 @@ def run_conversation(
     retriever: Retriever | None = None,
     experiment: str | None = None,
 ) -> tuple[list[tuple[RunOutcome, RunResult]], RunResult]:
-    """Each turn runs on the agent's own earlier replies, in one shared world."""
-    world = World(":memory:")
-    world.seed(convo.world, case_now(convo.today))
-    start = _snapshot_ids(world)
-    thread: list[ThreadMessage] = []
-    turns, last = [], None
-    for i, turn in enumerate(convo.turns):
-        now = case_now(convo.today, minutes=10 * i)
-        before = _snapshot_ids(world)
-        deps = _deps(
-            world,
-            agent_model,
-            triage_model,
-            now,
-            retriever=retriever,
-            experiment=experiment,
-            case_id=f"{convo.id}#{i + 1}",
-        )
-        email = Email(
-            **{
-                "from": convo.sender,
-                "subject": "Re: our event",
-                "body": turn.customer,
-                "message_id": f"{convo.id}-turn-{i + 1}@evals",
-            }
-        )
-        out = process_email(deps, email, list(thread), email.message_id, today=convo.today)
-        turns.append((out, to_result(out, world, before)))
-        thread.append(ThreadMessage(role="customer", body=turn.customer))
-        if out.text:
-            thread.append(ThreadMessage(role="agent", body=out.text))
-        last = out
-    end = to_result(last, world, start)
-    end.escalated = any(o.escalated for o, _ in turns)
-    return turns, end
+    return run_turns(
+        [t.customer for t in convo.turns],
+        convo.sender,
+        convo.world,
+        convo.today,
+        agent_model,
+        triage_model,
+        convo_id=convo.id,
+        retriever=retriever,
+        experiment=experiment,
+    )
 
 
 # --- real models ---------------------------------------------------------------------------
