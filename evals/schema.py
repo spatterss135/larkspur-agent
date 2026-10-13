@@ -234,6 +234,91 @@ class Anchor(Strict):
         return v
 
 
+ToolStatus = Literal["executed", "pending_approval", "needs_input", "not_permitted", "failed"]
+Guard = Literal[
+    "booking_claim",
+    "hold_claim",
+    "tour_claim",
+    "availability_claim",
+    "discount_claim",
+    "untraced_amount",
+    "typed_total",
+    "policy_without_search",
+]
+CodeCheck = Literal["numbers_traceable", "total_matches_quote"]
+JudgeCheck = Literal["grounded", "must_not_claim"]
+Verdict = Literal["pass", "fail"]
+
+
+class ToolCall(Strict):
+    tool: Tool
+    status: ToolStatus
+    record_id: str | None = None  # e.g. "R1" or "Q1", referenced by price placeholders
+    args: dict[str, Any] = {}
+    output: dict[str, Any] = {}
+
+
+class Chunk(Strict):
+    doc_id: str
+    section: str
+    text: str
+
+    @field_validator("doc_id")
+    @classmethod
+    def known_doc(cls, v: str) -> str:
+        if v not in DOC_IDS:
+            raise ValueError(f"unknown doc id: {v}")
+        return v
+
+
+class Source(Strict):
+    doc_id: str
+    section: str
+
+
+class KnownBadRun(Strict):
+    """What the system saw during the run the reply came from."""
+
+    tool_calls: list[ToolCall] = []
+    retrieved: list[Chunk] = []
+
+
+class KnownBadExpect(Strict):
+    code: dict[CodeCheck, Verdict] = {}
+    guards: list[Guard] = []  # exactly these fire; every other guard stays quiet
+    judge: dict[JudgeCheck, Verdict] = {}
+    known_miss: list[str] = []  # checks expected to miss this failure (documentation)
+
+    @model_validator(mode="after")
+    def expects_something(self) -> KnownBadExpect:
+        if not (self.code or self.guards or self.judge):
+            raise ValueError("an item must expect at least one verdict")
+        return self
+
+
+class KnownBad(Strict):
+    """A deliberately bad (or control) reply with the verdict every check should give."""
+
+    id: str = Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
+    why: str
+    email: Email
+    thread: list[ThreadMessage] = []
+    run: KnownBadRun = KnownBadRun()
+    reply: str
+    sources: list[Source] = []
+    must_not_claim: list[str] = []
+    expect: KnownBadExpect
+
+
+def load_known_bad(root: Path = ROOT / "evals") -> list[KnownBad]:
+    items = _load(root / "known_bad", KnownBad)
+    ids = [i.id for i in items]
+    dupes = sorted({i for i in ids if ids.count(i) > 1})
+    if dupes:
+        raise ValueError(f"duplicate ids: {dupes}")
+    return items
+
+
 @dataclass
 class Suite:
     cases: list[Case]
