@@ -39,6 +39,18 @@ def test_retrieved_chunks_must_cite_real_docs():
         KnownBad.model_validate(bad)
 
 
+def test_a_control_may_not_expect_any_firing_or_failure():
+    control = {**ITEM, "control": True, "expect": {"judge": {"must_not_claim": "pass"}}}
+    assert KnownBad.model_validate(control).control is True
+    for bad_expect in (
+        {"guards": ["hold_claim"]},
+        {"code": {"numbers_traceable": "fail"}},
+        {"judge": {"grounded": "fail"}},
+    ):
+        with pytest.raises(ValidationError):
+            KnownBad.model_validate({**control, "expect": bad_expect})
+
+
 def test_an_item_must_expect_something():
     with pytest.raises(ValidationError):
         KnownBad.model_validate({**ITEM, "expect": {}})
