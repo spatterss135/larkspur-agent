@@ -14,9 +14,14 @@ from collections import Counter
 from decimal import Decimal
 from typing import Any
 
-from agent.claims import DATE_MENTION, MONEY, MONTHS, PERCENT
+from agent.claims import DATE_MENTION, MONEY, MONTHS, PERCENT, PLACEHOLDER
+from agent.pricing import SHEET
 
 TIME = re.compile(r"\b(\d{1,2}):(\d{2})\b")
+ORDINAL = re.compile(r"\b(\d{1,2})(?:st|nd|rd|th)\b", re.I)
+WEEKDAY = re.compile(r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", re.I)
+ROOM_NAMES = {room["name"].lower(): key for key, room in SHEET["rooms"].items()}
+ROOM = re.compile(r"\b(" + "|".join(re.escape(n) for n in ROOM_NAMES) + r")\b", re.I)
 NUMBER = re.compile(r"\b\d[\d,]*\b")
 
 
@@ -47,9 +52,13 @@ def _tokens(text: str) -> Counter:
             found[key(m)] += 1
         text = pattern.sub(" ", text)
 
+    take(PLACEHOLDER, lambda m: ("record", m[1], m[2]))  # a different price record
     take(MONEY, lambda m: ("$", Decimal(m[1].replace(",", "")) * (1000 if m[2] else 1)))
     take(PERCENT, lambda m: ("%", Decimal(m[1])))
     take(DATE_MENTION, lambda m: ("date", MONTHS[m[1].lower()], int(m[2])))
+    take(ORDINAL, lambda m: ("day", int(m[1])))
+    take(WEEKDAY, lambda m: ("weekday", m[1].lower()))
+    take(ROOM, lambda m: ("room", ROOM_NAMES[m[1].lower()]))
     take(TIME, lambda m: ("time", int(m[1]), int(m[2])))
     take(NUMBER, lambda m: ("n", int(m[0].replace(",", ""))))
     return found
