@@ -44,12 +44,23 @@ _WEEKDAY = "|".join(WEEKDAYS)
 
 ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 NAMED = re.compile(
-    rf"\b(?:({_WEEKDAY}),?\s+)?({_MONTH})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?\b(?:,?\s+(\d{{4}})\b)?"
+    rf"\b(?:({_WEEKDAY}),?\s+)?({_MONTH})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?\b"
+    r"(\s*[-–]\s*\d{1,2}(?:st|nd|rd|th)?\b)?"  # a range: "June 13-14"
+    r"(?:,?\s+(\d{4})\b)?"
 )
 NUMERIC = re.compile(r"\b(\d{1,2})/(\d{1,2})(?:/(\d{2}|\d{4}))?\b")
 RELATIVE = re.compile(rf"\b(?:(?:next|this|coming)\s+({_WEEKDAY})|(today|tomorrow))\b")
-DAY_ONLY = re.compile(r"\bthe\s+(\d{1,2})(?:st|nd|rd|th)\b")
-MONTH_WORD = re.compile(rf"\b({_MONTH})\b")
+DAY_ONLY = re.compile(rf"\b(?:({_WEEKDAY})\s+)?the\s+(\d{{1,2}})(?:st|nd|rd|th)\b")
+MONTH_WORD = re.compile(rf"\b({_MONTH})\b", re.I)
+
+
+def _month_word(raw: str) -> re.Match[str] | None:
+    """A bare month name. "may" counts only as "May": lowercase, it's usually the verb."""
+    for m in MONTH_WORD.finditer(raw):
+        if m[1].lower() != "may" or m[1] == "May":
+            return m
+    return None
+
 
 Status = Literal["ok", "needs_input", "not_permitted"]
 
@@ -101,9 +112,14 @@ def _blank(text: str, m: re.Match[str]) -> str:
 
 def resolve_date(fragments: list[str], today: dt.date) -> DateResult:
     """Resolve the one date named across the customer's quoted fragments."""
-    text = " ".join(fragments).lower()
+    raw = " ".join(fragments)  # original case, used only to tell "May" from "may"
+    text = raw.lower()
     found: list[dt.date] = []
     problems: list[DateResult] = []
+
+    def consume(m: re.Match[str]) -> None:
+        nonlocal text, raw
+        text, raw = _blank(text, m), _blank(raw, m)
 
     def explicit(year: int | None, month: int, day: int, weekday: str | None) -> None:
         try:
@@ -129,27 +145,36 @@ def resolve_date(fragments: list[str], today: dt.date) -> DateResult:
 
     for m in ISO.finditer(text):
         explicit(int(m[1]), int(m[2]), int(m[3]), None)
-        text = _blank(text, m)
+        consume(m)
     for m in NAMED.finditer(text):
-        explicit(int(m[4]) if m[4] else None, MONTHS[m[2]], int(m[3]), m[1])
-        text = _blank(text, m)
+        if m[4]:  # "June 13-14": a multi-day event or a choice of days; ask
+            problems.append(
+                DateResult(
+                    "needs_input",
+                    reason="ambiguous",
+                    message="Is that a one-day event? If so, which day?",
+                )
+            )
+        else:
+            explicit(int(m[5]) if m[5] else None, MONTHS[m[2]], int(m[3]), m[1])
+        consume(m)
     for m in NUMERIC.finditer(text):
         year = int(m[3]) if m[3] else None
         if year is not None and year < 100:
             year += 2000
         explicit(year, int(m[1]), int(m[2]), None)
-        text = _blank(text, m)
+        consume(m)
     for m in RELATIVE.finditer(text):
         if m[2]:
             found.append(today + dt.timedelta(days=0 if m[2] == "today" else 1))
         else:
             found.append(_weekday_after(m[1], today))
-        text = _blank(text, m)
+        consume(m)
     day_only = DAY_ONLY.search(text)
     if day_only:
-        month = MONTH_WORD.search(text)
+        month = _month_word(raw)
         if month:
-            explicit(None, MONTHS[month[1]], int(day_only[1]), None)
+            explicit(None, MONTHS[month[1].lower()], int(day_only[2]), day_only[1])
 
     if problems:
         return problems[0]
