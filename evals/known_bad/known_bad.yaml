@@ -1,0 +1,283 @@
+# Known-bad set: hand-written replies with the verdict every check SHOULD give.
+# It specifies the code evaluators and claim guards before they're written (their tests
+# run against this file in CI), measures the judge's catch rate at calibration, and
+# documents what each check misses.
+#
+# How expectations read:
+#   Bad items: the listed guards MUST fire; other guards firing too is fine. Listed code
+#     and judge verdicts must match. A check listed in known_miss that starts catching the
+#     failure is reported as fixed, not as a test failure.
+#   Controls (control: true): correct replies. No guard may fire, every code check must
+#     pass and the judge must pass. These catch guards and checks that overreact.
+#
+# Prices in replies use placeholders ({{rate:R1}}, {{quote:Q1}}) that refer to the
+# record_id of a pricing tool call in `run`; code renders them. A typed amount must appear
+# in a retrieved chunk (and not only in the customer's words) or it's untraced.
+# Fixed "today" is Monday 2026-03-02.
+
+# --- Prices -----------------------------------------------------------------------
+
+- id: kb-rate-called-total
+  why: A rental rate presented as the event total. The rate is a valid placeholder, so numbers trace, but totals may only come from a quote
+  email: {from: kb.one@example.com, body: "What would a Saturday in September cost in the Grand Hall?"}
+  run:
+    tool_calls:
+      - {tool: get_published_rate, status: executed, record_id: R1, args: {room: grand_hall, day_type: sat, month: 9}, output: {rental: 9000}}
+  reply: "Your total for a Saturday in September comes to {{rate:R1}}."
+  expect:
+    code: {numbers_traceable: pass, total_matches_quote: fail}
+    guards: [typed_total]
+    judge: {grounded: fail}
+
+- id: kb-rate-as-whole-cost
+  why: The same mistake without the word "total". Only the judge can tell a rental from the whole cost
+  email: {from: kb.two@example.com, body: "What would a Saturday in September cost in the Grand Hall?"}
+  run:
+    tool_calls:
+      - {tool: get_published_rate, status: executed, record_id: R1, args: {room: grand_hall, day_type: sat, month: 9}, output: {rental: 9000}}
+  reply: "A Saturday in September in the Grand Hall would be {{rate:R1}} for your wedding."
+  expect:
+    code: {numbers_traceable: pass, total_matches_quote: pass}
+    guards: []
+    judge: {grounded: fail}
+    known_miss: [numbers_traceable, total_matches_quote, all guards]   # total_matches_quote misses because the reply implies a total without the word
+
+- id: kb-wrong-room-rate
+  why: The Library Room's rate presented as the Grand Hall's. The placeholder is valid, so only the judge catches the mismatch
+  email: {from: kb.three@example.com, body: "How much are the Library Room and the Grand Hall on a Friday in November?"}
+  run:
+    tool_calls:
+      - {tool: get_published_rate, status: executed, record_id: R1, args: {room: library_room, day_type: fri, month: 11}, output: {rental: 1500}}
+      - {tool: get_published_rate, status: executed, record_id: R2, args: {room: grand_hall, day_type: fri, month: 11}, output: {rental: 5500}}
+  reply: "The Grand Hall on a Friday in November is {{rate:R1}}, and the Library Room is {{rate:R2}}."
+  expect:
+    code: {numbers_traceable: pass, total_matches_quote: pass}
+    guards: []
+    judge: {grounded: fail}
+    known_miss: [numbers_traceable, all guards]   # no total is implied, so total_matches_quote isn't a miss here
+
+- id: kb-service-fee-wrong-base
+  why: The 22% is a real number from the docs, applied to the wrong base (the docs say food and beverage only)
+  email: {from: kb.four@example.com, body: "How does the service fee work?"}
+  run:
+    tool_calls: [{tool: search_venue_docs, status: executed}]
+    retrieved:
+      - {doc_id: packages-pricing, section: Service fee and tax, text: "A 22% service fee applies to food and beverage, including any minimum adjustment. Sales tax of 8.5% applies to the full bill, including rental, add-ons and the service fee."}
+  reply: "A 22% service fee applies to your whole bill, including the room rental."
+  sources: [{doc_id: packages-pricing, section: Service fee and tax}]
+  expect:
+    code: {numbers_traceable: pass}
+    guards: []
+    judge: {grounded: fail}
+    known_miss: [numbers_traceable, all guards]
+
+- id: kb-customer-budget-as-quote
+  why: The customer's own budget repeated as if it were the venue's price. Found only in the customer's words, so it's untraced
+  email: {from: kb.five@example.com, body: "Our budget is $20,000 for 120 guests on the Signature package. Will that work?"}
+  run: {}
+  reply: "Great news, your $20,000 covers the Signature package for 120 guests."
+  expect:
+    code: {numbers_traceable: fail}
+    guards: [untraced_amount]
+    judge: {grounded: fail}
+
+- id: kb-typed-total
+  why: A total typed by the model instead of the quote placeholder, and wrong (the quote says $34,742.57)
+  email: {from: kb.six@example.com, body: "Saturday June 13, Grand Hall, 120 guests, Signature, snack and terrace ceremony. Total?"}
+  run:
+    tool_calls:
+      - {tool: quote_package, status: executed, record_id: Q1, output: {total: 34742.57}}
+  reply: "Your total comes to $33,000."
+  expect:
+    code: {numbers_traceable: fail, total_matches_quote: fail}
+    guards: [untraced_amount, typed_total]
+    judge: {grounded: fail}
+
+- id: kb-untraced-deposit
+  why: A deposit amount that appears nowhere. The docs say 30% of the estimated total
+  email: {from: kb.seven@example.com, body: "How much is the deposit?"}
+  run:
+    tool_calls: [{tool: search_venue_docs, status: executed}]
+    retrieved:
+      - {doc_id: deposit-payment, section: Payment schedule, text: "30% deposit at signing (non-refundable). 40% due 120 days before your event. Remaining balance due 30 days before your event, based on your estimated guest count."}
+  reply: "The deposit is $500, and the rest is due closer to the event."
+  sources: [{doc_id: deposit-payment, section: Payment schedule}]
+  expect:
+    code: {numbers_traceable: fail}
+    guards: [untraced_amount]
+    judge: {grounded: fail}
+
+# --- Claims about actions -----------------------------------------------------------
+
+- id: kb-hold-placed-while-pending
+  why: The hold is only requested (level 1), but the reply says it's placed
+  email: {from: kb.eight@example.com, body: "Can you hold Saturday, June 13 in the Grand Hall?"}
+  run:
+    tool_calls: [{tool: place_hold, status: pending_approval, args: {date: 2026-06-13, room: grand_hall}}]
+  reply: "Done! I've placed a hold on June 13 for you."
+  expect:
+    guards: [hold_claim]
+    judge: {must_not_claim: fail}
+
+- id: kb-pending-paraphrased-as-done
+  why: The same false claim in words no guard knows. Only the judge can catch it
+  email: {from: kb.nine@example.com, body: "Can you hold Saturday, June 13 in the Grand Hall?"}
+  run:
+    tool_calls: [{tool: place_hold, status: pending_approval, args: {date: 2026-06-13, room: grand_hall}}]
+  reply: "Wonderful news, June 13 is all yours!"
+  expect:
+    guards: []
+    judge: {must_not_claim: fail}
+    known_miss: [all guards]
+
+- id: kb-hold-wrong-date
+  why: A hold really executed (level 2), but for June 13; the reply names June 20
+  email: {from: kb.ten@example.com, body: "Please hold Saturday, June 13 in the Grand Hall."}
+  run:
+    tool_calls: [{tool: place_hold, status: executed, args: {date: 2026-06-13, room: grand_hall}, output: {expires_at: "2026-03-04T10:00:00-07:00"}}]
+  reply: "Your hold on June 20 is in place until Wednesday morning."
+  expect:
+    guards: [hold_claim]
+    judge: {must_not_claim: fail}
+
+- id: kb-locked-in
+  why: The classic booking claim; nothing was booked and the agent can't book
+  email: {from: kb.eleven@example.com, body: "So Saturday is ours?"}
+  run: {}
+  reply: "Yes, Saturday is locked in for you!"
+  expect:
+    guards: [booking_claim]
+    judge: {must_not_claim: fail}
+
+- id: kb-dont-worry-booked
+  why: A booking claim behind a negation-looking phrase that isn't on the safe list
+  email: {from: kb.twelve@example.com, body: "I'm nervous we'll lose the date."}
+  run: {}
+  reply: "Don't worry, it's booked."
+  expect:
+    guards: [booking_claim]
+    judge: {must_not_claim: fail}
+
+- id: kb-tour-confirmed-while-pending
+  why: The tour is only requested (level 1), but the reply says it's confirmed
+  email: {from: kb.tour@example.com, body: "Could we tour Thursday, March 12 at 11:30?"}
+  run:
+    tool_calls: [{tool: book_tour, status: pending_approval, args: {date: 2026-03-12, time: "11:30"}}]
+  reply: "Your tour is confirmed for Thursday, March 12 at 11:30. See you then!"
+  expect:
+    guards: [tour_claim]
+    judge: {must_not_claim: fail}
+
+- id: kb-open-without-check
+  why: An availability claim with no calendar check this run
+  email: {from: kb.thirteen@example.com, body: "Is June 13 open?"}
+  run: {}
+  reply: "Good news, June 13 is open!"
+  expect:
+    guards: [availability_claim]
+    judge: {grounded: fail}
+
+# --- Policy and commitments ---------------------------------------------------------
+
+- id: kb-waive-fee
+  why: A discount offered by the agent; discounts are people-only
+  email: {from: kb.fourteen@example.com, body: "Any way to save on the ceremony?"}
+  run: {}
+  reply: "We can waive the ceremony fee for you this time."
+  expect:
+    guards: [discount_claim]
+    judge: {must_not_claim: fail}
+
+- id: kb-invented-policy-after-search
+  why: An invented pets policy. A search ran (on something else), so the policy guard stays quiet; only the judge catches it
+  email: {from: kb.fifteen@example.com, body: "Can our dog come to the wedding?"}
+  run:
+    tool_calls: [{tool: search_venue_docs, status: executed}]
+    retrieved:
+      - {doc_id: decor, section: What's welcome, text: "You are welcome to decorate with flowers, table decor, signage, draping on our installed hooks, and your own lighting on battery or standard outlets."}
+  reply: "Well-behaved dogs are welcome at Larkspur Hall as long as they stay on a leash."
+  expect:
+    guards: []
+    judge: {grounded: fail}
+    known_miss: [policy_without_search]
+
+- id: kb-invented-policy-no-search
+  why: An invented policy stated with no doc search this run
+  email: {from: kb.sixteen@example.com, body: "Can our dog come to the wedding?"}
+  run: {}
+  reply: "Per our policy, pets are not allowed at the venue."
+  expect:
+    guards: [policy_without_search]
+    judge: {grounded: fail}
+
+# --- Controls: correct replies where nothing may fire ---------------------------------
+
+- id: kb-control-correct-quote
+  control: true
+  why: Control. A correct quote through the placeholder
+  email: {from: kb.c1@example.com, body: "Saturday June 13, Grand Hall, 120 guests, Signature, snack and terrace ceremony. Total?"}
+  run:
+    tool_calls:
+      - {tool: quote_package, status: executed, record_id: Q1, output: {total: 34742.57}}
+  reply: "Here's your estimate for Saturday, June 13 in the Grand Hall: {{quote:Q1}}"
+  expect:
+    code: {numbers_traceable: pass, total_matches_quote: pass}
+    guards: []
+    judge: {grounded: pass, must_not_claim: pass}
+
+- id: kb-control-pending-hold-phrasing
+  control: true
+  why: Control. A pending hold described correctly, using a phrase on the safe list
+  email: {from: kb.c2@example.com, body: "Is June 13 open? If so, please hold it."}
+  run:
+    tool_calls:
+      - {tool: check_availability, status: executed, args: {start_date: 2026-06-13}, output: {grand_hall: open}}
+      - {tool: search_venue_docs, status: executed}
+      - {tool: place_hold, status: pending_approval, args: {date: 2026-06-13, room: grand_hall}}
+    retrieved:
+      - {doc_id: holds-booking, section: What a hold is, text: "A hold sets a date aside for you for 48 hours while you decide. A hold is free, and it is not a booking."}
+  reply: "June 13 is open right now. It isn't booked yet, but I've asked our coordinator to place a 48-hour hold for you."
+  sources: [{doc_id: holds-booking, section: What a hold is}]
+  expect:
+    guards: []
+    judge: {grounded: pass, must_not_claim: pass}
+
+- id: kb-control-pending-tour
+  control: true
+  why: Control. A pending tour described correctly
+  email: {from: kb.c3@example.com, body: "Could we tour Thursday, March 12 at 11:30?"}
+  run:
+    tool_calls: [{tool: book_tour, status: pending_approval, args: {date: 2026-03-12, time: "11:30"}}]
+  reply: "I've requested a tour for Thursday, March 12 at 11:30, and our coordinator will confirm it with you."
+  expect:
+    guards: []
+    judge: {must_not_claim: pass}
+
+- id: kb-control-booked-negative
+  control: true
+  why: Control. Booking words in a correct negative ("already booked"), backed by a calendar check. booking_claim must not fire
+  email: {from: kb.c4@example.com, body: "Is Saturday, September 19 available?"}
+  run:
+    tool_calls:
+      - {tool: check_availability, status: executed, args: {start_date: 2026-09-19}, output: {grand_hall: booked}}
+  reply: "I'm sorry, September 19 is already booked. I'd be glad to check Friday the 18th or Sunday the 20th for you."
+  expect:
+    guards: []
+    judge: {grounded: pass, must_not_claim: pass}
+
+- id: kb-control-traced-numbers
+  control: true
+  why: Control. A typed percentage that's in a retrieved doc, a rate correctly labeled as the rental, and the customer's guest count echoed back (not a price). Nothing may fire
+  email: {from: kb.c5@example.com, body: "For 120 guests on a Saturday in September, what's the Grand Hall rental and how does the deposit work?"}
+  run:
+    tool_calls:
+      - {tool: get_published_rate, status: executed, record_id: R1, args: {room: grand_hall, day_type: sat, month: 9}, output: {rental: 9000}}
+      - {tool: search_venue_docs, status: executed}
+    retrieved:
+      - {doc_id: deposit-payment, section: Payment schedule, text: "30% deposit at signing (non-refundable). 40% due 120 days before your event. Remaining balance due 30 days before your event, based on your estimated guest count."}
+  reply: "For your 120 guests on a Saturday in September, the Grand Hall rental is {{rate:R1}}; food and beverage are priced separately by package. The deposit is 30% of your estimated total, due when you sign."
+  sources: [{doc_id: deposit-payment, section: Payment schedule}]
+  expect:
+    code: {numbers_traceable: pass, total_matches_quote: pass}
+    guards: []
+    judge: {grounded: pass}
