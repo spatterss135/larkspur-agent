@@ -84,6 +84,7 @@ def to_result(out: RunOutcome, world: World, before: dict[str, set[int]]) -> Run
         skipped=out.skipped,
         retrieved=out.retrieved,
         customer_texts=out.customer_texts,
+        error=out.error,
         **new_items(world, before),
     )
 
@@ -206,7 +207,10 @@ def _print(case_id: str, out: RunOutcome, results) -> None:
         mark = "ok  " if r.passed else ("FAIL" if r.gate else "miss")
         extra = f" score={r.score}" if r.score is not None else ""
         print(f"  {mark} {r.key}{extra} {r.comment}")
-    print(f"  => run {'PASSED' if run_passed(results) else 'FAILED'}")
+    if out.error:
+        print(f"  => INFRA ERROR, not graded: {out.error}")
+    else:
+        print(f"  => run {'PASSED' if run_passed(results) else 'FAILED'}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -230,7 +234,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.judge:
             results += judge_case(case, out)
         _print(cid, out, results)
-        ok &= run_passed(results)
+        ok &= run_passed(results) and not out.error
     return 0 if ok else 1
 
 

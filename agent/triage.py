@@ -65,7 +65,7 @@ def _render(email: Email, thread: list[ThreadMessage]) -> str:
 
 def triage(email: Email, thread: list[ThreadMessage], model: Any = None) -> TriageResult:
     model = model or default_model()
-    judge = model.with_structured_output(TriageOutput)
+    judge = model.with_structured_output(TriageOutput, method="json_schema")
     messages = [
         {"role": "system", "content": TRIAGE_PROMPT},
         {"role": "user", "content": _render(email, thread)},

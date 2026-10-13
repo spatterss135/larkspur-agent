@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 from typing import Any, TypedDict
 
 from langchain.agents import create_agent
-from langchain.agents.structured_output import ToolStrategy
 from langchain_core.messages import HumanMessage
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
@@ -72,7 +71,7 @@ class Deps:
                 TOOLS,
                 system_prompt=SYSTEM_PROMPT,
                 middleware=middleware,
-                response_format=ToolStrategy(Reply),
+                response_format=Reply,  # native structured output where the model has it
                 context_schema=RunContext,
             )
         return self._agent

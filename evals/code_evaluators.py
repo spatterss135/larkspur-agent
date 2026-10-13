@@ -37,6 +37,7 @@ class RunResult:
     new_pending: list[dict[str, Any]] = field(default_factory=list)
     retrieved: list[dict[str, str]] = field(default_factory=list)
     customer_texts: list[str] = field(default_factory=list)
+    error: str | None = None  # an infrastructure error: the run is not graded, never a pass
 
 
 @dataclass
