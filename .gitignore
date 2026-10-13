@@ -1,0 +1,22 @@
+# Secrets
+.env
+
+# Private planning notes (kept locally, never published)
+/DECISIONS.md
+/exercise.md
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Local data
+*.sqlite3
+*.db
+data/
+
+# UI
+node_modules/
+ui/dist/
