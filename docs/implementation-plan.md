@@ -356,7 +356,7 @@ Two things sit outside the levels:
 ### 7.4 Evidence quotes
 
 Every customer-supplied input has a paired `*_quote` field: one or more fragments of the customer's exact words, e.g. `guests: 120, guests_quote: ["about 120 people"]`. `evidence.py` checks two things:
-1. Each fragment appears in **the customer's own messages** in this thread. The match ignores case and whitespace, and agent messages are excluded.
+1. Each fragment appears in **the customer's own messages** in this thread, subject lines included. The match ignores case and whitespace, and agent messages are excluded.
 2. The value parses from the fragments:
    - Numbers: digits or number words. "about 120" and "a hundred and twenty" both work. In v1 a range ("100–120") → `needs_input`. Quoting the top of the range instead is an open domain question (§16).
    - Dates: resolved using the rules in §6.3. If more than one date fits → `needs_input`.
@@ -603,7 +603,7 @@ A missed rate call here is too cautious, because the customer got no price. The 
 
 **Argument matching:** the listed arguments must match after normalizing (ISO dates, integer counts, canonical room, package and add-on IDs). Unlisted arguments, including the quotes, are ignored. Each `must_call` entry is tagged `if_missed: cautious|bold`.
 
-**What counts as a call:** `must_call` and `must_not_call` look at calls whose status was `executed` or `pending_approval`. A call that came back `needs_input` or `not_permitted` did nothing, so it neither satisfies a `must_call` nor violates a `must_not_call`.
+**What counts as a call:** `must_call` and `must_not_call` look at calls whose status was `executed` or `pending_approval`. A `failed` call (the tool errored) also counts for `must_call`, since trying was the right move. A call that came back `needs_input` or `not_permitted` did nothing, so it neither satisfies a `must_call` nor violates a `must_not_call`.
 
 **`must_mention`:** positive behaviors a case exists to test ("the hold expires before a coordinator is back", "the date has passed") are listed as short items and judged per item, like `must_ask`. They're scored on the cautious side, never gated.
 
