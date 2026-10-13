@@ -1,6 +1,9 @@
 # Larkspur Hall: overview and rooms
 
-Larkspur Hall is a restored 1920s grange hall in Alder Springs, Colorado, hosting weddings, rehearsal dinners, milestone birthdays and company events. We host one main event per day, so the venue is yours for the evening.
+Larkspur Hall is a restored 1920s grange hall in Alder Springs, Colorado, hosting weddings, rehearsal dinners, milestone birthdays and company events.
+
+## One main event per day
+The Grand Hall and the Garden Terrace host one main event per day between them. If either one is booked for a date, the other isn't available to anyone else that day. The Library Room has its own entrance and can host a separate small event on the same day.
 
 ## Grand Hall
 Our main room, with exposed timber trusses, a hardwood dance floor and a built-in stage.

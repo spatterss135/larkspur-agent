@@ -273,9 +273,10 @@ Everything uses `Decimal`. Every computed line is rounded half-up to cents, and 
 ### 6.4 Calendar and policies
 
 - **Calendar = bookings and blocks + high-demand flags.** "Held" is never stored on the calendar. It's derived from active holds whose expiry hasn't passed.
+- **One main event per day:** the Grand Hall and the Garden Terrace share one calendar. A booking, block or active hold on either makes both unavailable to anyone else that day. The Library Room is independent. "Is June 13 open?" is answered per room, using this rule.
 - **Every change to bookings, blocks, holds and tours goes through `world.py`,** inside a `BEGIN IMMEDIATE` transaction: tools, approvals, expiry, release, undo and seeding alike. A test fails if SQL writes to these tables appear in any other module.
 - **High-demand dates** (e.g. Saturdays in September and October, Dec 31) define the `peak_date` slice for holds.
-- **Tours:** Tue–Sat, 10:00–16:00, 45-minute slots, one upcoming tour per customer.
+- **Tours:** Tue–Sat, back-to-back 45-minute slots starting 10:00, 10:45, 11:30, 12:15, 13:00, 13:45, 14:30 and 15:15 (the last). One upcoming tour per customer. Rates and minimums are the same for daytime and evening events.
 - **Holds:** 48 hours, one active hold per customer, a date and room held by only one customer at a time. Expiry is always set by code. A hold is never a booking.
 - **Bookings, deposits and contracts:** people only.
 
@@ -342,8 +343,8 @@ Two things sit outside the levels:
 | `check_availability(start_date, end_date?, weekday?, room?)` | read | dates | Dates resolve from the quote; within the booking window; terrace in season | — |
 | `get_published_rate(room, day_type, month)` | read | — | Valid for the price sheet | — |
 | `quote_package(room, date, guests, package, add_ons)` | read | date, guests, package, add-ons | Every quote verified; guests ≤ seated capacity; room in season | — |
-| `book_tour(date, time)` | write | date, time | Quotes verified; within tour hours | Slot open; the customer has no upcoming tour |
-| `place_hold(date, room)` | write | date | Quote verified; within the booking window; room in season | Date and room free (no booking, block or active hold); the customer has no active hold |
+| `book_tour(date, time)` | write | date, time | Quotes verified; time is one of the listed slots on a Tue–Sat | Slot open; the customer has no upcoming tour |
+| `place_hold(date, room)` | write | date | Quote verified; within the booking window; room in season | Date and room free (no booking, block or active hold, applying the shared Grand Hall/Garden Terrace calendar); the customer has no active hold |
 | `escalate(reason, category)` | always | — | — | — |
 
 - The customer's email (lowercased, trimmed) and name come from the email header through runtime context. Holds and tours can't be made for anyone else (I6).

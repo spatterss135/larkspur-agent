@@ -1,6 +1,7 @@
 # Larkspur Hall price sheet. Read only by agent/pricing.py.
 # Formula and rounding: docs/implementation-plan.md §6.2.
 # Seasons: peak = May–Oct, off = Nov–Apr. Day types: mon_thu, fri, sat, sun.
+# Rates and minimums are the same for daytime and evening events.
 version: "2026-10-13"
 
 seasons:

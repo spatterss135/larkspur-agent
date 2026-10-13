@@ -3,7 +3,7 @@
 Every event has three parts: the room rental, a catering package, and any add-ons. Your coordinator prepares an itemized quote for your date, guest count and package.
 
 ## Room rental
-Rental rates depend on the room, the day of the week and the season. Peak season is May through October. Grand Hall rental starts at $3,500 for a Monday–Thursday evening in the off-season. Saturdays in peak season are our highest rate. Ask us for a quote for your specific date.
+Rental rates depend on the room, the day of the week and the season. Peak season is May through October. Grand Hall rental starts at $3,500 for a Monday–Thursday evening in the off-season. Saturdays in peak season are our highest rate. Rental rates and food and beverage minimums are the same for daytime and evening events. Ask us for a quote for your specific date.
 
 ## Catering packages
 All food and beverage is provided by our in-house kitchen. Packages are priced per guest:

@@ -1,6 +1,10 @@
 # Default world for local runs (`make run`). Eval cases bring their own world.
 timezone: America/Denver
 
+# One main event per day: these rooms share a calendar. If either is booked, blocked or
+# held, the other is unavailable to anyone else that day. The Library Room is separate.
+shared_calendar: [grand_hall, garden_terrace]
+
 high_demand_dates:
   # Saturdays in September and October, plus New Year's Eve
   - 2026-09-05
@@ -43,6 +47,6 @@ blocks:     # unavailable for other reasons
 holds: []   # active holds by other customers: {date, room, customer_email, expires_at}
 
 tours:
-  hours: {start: "10:00", end: "16:00"}
   days: [tue, wed, thu, fri, sat]
   slot_minutes: 45
+  slots: ["10:00", "10:45", "11:30", "12:15", "13:00", "13:45", "14:30", "15:15"]

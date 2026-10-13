@@ -16,6 +16,9 @@ Failures found later, during the eval loop, are tagged by source in `docs/findin
 | No breakdown time for vendors | Realism | One hour after the end time |
 | The getting-ready suite was available only from setup time (2 hours before) | Unrealistic for weddings | From 11:00 am on the event day |
 | A "Heat and wind" heading over text about cool evenings | Realism | Renamed "Cool evenings and wind" |
+| "One main event per day", but the calendar books per room | "Is June 13 open?" had two defensible answers when only one room was booked | The Grand Hall and Garden Terrace share one calendar; the Library Room is separate |
+| Daytime events were offered, but the price sheet has no daytime rates | "How much for a Saturday daytime wedding?" was arguable | Rates and minimums are the same for daytime and evening events |
+| "Tours between 10:00 and 4:00, about 45 minutes" | "Can I come at 3:45?" was arguable | Back-to-back slots, last at 3:15 pm |
 | An FAQ line priced children at half the package rate | A pricing rule the pricing tool doesn't implement, so the docs and the tool would disagree | Removed; the FAQ refers kids' meals to the coordinator |
 
 ## Kept on purpose (test cases)
