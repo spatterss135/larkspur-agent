@@ -174,12 +174,12 @@ def run_conversation(
 # --- real models ---------------------------------------------------------------------------
 
 
-def real_models(agent: str = "sonnet") -> tuple[Any, Any]:
+def real_models(agent: str = "haiku") -> tuple[Any, Any]:
     from langchain_anthropic import ChatAnthropic
 
     model = ChatAnthropic(model=MODELS.get(agent, agent), max_tokens=2048, max_retries=2)
     triage_model = ChatAnthropic(
-        model=os.environ.get("TRIAGE_MODEL", MODELS["sonnet"]), max_tokens=300, max_retries=2
+        model=os.environ.get("TRIAGE_MODEL", MODELS["haiku"]), max_tokens=300, max_retries=2
     )
     return model, triage_model
 
@@ -216,7 +216,7 @@ def _print(case_id: str, out: RunOutcome, results) -> None:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--case", action="append", help="case id (repeatable)")
-    p.add_argument("--model", default="sonnet")
+    p.add_argument("--model", default="haiku")
     p.add_argument("--judge", action="store_true")
     args = p.parse_args(argv)
 

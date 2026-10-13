@@ -102,3 +102,10 @@ A throwaway spike on branch `spike/framework` (never merged) checked the plan's 
 - **The tool definitions are schemas only.** The AutonomyMiddleware runs every call through one function (`handle_call`) and never calls a tool body, so nothing can execute around the gate. Each call is still one traced tool span, named after the tool, with its status.
 - **The ledger shares the world's SQLite file**, so a write and its ledger row (or a pending request and its row) commit in one transaction. The idempotency key is unique in the ledger too, and a failed call never claims it, so a successful retry is still recorded.
 
+## D20. Haiku 5.5 runs the agent and triage; cost is part of the design
+- **Change from D9.** The agent and triage run on Claude Haiku 5.5. The baseline uses 2 repetitions per case (not 3), and the judge grades one repetition per case.
+- **Why.** A take-home eval program should cost what a client would accept for a first look. Measured on real traces, a Sonnet run cost 1-2 cents (about 95% of input tokens were prompt-cache reads); Haiku costs about a third of that. The whole program, baseline through v2, is budgeted under $10. Triage is a short, simple classification, so the smaller model is the right tool regardless of cost.
+- **What it costs in quality, and how we'll know.** Haiku may fail cases a larger model would pass. In phase 7, failing cases are rerun once on Sonnet 5.5 to separate design failures (both models fail) from capability failures (only Haiku fails). Running the full suite on stronger models is listed under next steps in the README.
+- **Kept:** all 75 cases. At about a cent per run, cutting cases would save very little and cost statistical power and approved labels.
+- **Rejected:** a full Sonnet comparison at 3 repetitions (most of the cost, little of the story); dropping cases to save money.
+

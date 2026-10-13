@@ -25,7 +25,11 @@ An email inquiry agent for a fictional event venue. It answers questions from th
 
 ## 8. Evaluating it in production
 
-## 9. Quickstart
+## 9. What I'd do next
+<!-- Filled in from the findings. Already planned: -->
+- **Stronger models.** The agent and triage run on Claude Haiku 5.5 to keep the eval program cheap (see D20). Next: run the full suite on Sonnet 5.5 and compare gate pass rate against cost and latency. Phase 7's targeted Sonnet rerun of failing cases shows which failures are the model's and which are the design's.
+
+## 10. Quickstart
 
 ```bash
 cp .env.example .env   # add your keys
@@ -33,12 +37,12 @@ make setup
 make test
 ```
 
-## 10. Working on this
+## 11. Working on this
 <!-- Add an eval case, add a tool with its checks, read a trace. -->
 
-## 11. Playbook notes
+## 12. Playbook notes
 
-## 12. How AI assistants helped, and what I checked myself
+## 13. How AI assistants helped, and what I checked myself
 
-## 13. Decision records
+## 14. Decision records
 See [docs/decisions.md](docs/decisions.md).

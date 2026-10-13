@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from evals.schema import Email, ThreadMessage
 
-TRIAGE_MODEL = "claude-sonnet-5-5"
+TRIAGE_MODEL = "claude-haiku-5-5"
 ATTEMPTS = 3
 
 TRIAGE_PROMPT = """You sort incoming email for Larkspur Hall, an event venue, before anyone \

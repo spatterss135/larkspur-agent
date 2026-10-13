@@ -140,7 +140,7 @@ def _run(args, world: World, approvals: Approvals, now: dt.datetime) -> int:
         world=world,
         retriever=default_retriever(),
         agent_model=ChatAnthropic(
-            model=os.environ.get("AGENT_MODEL", "claude-sonnet-5-5"),
+            model=os.environ.get("AGENT_MODEL", "claude-haiku-5-5"),
             max_tokens=2048,
             max_retries=2,
         ),
