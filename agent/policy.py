@@ -57,7 +57,9 @@ def reply_level(
     config: dict[str, Any] = CONFIG,
 ) -> int:
     """The strictest level among the read tools called this run. A tool called but not
-    used still counts. With no read tool, the reply is a plain reply."""
+    used still counts. With no read tool, the reply is a plain reply. The result can be 0
+    (a read tool the venue turned off); the reply gate treats anything below 2 as "a
+    person sends it"."""
     levels = [
         effective_level(action_for_tool(t, config), overrides=overrides, config=config)
         for t in tools_used
