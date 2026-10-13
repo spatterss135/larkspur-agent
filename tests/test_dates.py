@@ -27,6 +27,8 @@ MON = dt.date(2026, 3, 2)  # a Monday; most eval cases use this today
         (["tomorrow"], dt.date(2026, 3, 3)),
         (["next Monday, March 9"], dt.date(2026, 3, 9)),  # agrees with itself
         (["June", "the 14th"], dt.date(2026, 6, 14)),  # the month from another fragment
+        (["in May, ideally the 14th"], dt.date(2026, 5, 14)),
+        (["Sunday the 14th of June"], dt.date(2026, 6, 14)),
     ],
 )
 def test_explicit_and_relative_dates_resolve(fragments, expected):
@@ -44,6 +46,11 @@ def test_explicit_and_relative_dates_resolve(fragments, expected):
         (["sometime in the spring"], "no_date"),
         ([], "no_date"),
         (["February 30"], "invalid_date"),
+        # Found by probing after green: each of these silently resolved to a wrong date.
+        (["we may want the 14th"], "day_without_month"),  # "may" the verb, not the month
+        (["Saturday the 14th of June"], "weekday_mismatch"),  # June 14, 2026 is a Sunday
+        (["Friday the 14th", "June"], "weekday_mismatch"),
+        (["June 13-14"], "ambiguous"),  # a two-day range, not June 13
     ],
 )
 def test_unclear_dates_need_input(fragments, reason):
