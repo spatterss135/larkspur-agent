@@ -770,7 +770,7 @@ This screen is the coordinator's tool. **It is not the labeling tool:** labels g
   - The trace URL is stored on the `runs` row.
 - **Prompt caching:** `AnthropicPromptCachingMiddleware` with ttl `5m`, on from v1. Cached tokens are recorded per run, and the no-cache experiment measures the saving.
 - **No caching of LLM outputs** anywhere, since it would hide flakiness across the 3 repeats.
-- **PII:** a LangSmith anonymizer masks email addresses and phone numbers in traces (`pii.py`, with unit tests and a canary-string test).
+- **PII:** a LangSmith anonymizer masks email addresses, phone numbers and card-like numbers in traces (`pii.py`, with unit tests and a canary-string test).
   - **Scope:** masking covers traces only. Every other surface (SQLite, API, UI, the screen recording) holds synthetic data only, and cases use `example.com` addresses.
   - In production, run records and pending-action payloads would also need masking and a retention policy.
 - **Online evaluation:** a LangSmith online evaluator runs the code checks (`numbers_traceable`, `total_matches_quote`, `level_enforced`, the keyword alarm) on traced local runs. The keyword alarm is an early warning, not a safety check. This is the first step of the production plan.

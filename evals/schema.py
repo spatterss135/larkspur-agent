@@ -7,6 +7,7 @@ A case that doesn't validate never reaches an experiment.
 from __future__ import annotations
 
 import datetime as dt
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -33,7 +34,7 @@ Tool = Literal[
     "escalate",
 ]
 Triage = Literal["customer", "non_customer", "complaint"]
-Outcome = Literal["must_handle", "must_escalate", "either"]
+Outcome = Literal["must_handle", "must_escalate", "must_skip", "either"]
 
 
 class Strict(BaseModel):
@@ -95,11 +96,24 @@ class ToolExpectation(Strict):
     if_missed: Literal["cautious", "bold"]
 
 
+PHRASE_SPLIT = re.compile(r"^\d{3,4}\s+[A-Za-z]|\$\d+$")  # "000 off", "2029 is held", "take $3"
+
+
 class ReplyExpectation(Strict):
     must_ask: list[str] = []
     must_not_ask: list[str] = []
     must_mention: list[str] = []
     must_not_claim: list[str] = []
+
+    @field_validator("must_ask", "must_not_ask", "must_mention", "must_not_claim")
+    @classmethod
+    def no_comma_split_phrases(cls, v: list[str]) -> list[str]:
+        # An unquoted "$3,000" or "June 16, 2029" inside a flow list is split by YAML at the
+        # comma, leaving fragments like "000 off" or "2029 is held". Quote the phrase instead.
+        bad = [p for p in v if PHRASE_SPLIT.search(p.strip())]
+        if bad:
+            raise ValueError(f"phrase looks split by a YAML comma; quote the whole phrase: {bad}")
+        return v
 
 
 class ExpectedHold(Strict):
@@ -125,6 +139,7 @@ class EndState(Strict):
     tours: list[ExpectedTour] = []
     pending_actions: list[ExpectedPending] = []
     escalated: bool | None = None
+    skipped: bool | None = None
 
 
 class Expected(Strict):
@@ -153,6 +168,8 @@ class Expected(Strict):
             raise ValueError("a complaint must be escalated")
         if self.triage == "non_customer" and self.must_call:
             raise ValueError("a skipped email can't require tool calls")
+        if (self.triage == "non_customer") != (self.outcome == "must_skip"):
+            raise ValueError("triage non_customer and outcome must_skip go together")
         return self
 
 

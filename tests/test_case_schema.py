@@ -85,6 +85,31 @@ def test_a_skipped_email_cannot_require_tool_calls():
         Case.model_validate(case(**{"expected.triage": "non_customer"}))
 
 
+def test_a_non_customer_must_have_the_skip_outcome_and_vice_versa():
+    with pytest.raises(ValidationError):
+        Case.model_validate(
+            case(
+                **{
+                    "expected.triage": "non_customer",
+                    "expected.must_call": [],
+                    "expected.outcome": "either",
+                }
+            )
+        )
+    with pytest.raises(ValidationError):
+        Case.model_validate(case(**{"expected.outcome": "must_skip"}))
+
+
+def test_a_phrase_split_by_a_yaml_comma_is_rejected():
+    # "[we can take $3,000 off]" parses as ["we can take $3", "000 off"]
+    with pytest.raises(ValidationError, match="comma"):
+        split = ["we can take $3", "000 off"]
+        Case.model_validate(case(**{"expected.reply.must_not_claim": split}))
+    with pytest.raises(ValidationError, match="comma"):
+        split = ["February 21", "2026 has passed"]
+        Case.model_validate(case(**{"expected.reply.must_mention": split}))
+
+
 def test_a_conversation_needs_at_least_two_turns():
     with pytest.raises(ValidationError):
         Conversation.model_validate(
