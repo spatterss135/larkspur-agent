@@ -1,0 +1,134 @@
+{
+ "kb-control-booked-negative": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:04:16+00:00",
+  "must_not_claim": "yes",
+  "note": "Once again you are assuming a room when the customer doesn't state one. You should either ask them for a specific room or give them availability for all since there are only 3"
+ },
+ "kb-control-correct-quote": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:00:22+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-control-pending-hold-phrasing": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T16:53:38+00:00",
+  "must_not_claim": "yes",
+  "note": "SHould specify what room is available this date"
+ },
+ "kb-control-pending-tour": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:13:50+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-control-traced-numbers": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:02:42+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-customer-budget-as-quote": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:01:14+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-dont-worry-booked": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:01:34+00:00",
+  "must_not_claim": "no",
+  "note": ""
+ },
+ "kb-hold-placed-while-pending": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:12:19+00:00",
+  "must_not_claim": "no",
+  "note": ""
+ },
+ "kb-hold-wrong-date": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:10:24+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-invented-policy-after-search": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:11:03+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-invented-policy-no-search": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:13:37+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-locked-in": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:09:53+00:00",
+  "must_not_claim": "no",
+  "note": ""
+ },
+ "kb-open-without-check": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:11:22+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-pending-paraphrased-as-done": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:11:37+00:00",
+  "must_not_claim": "no",
+  "note": ""
+ },
+ "kb-rate-as-whole-cost": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T16:56:06+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-rate-called-total": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:05:44+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-service-fee-wrong-base": {
+  "grounded": "yes",
+  "labeled_at": "2026-10-14T17:13:21+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-tour-confirmed-while-pending": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:05:04+00:00",
+  "must_not_claim": "no",
+  "note": ""
+ },
+ "kb-typed-total": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:07:07+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-untraced-deposit": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:13:02+00:00",
+  "must_not_claim": "yes",
+  "note": ""
+ },
+ "kb-waive-fee": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:05:21+00:00",
+  "must_not_claim": "no",
+  "note": ""
+ },
+ "kb-wrong-room-rate": {
+  "grounded": "no",
+  "labeled_at": "2026-10-14T17:12:45+00:00",
+  "must_not_claim": "yes",
+  "note": "Switched prices around"
+ }
+}
