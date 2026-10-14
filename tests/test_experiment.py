@@ -154,3 +154,37 @@ def test_a_targeted_rerun_selects_cases_and_conversations_by_id():
     examples = [SimpleNamespace(metadata={"id": i}) for i in ("a", "b", "c")]
     assert [e.metadata["id"] for e in select_examples(examples, ("c", "a"), None)] == ["a", "c"]
     assert [e.metadata["id"] for e in select_examples(examples, None, 2)] == ["a", "b"]
+
+
+def test_a_targeted_rerun_of_only_conversations_skips_the_empty_case_experiment(
+    monkeypatch, tmp_path
+):
+    # `--case convo-x` once crashed: LangSmith refuses an experiment with no examples.
+    import langsmith
+
+    import evals.experiment as ex
+    import evals.run as run
+
+    convo = SimpleNamespace(metadata={"id": "convo-x"})
+    ran = []
+
+    class FakeClient:
+        def list_examples(self, dataset_name, splits):
+            return [convo] if "conversation" in dataset_name and splits == ["dev"] else []
+
+    class Res(list):
+        experiment_name = "e"
+
+    monkeypatch.setattr(langsmith, "Client", FakeClient)
+    monkeypatch.setattr(
+        langsmith,
+        "evaluate",
+        lambda target, data, **kw: ran.append([e.metadata["id"] for e in data]) or Res(),
+    )
+    monkeypatch.setattr(run, "real_models", lambda agent: (None, None))
+    monkeypatch.setattr(run, "shared_retriever", lambda: None)
+    monkeypatch.setattr(run, "git_sha", lambda: "abc")
+    monkeypatch.setattr(ex, "ROOT", tmp_path)
+    saved = ex.run_experiment("t", reps=1, splits=("dev",), cases=("convo-x",))
+    assert ran == [["convo-x"]]
+    assert saved["cases"] == [] and saved["case_experiment"] is None
