@@ -200,3 +200,39 @@ def test_a_targeted_rerun_of_only_conversations_skips_the_empty_case_experiment(
     # patient connection retries is used for everything.
     (client,) = clients
     assert client.kw["retry_config"].connect >= 5 and used == [client]
+
+
+def test_a_saved_experiment_is_judged_offline_on_the_first_repetition(tmp_path, monkeypatch):
+    # v2 runs the agent first; the judge grades the saved replies once calibration settles
+    # which judge version to trust. The agent doesn't run again.
+    import evals.experiment as ex
+    import evals.judge as judge
+    from evals.code_evaluators import EvalResult
+
+    graded = []
+
+    def fake_judge(inp, model=None, criteria=None):
+        graded.append(inp.reply)
+        return [EvalResult("grounded", True, gate=True), EvalResult("tone", True, score=4)]
+
+    monkeypatch.setattr(judge, "judge_reply", fake_judge)
+    result = {"tool_calls": [], "retrieved": [], "sources": []}
+
+    def row(rep, text):
+        return {
+            "id": "hold-request",
+            "run_id": f"r{rep}",
+            "feedback": {},
+            "outputs": {"text": text, "result": result},
+        }
+
+    path = tmp_path / "v.json"
+    path.write_text(json.dumps({"metadata": {}, "cases": [row(1, "first"), row(2, "second")]}))
+    ex.judge_saved(path, push=False)
+    saved = json.loads(path.read_text())
+    assert graded == ["first"]
+    first, second = saved["cases"]
+    assert first["feedback"]["judge:grounded"]["score"] == 1
+    assert first["feedback"]["judge:tone"]["score"] == 4
+    assert not any(k.startswith("judge:") for k in second["feedback"])
+    assert saved["metadata"]["judge_version"] == judge.JUDGE_VERSION
