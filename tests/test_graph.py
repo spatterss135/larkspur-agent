@@ -296,3 +296,20 @@ def test_rerunning_the_apply_step_after_a_crash_has_one_effect():
     assert again["result"]["changed"] is False
     assert len(d.world.snapshot(NOW).active_holds()) == 1
     assert len([r for r in outbox(d.world) if r[0] == "follow_up"]) == 1
+
+
+def test_the_complaint_acknowledgment_takes_its_level_from_the_policy_and_records_it():
+    # F4: the template was sent with no level, so an auditor couldn't see why it was allowed.
+    d = deps([reply("never")], triage="complaint")
+    out = process_email(d, email("The music was far too loud at our event."), [], "m-13")
+    assert out.reply_status == "sent" and out.reply_level == 3
+    (level,) = d.world.conn.execute("SELECT reply_level FROM runs").fetchone()
+    assert level == 3
+
+
+def test_a_venue_can_make_complaint_acknowledgments_wait_for_a_person():
+    d = deps([reply("never")], triage="complaint", spec={"autonomy": {"complaint_ack": 1}})
+    out = process_email(d, email("The music was far too loud at our event."), [], "m-14")
+    assert out.reply_status == "pending_approval" and out.reply_level == 1
+    assert outbox(d.world) == [] and out.escalated
+    assert [r["kind"] for r in d.approvals.pending()] == ["reply"]
