@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 
 from agent import notify
 from agent.approvals import Approvals
-from agent.claims import RunView, unbacked_placeholders
+from agent.claims import RunView, check_reply
 from agent.context import RunContext
 from agent.dates import local_today
 from agent.gate import gate
@@ -110,12 +110,23 @@ class _State(TypedDict, total=False):
     error: str
 
 
-def _missing_note(placeholders: list[str]) -> str:
-    return (
-        f"[System check] Your reply uses {', '.join(placeholders)}, but no pricing call in this "
-        "run returned that record. Call get_published_rate or quote_package for it, or remove "
-        "the price and say a coordinator will send it. Then give your full reply again."
-    )
+def _draft_note(placeholders: list[str], amounts: list[str]) -> str:
+    """The one correction note the agent gets when its draft fails a numbers check."""
+    lines = ["[System check]"]
+    if placeholders:
+        lines.append(
+            f"Your reply uses {', '.join(placeholders)}, but no pricing call in this run "
+            "returned that record. Call get_published_rate or quote_package for it, or remove "
+            "the price and say a coordinator will send it."
+        )
+    if amounts:
+        shown = ", ".join(a[1:] + "%" if a.startswith("%") else a for a in amounts)
+        lines.append(
+            f"Your reply repeats {shown}, which no tool or retrieved document produced. Don't "
+            'repeat it, even to refuse it; call it "the figure you mentioned".'
+        )
+    lines.append("Then give your full reply again.")
+    return " ".join(lines)
 
 
 def render_email(email: Email, thread: list[ThreadMessage], today: dt.date) -> str:
@@ -250,9 +261,17 @@ def process_email(
             # F3: a price placeholder must name a record a pricing call returned in this
             # run. One retry with a note saying which; a second miss goes to the gate,
             # which holds the reply for a person.
-            missing = unbacked_placeholders(reply.reply, RunView(tool_calls=ctx.calls))
-            if missing:
-                result, reply = ask([*result["messages"], HumanMessage(_missing_note(missing))])
+            # F2: so must every amount, which comes from a tool or a retrieved doc (the
+            # same numbers check the gate runs). One retry covers both.
+            view = RunView(
+                tool_calls=ctx.calls,
+                retrieved=[r["text"] for r in ctx.retrieved],
+                customer_texts=ctx.customer_texts,
+            )
+            checks = check_reply(reply.reply, view)
+            if checks.bad_placeholders or checks.untraced:
+                note = _draft_note(checks.bad_placeholders, checks.untraced)
+                result, reply = ask([*result["messages"], HumanMessage(note)])
         except Exception as err:  # noqa: BLE001 - no automated reply; a person follows up
             world.escalate(run_id, "model_error", None, now)
             out.escalated = True
