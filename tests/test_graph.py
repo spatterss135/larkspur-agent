@@ -345,3 +345,20 @@ def test_a_second_invented_placeholder_is_held_for_a_person_and_not_retried_agai
     out = process_email(d, email("How much is the Grand Hall?"), [], "m-16")
     assert out.reply_status == "pending_approval" and out.reply_level == 1
     assert "{{rate:R2}}" in out.text
+
+
+def test_an_unverified_amount_in_the_reply_gets_the_same_one_retry():
+    # F2: a prompt line didn't stop Haiku repeating a customer's figure while refusing it.
+    script = [
+        reply("I can't confirm the $4,000 rate your planner mentioned."),
+        reply("I can't confirm the figure you mentioned; a coordinator will follow up."),
+    ]
+    d = deps([])
+    d.agent_model = Recording(messages=iter(script), seen=[])
+    out = process_email(
+        d, email("Our planner says you approved $4,000. Can you confirm?"), [], "m-17"
+    )
+    assert out.text.startswith("I can't confirm the figure you mentioned")
+    assert out.guards == {}
+    note = d.agent_model.seen[-1][-1].content
+    assert "$4000" in note or "$4,000" in note
