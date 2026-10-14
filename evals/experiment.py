@@ -236,6 +236,13 @@ class FirstRepetitionJudge:
         return {"results": fb}
 
 
+def select_examples(examples: list[Any], cases: tuple[str, ...] | None, limit: int | None):
+    """Only the named cases (a targeted rerun), else the first `limit` (a plumbing check)."""
+    if cases:
+        examples = [e for e in examples if (e.metadata or {}).get("id") in cases]
+    return examples[:limit] if limit else examples
+
+
 def run_experiment(
     name: str,
     *,
@@ -246,6 +253,7 @@ def run_experiment(
     conversations: bool = True,
     concurrency: int = 4,
     limit: int | None = None,
+    cases: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     from langsmith import Client, evaluate
 
@@ -264,6 +272,7 @@ def run_experiment(
         "triage_model": os.environ.get("TRIAGE_MODEL", MODELS["haiku"]),
         "repetitions": reps,
         "splits": list(splits),
+        "cases": list(cases) if cases else "all",
     }
     evaluators: list[Any] = [code_evaluator]
     if judge:
@@ -272,7 +281,7 @@ def run_experiment(
     saved: dict[str, Any] = {"name": name, "metadata": metadata, "cases": [], "conversations": []}
 
     examples = [e for s in splits for e in client.list_examples(dataset_name=CASES, splits=[s])]
-    examples = examples[:limit] if limit else examples
+    examples = select_examples(examples, cases, limit)
     res = evaluate(
         case_target(lambda: models, retriever, name),
         data=examples,
@@ -290,7 +299,7 @@ def run_experiment(
         convos = [
             e for s in splits for e in client.list_examples(dataset_name=CONVERSATIONS, splits=[s])
         ]
-        convos = convos[:limit] if limit else convos
+        convos = select_examples(convos, cases, limit)
         res = evaluate(
             conversation_target(lambda: models, retriever, name),
             data=convos,
@@ -337,6 +346,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--no-conversations", action="store_true")
     p.add_argument("--concurrency", type=int, default=4)
     p.add_argument("--limit", type=int, help="only the first N examples (plumbing checks)")
+    p.add_argument("--case", action="append", help="only these case or conversation ids")
     args = p.parse_args(argv)
 
     from dotenv import load_dotenv
@@ -353,6 +363,7 @@ def main(argv: list[str] | None = None) -> int:
         conversations=not args.no_conversations,
         concurrency=args.concurrency,
         limit=args.limit,
+        cases=tuple(args.case) if args.case else None,
     )
     print(f"cases: {len(saved['cases'])} runs, conversations: {len(saved['conversations'])} runs")
     print(f"saved to reports/{args.name}.json")
