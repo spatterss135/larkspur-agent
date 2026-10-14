@@ -130,7 +130,10 @@ def test_the_command_line_passes_every_option_through(monkeypatch):
         "run_experiment",
         lambda name, **kw: seen.update(kw, name=name) or {"cases": [], "conversations": []},
     )
-    ex.main(["--name", "x", "--reps", "1", "--limit", "2", "--split", "dev", "--no-conversations"])
+    ex.main(
+        ["--name", "x", "--reps", "1", "--limit", "2", "--split", "dev", "--no-conversations"]
+        + ["--case", "a", "--case", "b"]
+    )
     assert seen == {
         "name": "x",
         "reps": 1,
@@ -140,4 +143,14 @@ def test_the_command_line_passes_every_option_through(monkeypatch):
         "conversations": False,
         "concurrency": 4,
         "limit": 2,
+        "cases": ("a", "b"),
     }
+
+
+def test_a_targeted_rerun_selects_cases_and_conversations_by_id():
+    # Phase 7 measures each fix on just the affected cases, at more repetitions.
+    from evals.experiment import select_examples
+
+    examples = [SimpleNamespace(metadata={"id": i}) for i in ("a", "b", "c")]
+    assert [e.metadata["id"] for e in select_examples(examples, ("c", "a"), None)] == ["a", "c"]
+    assert [e.metadata["id"] for e in select_examples(examples, None, 2)] == ["a", "b"]
