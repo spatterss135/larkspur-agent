@@ -21,7 +21,7 @@ Before any fix, each plan was checked against four questions:
 |---|---|---|---|---|---|
 | F1 | Guards hold replies that restate a rule or refuse | agent | 50 of 57 guard-held | No (held) | Planned |
 | F2 | The agent repeats a customer's unverified figure while refusing it | agent | 5 | No (held) | Planned |
-| F3 | The agent writes a price placeholder without pricing anything | agent | 3 | No (held) | Planned |
+| F3 | The agent writes a price placeholder without pricing anything | agent | 3 | No (held) | Fixed (safety net; see result) |
 | F4 | The complaint acknowledgement is sent with no level in the ledger | agent | 4 | Yes (harmless template) | Fixed: 0/4 → 10/10 |
 | F5 | The agent asks "which month?" and loops on a tool that needs input | agent | 2 | No | Fixed: loops 1/2 → 0/5; passes 0/2 → 2/5 |
 | F6 | The agent re-requests a hold that's already pending | label / agent | 2 | No (pending) | Known issue |
@@ -70,6 +70,13 @@ Traces: `01a13744-c458-77d1-a3a7-e60c7d1608e4`, `01a137e5-3c63-7151-8663-d8eea8c
 **Rejected plan:** another prompt line. The prompt already explains placeholders.
 
 **Fix:** a check inside the agent loop. After each model turn that produces the reply, the middleware checks every placeholder against this run's price records. If one is missing, the model gets one message telling it to call the pricing tool or remove the price, and one more try. The gate still checks afterwards.
+
+**Result.** Commits `c3e8431` (green; red is the commit before it). Targeted rerun `f3-placeholders`, 5 repetitions:
+- question-buried-in-long-reply 5/5 (baseline 1/2), convo-clarification-loop 4/5 (0/2), convo-clarify-quote-hold 3/5 (0/2, and 2/5 after F5 alone).
+- **But the retry never fired in those 15 runs.** Every trace has exactly one agent call per turn, so the model invented no placeholder at all. The drop from 3/6 runs to 0/15 can't be credited to this fix; it may be chance, or a side effect of F5's tool messages. With these sample sizes I can't tell which.
+- The mechanism was checked on the real model by forcing the check to flag once (`scratchpad` script, experiment tag `f3-force-retry`, case faq-parking): Claude accepted the note after its structured reply, answered again and the reply was sent. The unit tests cover the second miss being held.
+- So F3's fix is a safety net with unknown real-world frequency. v2 will show whether invented placeholders come back.
+- The one clarification-loop failure is different: the model typed "$95" and "$135" (per-guest package prices) instead of using a placeholder. The guard held it. That's the same class as F2 (typed amounts), not caused by the retry.
 
 ## F4. The complaint acknowledgement is sent with no level in the ledger (agent)
 
