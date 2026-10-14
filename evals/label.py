@@ -14,6 +14,7 @@ run again replaces its earlier labels.
     uv run python -m evals.label --redo     # include runs already labeled
     uv run python -m evals.label --known-bad        # annotator check, labels to reports/
     uv run python -m evals.label score-known-bad    # score it
+    uv run python -m evals.label --review   # after the first pass: each disagreement, judge shown
 """
 
 from __future__ import annotations
@@ -289,6 +290,61 @@ def known_bad_report() -> Path:
     return out
 
 
+# --- review: the disagreements, with the judge's reasoning shown -------------------------------
+# Run only after the blind first pass is frozen (reports/calibration-labels-pass1.json). The
+# person decides, per disputed gate, whether it was their slip, the judge's error, or unclear.
+
+PASS1_FILE = ROOT / "reports" / "calibration-labels-pass1.json"
+DECISIONS = ("slip", "keep", "unsure")
+
+
+def first_pass() -> dict[str, dict[str, float]]:
+    runs = json.loads(PASS1_FILE.read_text(encoding="utf-8"))["runs"]
+    return {r: {k: v["score"] for k, v in got["labels"].items()} for r, got in runs.items()}
+
+
+def disagreements(
+    cal: dict[str, Any], labels: dict[str, dict[str, float]], split: str = "holdout"
+) -> list[dict[str, Any]]:
+    out = []
+    for item in cal[split]:
+        got = labels.get(item["run_id"], {})
+        disputes = {}
+        for crit in GATES:
+            if crit not in item["judge"] or f"human_{crit}" not in got:
+                continue
+            human, judge = got[f"human_{crit}"] >= 1, item["judge"][crit] >= 1
+            if human != judge:
+                disputes[crit] = {
+                    "human": "pass" if human else "fail",
+                    "judge": "pass" if judge else "fail",
+                    "comment": item.get("judge_comments", {}).get(crit, ""),
+                }
+        if disputes:
+            out.append({"run_id": item["run_id"], "case": item["case"], "disputes": disputes})
+    return out
+
+
+def build_review_item(case: Case, row: dict[str, Any], dispute: dict[str, Any]) -> dict[str, Any]:
+    return {**build_item(case, row), "review": dispute["disputes"]}
+
+
+def save_adjudication(
+    path: Path, run_id: str, form: dict[str, Any], disputes: dict[str, Any]
+) -> None:
+    decisions = form.get("decisions") or {}
+    for crit in disputes:
+        if decisions.get(crit) not in DECISIONS:
+            raise ValueError(f"{crit} needs a decision: {', '.join(DECISIONS)}")
+    saved = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    saved[run_id] = {
+        **{crit: decisions[crit] for crit in disputes},
+        "note": (form.get("note") or "").strip(),
+        "reviewed_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"),
+    }
+    path.write_text(json.dumps(saved, indent=1, sort_keys=True), encoding="utf-8")
+
+
 # --- the page --------------------------------------------------------------------------------
 
 
@@ -391,6 +447,30 @@ def _serve_known_bad(redo: bool, port: int) -> None:
     )
 
 
+def _serve_review(redo: bool, port: int) -> None:
+    from evals.calibrate import ADJ_FILE
+    from evals.schema import load_suite
+
+    cases = {c.id: c for c in load_suite().cases}
+    rows = {r["run_id"]: r for r in json.loads(BASELINE.read_text(encoding="utf-8"))["cases"]}
+    cal = json.loads(SET_FILE.read_text(encoding="utf-8"))
+    found = disagreements(cal, first_pass())
+    done = (
+        set()
+        if redo or not ADJ_FILE.exists()
+        else set(json.loads(ADJ_FILE.read_text(encoding="utf-8")))
+    )
+    todo = [d for d in found if d["run_id"] not in done]
+    disputes = {d["run_id"]: d["disputes"] for d in found}
+    serve(
+        [build_review_item(cases[d["case"]], rows[d["run_id"]], d) for d in todo],
+        len(found),
+        lambda run_id, form: save_adjudication(ADJ_FILE, run_id, form, disputes[run_id]),
+        "uv run python -m evals.calibrate report reports/v1-baseline.json",
+        port,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     from dotenv import load_dotenv
 
@@ -401,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
         out = known_bad_report()
         print(out.read_text(encoding="utf-8"))
         print(f"wrote {out}")
+    elif "--review" in args:
+        _serve_review("--redo" in args, port)
     elif "--known-bad" in args:
         _serve_known_bad("--redo" in args, port)
     else:

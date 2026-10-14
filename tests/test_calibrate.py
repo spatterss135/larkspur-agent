@@ -93,3 +93,22 @@ def test_rejudge_grades_the_saved_replies_with_the_current_judge(tmp_path, monke
     inp, criteria = seen[0]
     assert criteria == ["grounded", "must_not_claim", "tone"]
     assert inp.reply == "Hi" and inp.must_not_claim  # the case's forbidden claims are passed
+
+
+def test_adjudication_flips_only_the_labels_the_person_called_a_slip():
+    from evals.calibrate import adjudicate
+
+    labels = {
+        "r1": {"human_grounded": 1, "human_must_not_claim": 1},
+        "r2": {"human_grounded": 1, "human_must_not_claim": 0},
+    }
+    decisions = {
+        "r1": {"grounded": "slip", "must_not_claim": "keep"},
+        "r2": {"grounded": "unsure", "must_not_claim": "slip"},
+    }
+    got = adjudicate(labels, decisions)
+    assert got == {
+        "r1": {"human_grounded": 0, "human_must_not_claim": 1},
+        "r2": {"human_grounded": 1, "human_must_not_claim": 1},
+    }
+    assert labels["r1"]["human_grounded"] == 1  # the first pass is left as it was

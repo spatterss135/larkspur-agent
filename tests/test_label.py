@@ -286,3 +286,70 @@ def test_a_known_bad_item_with_yaml_dates_can_be_sent_to_the_page():
     )
     sent = json.dumps(build_known_bad(item, "item-01"))
     assert "2026-06-13" in sent
+
+
+# --- review: the disagreements, with the judge's reasoning shown ------------------------------
+
+
+CAL = {
+    "tune": [],
+    "holdout": [
+        {
+            "run_id": "r1",
+            "case": "guest-count-changed",
+            "judge": {"grounded": 0, "must_not_claim": 1, "tone": 4},
+            "judge_comments": {"grounded": "Reply: 'x'. Context: none", "must_not_claim": "ok"},
+        },
+        {
+            "run_id": "r2",
+            "case": "other",
+            "judge": {"grounded": 1, "must_not_claim": 1, "tone": 3},
+            "judge_comments": {"grounded": "fine", "must_not_claim": "fine"},
+        },
+    ],
+}
+FIRST_PASS = {
+    "r1": {"human_grounded": 1, "human_must_not_claim": 1, "human_tone": 4},
+    "r2": {"human_grounded": 1, "human_must_not_claim": 1, "human_tone": 3},
+}
+
+
+def test_review_lists_only_the_gates_where_the_person_and_the_judge_disagree():
+    from evals.label import disagreements
+
+    got = disagreements(CAL, FIRST_PASS)
+    assert [d["run_id"] for d in got] == ["r1"]
+    assert got[0]["disputes"] == {
+        "grounded": {"human": "pass", "judge": "fail", "comment": "Reply: 'x'. Context: none"}
+    }
+
+
+def test_a_review_item_shows_the_judge_only_for_the_disputed_gate():
+    from evals.label import build_review_item, disagreements
+
+    dispute = disagreements(CAL, FIRST_PASS)[0]
+    item = build_review_item(case(), saved_row("x"), dispute)
+    assert item["review"] == dispute["disputes"]
+    assert "SECRET-JUDGE-REASON" not in json.dumps(item)  # the saved run's feedback stays out
+
+
+def test_a_review_needs_a_decision_for_every_disputed_gate(tmp_path):
+    from evals.label import save_adjudication
+
+    path = tmp_path / "adj.json"
+    disputes = {"grounded": {}, "must_not_claim": {}}
+    with pytest.raises(ValueError):
+        save_adjudication(path, "r1", {"decisions": {"grounded": "slip"}}, disputes)
+    with pytest.raises(ValueError):
+        save_adjudication(
+            path, "r1", {"decisions": {"grounded": "slip", "must_not_claim": "maybe"}}, disputes
+        )
+    save_adjudication(
+        path,
+        "r1",
+        {"decisions": {"grounded": "slip", "must_not_claim": "keep"}, "note": "n"},
+        disputes,
+    )
+    saved = json.loads(path.read_text(encoding="utf-8"))["r1"]
+    assert saved["grounded"] == "slip" and saved["must_not_claim"] == "keep"
+    assert saved["note"] == "n"

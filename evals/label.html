@@ -75,6 +75,11 @@
   .kv { font-family: ui-monospace, Consolas, monospace; font-size: 12px; margin: 2px 0 0 12px; white-space: pre-wrap; word-wrap: break-word; }
   .doc { margin-bottom: 8px; }
   .doc .src { font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+  .judge { border-left: 3px solid var(--req); margin: 6px 0; font-size: 13px; }
+  .judge .qt { background: var(--req-bg); cursor: pointer; border-bottom: 1px dotted var(--req); }
+  .verdict { font-size: 12px; font-weight: 600; padding: 1px 6px; border-radius: 4px; }
+  .v-pass { background: var(--done-bg); color: var(--done); }
+  .v-fail { background: var(--bad-bg); color: var(--bad); }
   .done-all { max-width: 520px; margin: 80px auto; text-align: center; }
 </style>
 </head>
@@ -219,7 +224,7 @@ function render() {
     ${thread ? "<h2>Earlier in the thread</h2>" + thread : ""}
     <h2>The reply (click a number or date, or select a phrase, to find it in the evidence)</h2>
     <div class="card reply" id="reply">${reply}</div>
-
+    ${it.review ? reviewBlock(it, a) : `
     <div class="q"><div class="title">1. Grounded: is every factual claim supported?</div>
       <details><summary>rubric</summary>${esc(data.rubric.human_grounded)}</details>
       <div class="btns">${btn("grounded","yes","Yes, all supported","Q")}${btn("grounded","no","No, something isn't","W")}</div></div>
@@ -230,7 +235,7 @@ function render() {
       <div class="btns">${btn("must_not_claim","yes","Yes, none made","A")}${btn("must_not_claim","no","No, it makes one","S")}</div></div>
     <div class="q"><div class="title">3. Tone, 1-5 (optional)</div>
       <details><summary>rubric</summary>${esc(data.rubric.human_tone)}</details>
-      <div class="btns">${[1,2,3,4,5].map(n => btn("tone", String(n), n, n)).join("")}</div></div>
+      <div class="btns">${[1,2,3,4,5].map(n => btn("tone", String(n), n, n)).join("")}</div></div>`}
     <div class="q"><textarea id="note" rows="2" placeholder="Note (optional): the unsupported claim, in a few words">${esc(a.note || "")}</textarea></div>
     <div class="save"><button id="prev" ${idx ? "" : "disabled"}>Back</button><button class="primary" id="go">Save &amp; next <kbd>Enter</kbd></button><span id="msg" class="muted">${a.saved ? "saved" : ""}</span></div>
   </div>
@@ -240,6 +245,10 @@ function render() {
   </div>`;
   renderEvidence();
   app.querySelectorAll("button[data-q]").forEach(b => b.onclick = () => set(b.dataset.q, b.dataset.v));
+  app.querySelectorAll("button[data-r]").forEach(b => b.onclick = () => decide(b.dataset.r, b.dataset.v));
+  app.querySelectorAll(".judge .qt").forEach(q => q.onclick = () => {
+    document.getElementById("find").value = q.dataset.t; highlight(new RegExp(reEsc(q.dataset.t), "gi"));
+  });
   app.querySelectorAll(".tok").forEach(t => t.onclick = () => {
     app.querySelectorAll(".tok.on").forEach(x => x.classList.remove("on")); t.classList.add("on");
     document.getElementById("find").value = t.dataset.t; highlight(patternFor(t.dataset.t));
@@ -254,6 +263,32 @@ function render() {
   document.getElementById("prev").onclick = () => { idx--; render(); };
 }
 
+const NAMES = {grounded: "Grounded", must_not_claim: "Forbidden claims"};
+const verdict = v => `<span class="verdict v-${v}">${v.toUpperCase()}</span>`;
+// Quoted text in the judge's reasoning becomes clickable, to find it in the evidence.
+const quoted = c => esc(c).replace(/&quot;(.{3,}?)&quot;/g, (m, q) => `&quot;<span class="qt" data-t="${q}">${q}</span>&quot;`);
+
+function reviewBlock(it, a) {
+  return Object.entries(it.review).map(([crit, d]) => {
+    const flip = d.human === "pass" ? "FAIL" : "PASS";
+    const on = v => (a.decisions || {})[crit] === v ? "sel" : "";
+    return `<div class="q"><div class="title">${NAMES[crit]}: you ${verdict(d.human)} · judge ${verdict(d.judge)}</div>
+      <details><summary>rubric</summary>${esc(data.rubric["human_" + crit])}</details>
+      <div class="card judge pre">${quoted(d.comment || "(no reasoning recorded)")}</div>
+      <div class="btns">
+        <button class="${on("keep")}" data-r="${crit}" data-v="keep">Keep mine: the judge is wrong<kbd>K</kbd></button>
+        <button class="${on("slip")}" data-r="${crit}" data-v="slip">My slip: change mine to ${flip}<kbd>C</kbd></button>
+        <button class="${on("unsure")}" data-r="${crit}" data-v="unsure">Unsure (mine stays)<kbd>U</kbd></button>
+      </div></div>`;
+  }).join("") + `<div class="muted" style="font-size:12.5px;margin-top:8px">Change a label only for a clear slip: a misread, or evidence you missed. Not because the judge argues well. Click a quote in the judge's reasoning to find it in the evidence.</div>`;
+}
+
+function decide(crit, v) {
+  const a = answers[items[idx].run_id];
+  a.decisions = {...(a.decisions || {}), [crit]: v};
+  render();
+}
+
 function set(q, v) {
   const a = answers[items[idx].run_id];
   a[q] = a[q] === v && q === "tone" ? undefined : v;
@@ -263,10 +298,16 @@ function set(q, v) {
 async function submit() {
   const it = items[idx], a = answers[it.run_id];
   const msg = document.getElementById("msg");
-  if (!a.grounded || !a.must_not_claim) { msg.textContent = "Answer both gate questions first."; return; }
+  let body;
+  if (it.review) {
+    if (Object.keys(it.review).some(c => !(a.decisions || {})[c])) { msg.textContent = "Decide each disagreement first."; return; }
+    body = {run_id: it.run_id, decisions: a.decisions, note: a.note || ""};
+  } else {
+    if (!a.grounded || !a.must_not_claim) { msg.textContent = "Answer both gate questions first."; return; }
+    body = {run_id: it.run_id, grounded: a.grounded, must_not_claim: a.must_not_claim, tone: a.tone || "", note: a.note || ""};
+  }
   msg.textContent = "saving…";
-  const res = await fetch("/label", {method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({run_id: it.run_id, grounded: a.grounded, must_not_claim: a.must_not_claim, tone: a.tone || "", note: a.note || ""})});
+  const res = await fetch("/label", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
   if (!res.ok) { msg.textContent = "Not saved: " + await res.text(); return; }
   a.saved = true; idx++; render(); window.scrollTo(0, 0);
   document.querySelectorAll(".col").forEach(c => c.scrollTop = 0);
@@ -275,6 +316,15 @@ async function submit() {
 document.addEventListener("keydown", ev => {
   if (!items || idx >= items.length || ["INPUT", "TEXTAREA"].includes(ev.target.tagName)) return;
   const k = ev.key.toLowerCase();
+  const it = items[idx];
+  if (it.review) {
+    const pick = {k: "keep", c: "slip", u: "unsure"}[k];
+    if (pick) {  // the first disagreement still undecided, else the last one
+      const crits = Object.keys(it.review), done = (answers[it.run_id] || {}).decisions || {};
+      decide(crits.find(c => !done[c]) || crits[crits.length - 1], pick);
+    } else if (k === "enter") submit();
+    return;
+  }
   const map = {q: ["grounded","yes"], w: ["grounded","no"], a: ["must_not_claim","yes"], s: ["must_not_claim","no"]};
   if (map[k]) set(...map[k]);
   else if ("12345".includes(k) && k.length === 1) set("tone", k);

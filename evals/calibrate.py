@@ -31,6 +31,9 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE = "larkspur-judge-calibration"
 SET_FILE = ROOT / "reports" / "calibration-set.json"
+# The person's review of each disagreement (evals/label.py --review): "slip" flips their
+# first-pass label, "keep" and "unsure" leave it. The first pass itself is never changed.
+ADJ_FILE = ROOT / "reports" / "calibration-adjudication.json"
 GATES = ("grounded", "must_not_claim")
 # Cases whose judge reasons or replies were read while designing judge-v2 (D21). They can't
 # measure judge-v2 fairly, so they always land in the tuning half.
@@ -233,6 +236,18 @@ def human_labels(run_ids: list[str]) -> dict[str, dict[str, float]]:
     return out
 
 
+def adjudicate(
+    labels: dict[str, dict[str, float]], decisions: dict[str, dict[str, str]]
+) -> dict[str, dict[str, float]]:
+    out = {run: dict(got) for run, got in labels.items()}
+    for run, decided in decisions.items():
+        for crit in GATES:
+            key = f"human_{crit}"
+            if decided.get(crit) == "slip" and key in out.get(run, {}):
+                out[run][key] = 1 - out[run][key]
+    return out
+
+
 def _table(items: list[dict[str, Any]], labels: dict[str, dict[str, float]]) -> dict[str, Any]:
     rows = {}
     for crit in GATES:
@@ -317,6 +332,34 @@ def report(saved_path: Path, with_known_bad: bool = True) -> Path:
             lines.append(
                 f"| {crit} | {name} | {pct} | {lo:.2f}-{hi:.2f} | {a['false_pass']} | "
                 f"{a['false_fail']} |"
+            )
+    if ADJ_FILE.exists():
+        decisions = json.loads(ADJ_FILE.read_text(encoding="utf-8"))
+        adj = _table(cal["holdout"], adjudicate(labels, decisions))
+        counts = {d: 0 for d in ("slip", "keep", "unsure")}
+        for decided in decisions.values():
+            for crit in GATES:
+                if crit in decided:
+                    counts[decided[crit]] += 1
+        disputed = sum(hold[c]["n"] - hold[c]["agree"] for c in GATES)
+        lines += [
+            "",
+            "## Holdout after review of the disagreements",
+            "",
+            f"Reviewed {sum(counts.values())} of {disputed} disagreements with the judge's "
+            f"reasoning shown: {counts['slip']} my slip (label changed), {counts['keep']} kept "
+            f"(judge wrong), {counts['unsure']} unsure (kept). Reviewing only disagreements can "
+            "only move agreement up, so the raw numbers above are the headline.",
+            "",
+            "| Criterion | Raw agree | Adjudicated agree | 95% CI | False passes | False fails |",
+            "|---|---|---|---|---|---|",
+        ]
+        for crit in GATES:
+            a, r = adj[crit], hold[crit]
+            lo, hi = a["ci"]
+            lines.append(
+                f"| {crit} | {r['agree']}/{r['n']} | {a['agree']}/{a['n']} | {lo:.2f}-{hi:.2f} | "
+                f"{a['false_pass']} | {a['false_fail']} |"
             )
     lines += [
         "",
