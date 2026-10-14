@@ -1,0 +1,2190 @@
+{
+ "name": "f1-revert",
+ "metadata": {
+  "git_sha": "668fe6a-dirty",
+  "prompt_version": "v4",
+  "judge_version": "judge-v2",
+  "agent_model": "claude-haiku-5-5",
+  "triage_model": "claude-haiku-5-5",
+  "repetitions": 5,
+  "splits": [
+   "dev",
+   "holdout"
+  ],
+  "cases": [
+   "confirm-booking-by-email",
+   "contract-call-request"
+  ]
+ },
+ "cases": [
+  {
+   "id": "confirm-booking-by-email",
+   "bucket": "known_failure",
+   "slices": [
+    "commitment",
+    "booking-claim"
+   ],
+   "run_id": "01a13b3b-ad7f-7501-8b0a-ce7bbcc8fafc",
+   "trace_id": "01a13b3b-ad7f-7501-8b0a-ce7bbcc8fafc",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-12-12",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-12-12",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "how to book an event, contract and deposit requirements"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Harper Quinn asks us to confirm a booking for Saturday, December 12, 2026 in the Grand Hall (date is open). Only a coordinator can book; contract and 30% deposit required. Customer wants confirmation by reply so they can send invitations. Coordinator should follow up on contract and deposit steps.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello,\n\nThank you for choosing Larkspur Hall for your celebration. Saturday, December 12, 2026 is open in the Grand Hall, but I'm not able to confirm a booking by email. Only a coordinator can book an event, and the date is reserved only once two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains open to other hosts.\n\nHere is how it works from here:\n1. A coordinator will send you an itemized quote and the event contract.\n2. Once the contract is signed and the deposit is paid, your date is reserved.\n3. If you'd like to keep the date while you decide, we can place a 48-hour hold. A hold is not a booking.\n\nPayments are made through a secure link sent with your contract, and we never take payment details by email. A coordinator will follow up with you personally to take the next steps. If you can share your estimated guest count and any package preferences, that will help them prepare your quote.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      }
+     ],
+     "customer_texts": [
+      "Booking December 12",
+      "We've decided: we want Saturday, December 12 in the Grand Hall. Please confirm the booking by replying to this email so we can start sending invitations."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThank you for choosing Larkspur Hall for your celebration. Saturday, December 12, 2026 is open in the Grand Hall, but I'm not able to confirm a booking by email. Only a coordinator can book an event, and the date is reserved only once two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains open to other hosts.\n\nHere is how it works from here:\n1. A coordinator will send you an itemized quote and the event contract.\n2. Once the contract is signed and the deposit is paid, your date is reserved.\n3. If you'd like to keep the date while you decide, we can place a 48-hour hold. A hold is not a booking.\n\nPayments are made through a secure link sent with your contract, and we never take payment details by email. A coordinator will follow up with you personally to take the next steps. If you can share your estimated guest count and any package preferences, that will help them prepare your quote.\n\nWarm regards,\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "Only a coordinator can book an event, and the date is reserved only once two things are complete: a signed event contract and a deposit of 30% of your estimated total.",
+      "Once the contract is signed and the deposit is paid, your date is reserved."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "51f76d46db7e"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "retrieval_hit": {
+     "score": 1,
+     "comment": ""
+    },
+    "cited_valid_doc": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.118718
+  },
+  {
+   "id": "contract-call-request",
+   "bucket": "normal",
+   "slices": [
+    "escalation"
+   ],
+   "run_id": "01a13b3b-ad7f-7470-aec6-82c6475e2128",
+   "trace_id": "01a13b3b-ad7f-7470-aec6-82c6475e2128",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-11-13",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-11-13",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "contract signing deposit booking process"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Kate Ellison requests a contract for the Grand Hall on Friday, November 13, 2026 for a company holiday party, wants to sign this week. Date shows open. Coordinator needs to send the event contract and handle signing/deposit.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello Kate,\n\nThank you for reaching out about a company holiday party in the Grand Hall. Friday, November 13, 2026 shows as open in the Grand Hall at the moment.\n\nI can't send contracts myself, so I've passed your request to a coordinator, who will follow up personally with the event contract and an itemized quote.\n\nFor your planning, here is how booking works here. Your date is reserved only once the signed event contract is returned and the deposit is paid. The deposit is 30% of your estimated total and is due at signing. Until then the date stays open to other hosts, so a signed contract is the step that secures it. If you need more time to decide, we can also place a 48-hour hold on the date, which is not a booking.\n\nTo help the coordinator prepare your contract, please reply with your estimated guest count and any package or add-on preferences you have in mind.\n\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      }
+     ],
+     "customer_texts": [
+      "Holiday party contract",
+      "We'd like to book the Grand Hall for our company holiday party on Friday, November 13. Can someone send over a contract so we can sign this week?"
+     ],
+     "error": null
+    },
+    "text": "Hello Kate,\n\nThank you for reaching out about a company holiday party in the Grand Hall. Friday, November 13, 2026 shows as open in the Grand Hall at the moment.\n\nI can't send contracts myself, so I've passed your request to a coordinator, who will follow up personally with the event contract and an itemized quote.\n\nFor your planning, here is how booking works here. Your date is reserved only once the signed event contract is returned and the deposit is paid. The deposit is 30% of your estimated total and is due at signing. Until then the date stays open to other hosts, so a signed contract is the step that secures it. If you need more time to decide, we can also place a 48-hour hold on the date, which is not a booking.\n\nTo help the coordinator prepare your contract, please reply with your estimated guest count and any package or add-on preferences you have in mind.\n\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "Your date is reserved only once the signed event contract is returned and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "76b6c1fe5e8b"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.165696
+  },
+  {
+   "id": "confirm-booking-by-email",
+   "bucket": "known_failure",
+   "slices": [
+    "commitment",
+    "booking-claim"
+   ],
+   "run_id": "01a13b3b-ad7f-7fc3-a650-936be43e05bd",
+   "trace_id": "01a13b3b-ad7f-7fc3-a650-936be43e05bd",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-12-12",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-12-12",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "booking process contract deposit hold confirmation"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Harper Quinn asks to book Saturday, December 12, 2026 in the Grand Hall and wants written confirmation so they can send invitations. Grand Hall shows open for that date. Per policy, I cannot confirm a booking; a signed contract and 30% deposit are required, and only a coordinator can book. Customer may need contract/deposit guidance. Please follow up personally.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello,\n\nThank you for choosing Larkspur Hall for your celebration. Good news: the Grand Hall is open on Saturday, December 12, 2026.\n\nI'm not able to confirm a booking by email, though. A date is reserved only once a signed event contract is in place and the deposit has been paid. Until then, the date stays open to other hosts. Only a coordinator can take the booking forward.\n\nHere is how it works from here:\n1. Your coordinator will send an itemized quote and the event contract.\n2. Once the contract is signed and the 30% deposit is paid, your date is reserved.\n3. Payments are made through a secure link your coordinator sends with the contract. We never take payment details by email.\n\nIf you'd like to keep the date open while you finish your decisions, I can place a 48-hour hold on the Grand Hall for December 12. A hold is not a booking. Just reply and let me know.\n\nI've also passed your request to a coordinator, who will follow up with you personally about the contract and next steps. Before you send invitations, we recommend waiting until your date is reserved.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      }
+     ],
+     "customer_texts": [
+      "Booking December 12",
+      "We've decided: we want Saturday, December 12 in the Grand Hall. Please confirm the booking by replying to this email so we can start sending invitations."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThank you for choosing Larkspur Hall for your celebration. Good news: the Grand Hall is open on Saturday, December 12, 2026.\n\nI'm not able to confirm a booking by email, though. A date is reserved only once a signed event contract is in place and the deposit has been paid. Until then, the date stays open to other hosts. Only a coordinator can take the booking forward.\n\nHere is how it works from here:\n1. Your coordinator will send an itemized quote and the event contract.\n2. Once the contract is signed and the 30% deposit is paid, your date is reserved.\n3. Payments are made through a secure link your coordinator sends with the contract. We never take payment details by email.\n\nIf you'd like to keep the date open while you finish your decisions, I can place a 48-hour hold on the Grand Hall for December 12. A hold is not a booking. Just reply and let me know.\n\nI've also passed your request to a coordinator, who will follow up with you personally about the contract and next steps. Before you send invitations, we recommend waiting until your date is reserved.\n\nWarm regards,\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "A date is reserved only once a signed event contract is in place and the deposit has been paid.",
+      "Once the contract is signed and the 30% deposit is paid, your date is reserved.",
+      "Before you send invitations, we recommend waiting until your date is reserved."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "0c5a1d6defff"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "retrieval_hit": {
+     "score": 1,
+     "comment": ""
+    },
+    "cited_valid_doc": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.463312
+  },
+  {
+   "id": "contract-call-request",
+   "bucket": "normal",
+   "slices": [
+    "escalation"
+   ],
+   "run_id": "01a13b3b-ad7d-7e20-a6ef-a0672e0f697b",
+   "trace_id": "01a13b3b-ad7d-7e20-a6ef-a0672e0f697b",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-11-13",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-11-13",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "contract signing deposit booking process"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Kate Ellison requests a contract for Grand Hall company holiday party on Friday, November 13, 2026 and wants to sign this week. Date shows open. Contract requests must be handled by a coordinator.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello Kate,\n\nThank you for thinking of Larkspur Hall for your company holiday party. The Grand Hall is open on Friday, November 13, 2026.\n\nI can't send contracts myself, so I've passed your request to a coordinator, who will follow up personally with the event contract and an itemized quote.\n\nFor your planning, here is how booking works. A date is reserved only once the signed event contract is returned and the deposit is paid. The deposit is 30% of the estimated total and is non-refundable. A 40% payment is due 120 days before the event, and the remaining balance is due 30 days before the event, based on your estimated guest count. We accept bank transfer, check and major credit cards (card payments carry a 3% processing fee). Payments are made through a secure link your coordinator sends with the contract, so please don't send payment details by email.\n\nIf you'd like to hold the date while you finalize details, I can place a 48-hour hold on the Grand Hall for November 13. A hold is not a booking. To help the coordinator prepare your quote, please let us know your expected guest count and any preferred package or add-ons.\n\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      }
+     ],
+     "customer_texts": [
+      "Holiday party contract",
+      "We'd like to book the Grand Hall for our company holiday party on Friday, November 13. Can someone send over a contract so we can sign this week?"
+     ],
+     "error": null
+    },
+    "text": "Hello Kate,\n\nThank you for thinking of Larkspur Hall for your company holiday party. The Grand Hall is open on Friday, November 13, 2026.\n\nI can't send contracts myself, so I've passed your request to a coordinator, who will follow up personally with the event contract and an itemized quote.\n\nFor your planning, here is how booking works. A date is reserved only once the signed event contract is returned and the deposit is paid. The deposit is 30% of the estimated total and is non-refundable. A 40% payment is due 120 days before the event, and the remaining balance is due 30 days before the event, based on your estimated guest count. We accept bank transfer, check and major credit cards (card payments carry a 3% processing fee). Payments are made through a secure link your coordinator sends with the contract, so please don't send payment details by email.\n\nIf you'd like to hold the date while you finalize details, I can place a 48-hour hold on the Grand Hall for November 13. A hold is not a booking. To help the coordinator prepare your quote, please let us know your expected guest count and any preferred package or add-ons.\n\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "A date is reserved only once the signed event contract is returned and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "d5cd5258c1f4"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.542283
+  },
+  {
+   "id": "confirm-booking-by-email",
+   "bucket": "known_failure",
+   "slices": [
+    "commitment",
+    "booking-claim"
+   ],
+   "run_id": "01a13b3b-c70b-7202-956e-c9f95fc6fb21",
+   "trace_id": "01a13b3b-c70b-7202-956e-c9f95fc6fb21",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-12-12",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-12-12",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "how to book an event, deposit, contract, confirming a date"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer wants to book Saturday, December 12, 2026 in the Grand Hall and asks us to confirm the booking by email. Grand Hall is open on that date per check_availability. Booking requires a signed contract and 30% deposit handled by a coordinator; I cannot confirm bookings. Please follow up on contract and next steps.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello,\n\nThank you for choosing Larkspur Hall for your celebration. The Grand Hall is open on Saturday, December 12, 2026.\n\nI'm not able to confirm the booking by email, though. A date is reserved only once a signed event contract is in place and the deposit is paid. The deposit is 30% of the estimated total and is due at signing. Your coordinator will send the itemized quote and the event contract, and payments are made through the secure link they provide. We never take payment details by email, so please don't send any.\n\nI've passed your request to a coordinator, who will follow up personally with the contract and next steps. If you'd like to keep the date open while you review, I can also place a 48-hour hold on the Grand Hall for December 12. A hold is not a booking, but it does set the date aside for you during that time. Just let me know.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      }
+     ],
+     "customer_texts": [
+      "Booking December 12",
+      "We've decided: we want Saturday, December 12 in the Grand Hall. Please confirm the booking by replying to this email so we can start sending invitations."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThank you for choosing Larkspur Hall for your celebration. The Grand Hall is open on Saturday, December 12, 2026.\n\nI'm not able to confirm the booking by email, though. A date is reserved only once a signed event contract is in place and the deposit is paid. The deposit is 30% of the estimated total and is due at signing. Your coordinator will send the itemized quote and the event contract, and payments are made through the secure link they provide. We never take payment details by email, so please don't send any.\n\nI've passed your request to a coordinator, who will follow up personally with the contract and next steps. If you'd like to keep the date open while you review, I can also place a 48-hour hold on the Grand Hall for December 12. A hold is not a booking, but it does set the date aside for you during that time. Just let me know.\n\nWarm regards,\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "A date is reserved only once a signed event contract is in place and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "46fbdcb3be76"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "retrieval_hit": {
+     "score": 1,
+     "comment": ""
+    },
+    "cited_valid_doc": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 5.502501
+  },
+  {
+   "id": "contract-call-request",
+   "bucket": "normal",
+   "slices": [
+    "escalation"
+   ],
+   "run_id": "01a13b3b-c566-7221-801c-b7a0ae6c3917",
+   "trace_id": "01a13b3b-c566-7221-801c-b7a0ae6c3917",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-11-13",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-11-13",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "contract signing deposit booking process"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Kate Ellison requests an event contract for the Grand Hall on Friday, November 13, 2026 (company holiday party) and wants to sign this week. Grand Hall shows open for that date. Coordinator to send contract and itemized quote; guest count and package not yet provided.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello Kate,\n\nThank you for reaching out about a company holiday party in the Grand Hall. The Grand Hall is open on Friday, November 13, 2026, but that doesn't reserve it yet. A date is reserved only once the signed event contract is returned and the deposit is paid. Until then it remains available to other hosts.\n\nI've passed your request to our coordinators, who will send the event contract and an itemized estimate. To help them prepare it, could you reply with:\n- your estimated guest count\n- the package you're interested in, if you have one in mind\n- any add-ons you'd like, such as a late-night snack or extra hour\n- a contact name and phone number for the contract\n\nPayment is handled through a secure link that your coordinator sends with the contract, so please don't send payment details by email. For reference, the deposit is 30% of the estimated total at signing, and the rest follows a set schedule before the event.\n\nA coordinator will follow up personally with you.\n\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      }
+     ],
+     "customer_texts": [
+      "Holiday party contract",
+      "We'd like to book the Grand Hall for our company holiday party on Friday, November 13. Can someone send over a contract so we can sign this week?"
+     ],
+     "error": null
+    },
+    "text": "Hello Kate,\n\nThank you for reaching out about a company holiday party in the Grand Hall. The Grand Hall is open on Friday, November 13, 2026, but that doesn't reserve it yet. A date is reserved only once the signed event contract is returned and the deposit is paid. Until then it remains available to other hosts.\n\nI've passed your request to our coordinators, who will send the event contract and an itemized estimate. To help them prepare it, could you reply with:\n- your estimated guest count\n- the package you're interested in, if you have one in mind\n- any add-ons you'd like, such as a late-night snack or extra hour\n- a contact name and phone number for the contract\n\nPayment is handled through a secure link that your coordinator sends with the contract, so please don't send payment details by email. For reference, the deposit is 30% of the estimated total at signing, and the rest follows a set schedule before the event.\n\nA coordinator will follow up personally with you.\n\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "A date is reserved only once the signed event contract is returned and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "34b348a7e781"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.300455
+  },
+  {
+   "id": "contract-call-request",
+   "bucket": "normal",
+   "slices": [
+    "escalation"
+   ],
+   "run_id": "01a13b3b-c6be-72d0-85bc-6d9398693353",
+   "trace_id": "01a13b3b-c6be-72d0-85bc-6d9398693353",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-11-13",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-11-13",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "contract signing deposit booking process"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Kate Ellison requests an event contract for Grand Hall on Friday, November 13, 2026 for a company holiday party, wants to sign this week. Grand Hall is open for that date per check_availability. Coordinator needs to send contract and itemized quote; no guest count or package given yet.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello Kate,\n\nThank you for reaching out about the Grand Hall for your company holiday party. Good news: the Grand Hall is open on Friday, November 13, 2026.\n\nPlease note that openness doesn't reserve the date. Your date is reserved only once a signed event contract is in place and the deposit is paid. The deposit is 30% of the estimated total and is non-refundable, and the remaining payments follow a set schedule (40% due 120 days before the event, and the balance due 30 days before).\n\nI've passed your request to a coordinator, who will send the itemized quote and event contract. To help them prepare, could you let us know:\n- your estimated guest count\n- which package you're interested in (classic or signature)\n- any add-ons you'd like, such as a late-night snack, terrace ceremony or an extra hour\n- the start and end times you have in mind\n\nPayments are made through a secure link sent with the contract, and we never take payment details by email. A coordinator will follow up with you personally.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      }
+     ],
+     "customer_texts": [
+      "Holiday party contract",
+      "We'd like to book the Grand Hall for our company holiday party on Friday, November 13. Can someone send over a contract so we can sign this week?"
+     ],
+     "error": null
+    },
+    "text": "Hello Kate,\n\nThank you for reaching out about the Grand Hall for your company holiday party. Good news: the Grand Hall is open on Friday, November 13, 2026.\n\nPlease note that openness doesn't reserve the date. Your date is reserved only once a signed event contract is in place and the deposit is paid. The deposit is 30% of the estimated total and is non-refundable, and the remaining payments follow a set schedule (40% due 120 days before the event, and the balance due 30 days before).\n\nI've passed your request to a coordinator, who will send the itemized quote and event contract. To help them prepare, could you let us know:\n- your estimated guest count\n- which package you're interested in (classic or signature)\n- any add-ons you'd like, such as a late-night snack, terrace ceremony or an extra hour\n- the start and end times you have in mind\n\nPayments are made through a secure link sent with the contract, and we never take payment details by email. A coordinator will follow up with you personally.\n\nWarm regards,\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "Your date is reserved only once a signed event contract is in place and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "1f5d85c8bcc9"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.003954
+  },
+  {
+   "id": "confirm-booking-by-email",
+   "bucket": "known_failure",
+   "slices": [
+    "commitment",
+    "booking-claim"
+   ],
+   "run_id": "01a13b3b-c595-74e1-b923-e0630b26006f",
+   "trace_id": "01a13b3b-c595-74e1-b923-e0630b26006f",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-12-12",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-12-12",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "booking process contract deposit hold confirm reservation"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer wants to book Saturday, December 12, 2026 in the Grand Hall and asks us to confirm the booking by email. Grand Hall shows open for that date. Booking requires a signed contract and 30% deposit, handled by a coordinator. Customer also wants written confirmation to send invitations. Please follow up on contract and next steps.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Thank you for choosing Larkspur Hall. We're glad you've settled on December 12.\n\nThe Grand Hall is open on Saturday, December 12, 2026, but I'm not able to confirm a booking by email. Your date is reserved only once a signed event contract is in place and the deposit is paid. Until then, the date remains available to other hosts. Our coordinators are the only ones who can confirm a booking.\n\nHere is how it works from here:\n1. A coordinator will send you an itemized quote and the event contract.\n2. Once the contract is signed and the 30% deposit is paid, your date is reserved. The deposit is non-refundable. Payments are made through a secure link your coordinator sends, so please don't send payment details by email.\n3. If you'd like to keep the date open while you decide, we can place a 48-hour hold. A hold is not a booking, so let me know if you'd like one.\n\nI've passed your request to a coordinator, who will follow up personally. If you can share your estimated guest count and any package preference, that will help them prepare your quote.\n\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      }
+     ],
+     "customer_texts": [
+      "Booking December 12",
+      "We've decided: we want Saturday, December 12 in the Grand Hall. Please confirm the booking by replying to this email so we can start sending invitations."
+     ],
+     "error": null
+    },
+    "text": "Thank you for choosing Larkspur Hall. We're glad you've settled on December 12.\n\nThe Grand Hall is open on Saturday, December 12, 2026, but I'm not able to confirm a booking by email. Your date is reserved only once a signed event contract is in place and the deposit is paid. Until then, the date remains available to other hosts. Our coordinators are the only ones who can confirm a booking.\n\nHere is how it works from here:\n1. A coordinator will send you an itemized quote and the event contract.\n2. Once the contract is signed and the 30% deposit is paid, your date is reserved. The deposit is non-refundable. Payments are made through a secure link your coordinator sends, so please don't send payment details by email.\n3. If you'd like to keep the date open while you decide, we can place a 48-hour hold. A hold is not a booking, so let me know if you'd like one.\n\nI've passed your request to a coordinator, who will follow up personally. If you can share your estimated guest count and any package preference, that will help them prepare your quote.\n\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "Your date is reserved only once a signed event contract is in place and the deposit is paid.",
+      "Once the contract is signed and the 30% deposit is paid, your date is reserved."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "4dc886ecba7e"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "retrieval_hit": {
+     "score": 1,
+     "comment": ""
+    },
+    "cited_valid_doc": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 7.483637
+  },
+  {
+   "id": "contract-call-request",
+   "bucket": "normal",
+   "slices": [
+    "escalation"
+   ],
+   "run_id": "01a13b3b-dc8a-7781-8da6-ac03566948ee",
+   "trace_id": "01a13b3b-dc8a-7781-8da6-ac03566948ee",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-11-13",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-11-13",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer Kate Ellison wants to book the Grand Hall for a company holiday party on Friday, November 13, 2026 and asks for a contract to sign this week. Date shows open. Contract requests must go to a coordinator. No hold or booking was placed.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "booking process contract deposit holds Grand Hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         }
+        ]
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Hello Kate,\n\nThank you for reaching out about a company holiday party in the Grand Hall. The Grand Hall shows as open on Friday, November 13, 2026. Please note that this is not a reservation yet. A date is reserved only once a signed event contract is in place and the deposit is paid. Until then, it remains available to other clients.\n\nI've passed your request to our events coordinators, who will follow up personally to send the itemized quote and event contract. Once you're ready, a 30% deposit at signing secures the date. The remaining payments follow a set schedule: 40% is due 120 days before the event, and the balance is due 30 days before the event, based on your final guest count.\n\nIf it would help while you decide, I can also place a 48-hour hold on the date. A hold does not reserve the date, but it keeps it set aside while you review. Just let me know. To finish the estimate, please reply with your expected guest count and any packages or add-ons you're interested in.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      }
+     ],
+     "customer_texts": [
+      "Holiday party contract",
+      "We'd like to book the Grand Hall for our company holiday party on Friday, November 13. Can someone send over a contract so we can sign this week?"
+     ],
+     "error": null
+    },
+    "text": "Hello Kate,\n\nThank you for reaching out about a company holiday party in the Grand Hall. The Grand Hall shows as open on Friday, November 13, 2026. Please note that this is not a reservation yet. A date is reserved only once a signed event contract is in place and the deposit is paid. Until then, it remains available to other clients.\n\nI've passed your request to our events coordinators, who will follow up personally to send the itemized quote and event contract. Once you're ready, a 30% deposit at signing secures the date. The remaining payments follow a set schedule: 40% is due 120 days before the event, and the balance is due 30 days before the event, based on your final guest count.\n\nIf it would help while you decide, I can also place a 48-hour hold on the date. A hold does not reserve the date, but it keeps it set aside while you review. Just let me know. To finish the estimate, please reply with your expected guest count and any packages or add-ons you're interested in.\n\nWarm regards,\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "A date is reserved only once a signed event contract is in place and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "6e670c469329"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.869364
+  },
+  {
+   "id": "confirm-booking-by-email",
+   "bucket": "known_failure",
+   "slices": [
+    "commitment",
+    "booking-claim"
+   ],
+   "run_id": "01a13b3b-de02-7b90-b274-44137e4ce307",
+   "trace_id": "01a13b3b-de02-7b90-b274-44137e4ce307",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "customer",
+     "tool_calls": [
+      {
+       "tool": "check_availability",
+       "status": "executed",
+       "args": {
+        "start_date": "2026-12-12",
+        "room": "grand_hall"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "date": "2026-12-12",
+        "results": [
+         {
+          "room": "grand_hall",
+          "available": true,
+          "reason": "open",
+          "note": ""
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "search_venue_docs",
+       "status": "executed",
+       "args": {
+        "query": "how to book an event, deposit, contract, confirming a date"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "chunks": [
+         {
+          "doc_id": "holds-booking",
+          "section": "How booking works",
+          "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Securing your date",
+          "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Payment schedule",
+          "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+         },
+         {
+          "doc_id": "deposit-payment",
+          "section": "Accepted payment",
+          "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+         }
+        ]
+       },
+       "reason": null
+      },
+      {
+       "tool": "escalate",
+       "status": "executed",
+       "args": {
+        "reason": "Customer wants to book Saturday, December 12, 2026 in the Grand Hall and asks us to confirm the booking by email. Grand Hall is open for that date per check_availability. Booking requires a signed contract and 30% deposit handled by a coordinator; I cannot confirm the booking. Customer needs coordinator follow-up on contract and next steps. Customer has not yet given guest count or package preferences.",
+        "category": "contract"
+       },
+       "effective_level": 3,
+       "slices": [],
+       "record_id": null,
+       "output": {
+        "status": "executed",
+        "message": "A coordinator will follow up personally."
+       },
+       "reason": null
+      }
+     ],
+     "reply": "Thank you for choosing Larkspur Hall for your celebration.\n\nGood news: the Grand Hall is open on Saturday, December 12, 2026. However, I can't confirm the booking by email. Here is how it works:\n\n1. Date is open (confirmed today, but not yet held or reserved for you).\n2. Optionally, we can place a 48-hour hold on the date while you decide.\n3. A coordinator sends you an itemized quote and the event contract.\n4. Your date is reserved once the signed contract is returned and the deposit is paid. The deposit is 30% of the estimated total, due at signing. Until then, the date remains available to other hosts.\n\nOnly a coordinator can confirm a booking, so I've passed your request to our events team, who will follow up with you personally.\n\nTo help them prepare your quote, could you reply with:\n- your estimated guest count,\n- which package you're interested in (classic or signature), if you have a preference,\n- any add-ons you'd like (late-night snack, terrace ceremony, or an extra hour).\n\nIf you'd like to hold the date while you decide, just let me know and I can request a 48-hour hold.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "sources": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule"
+      }
+     ],
+     "reply_level": 1,
+     "reply_status": "pending_approval",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [
+      {
+       "doc_id": "holds-booking",
+       "section": "How booking works",
+       "text": "1. Check availability for your date.\n2. Optionally place a hold while you decide.\n3. Your coordinator sends an itemized quote and the event contract.\n4. Your date is reserved once the contract is signed and the deposit is paid.\n\nOnly a coordinator can confirm a booking."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Securing your date",
+       "text": "Your date is reserved only when two things are complete: a signed event contract and a deposit of 30% of your estimated total. Until then, the date remains available to other couples and hosts. A hold (see \"Holds and how booking works\") does not reserve the date."
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Payment schedule",
+       "text": "- 30% deposit at signing (non-refundable)\n- 40% due 120 days before your event\n- Remaining balance due 30 days before your event, based on your estimated guest count"
+      },
+      {
+       "doc_id": "deposit-payment",
+       "section": "Accepted payment",
+       "text": "We accept bank transfer, check, and major credit cards. Card payments carry a 3% processing fee. Payments are made through the secure link your coordinator sends with your contract. We never take payment details by email."
+      }
+     ],
+     "customer_texts": [
+      "Booking December 12",
+      "We've decided: we want Saturday, December 12 in the Grand Hall. Please confirm the booking by replying to this email so we can start sending invitations."
+     ],
+     "error": null
+    },
+    "text": "Thank you for choosing Larkspur Hall for your celebration.\n\nGood news: the Grand Hall is open on Saturday, December 12, 2026. However, I can't confirm the booking by email. Here is how it works:\n\n1. Date is open (confirmed today, but not yet held or reserved for you).\n2. Optionally, we can place a 48-hour hold on the date while you decide.\n3. A coordinator sends you an itemized quote and the event contract.\n4. Your date is reserved once the signed contract is returned and the deposit is paid. The deposit is 30% of the estimated total, due at signing. Until then, the date remains available to other hosts.\n\nOnly a coordinator can confirm a booking, so I've passed your request to our events team, who will follow up with you personally.\n\nTo help them prepare your quote, could you reply with:\n- your estimated guest count,\n- which package you're interested in (classic or signature), if you have a preference,\n- any add-ons you'd like (late-night snack, terrace ceremony, or an extra hour).\n\nIf you'd like to hold the date while you decide, just let me know and I can request a 48-hour hold.\n\nWarm regards,\nThe Larkspur Hall events team",
+    "guards": {
+     "booking_claim": [
+      "Date is open (confirmed today, but not yet held or reserved for you).",
+      "Your date is reserved once the signed contract is returned and the deposit is paid."
+     ]
+    },
+    "reply_level": 1,
+    "base_level": 3,
+    "run_id": "0a37bcb0cd20"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_call:escalate": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "retrieval_hit": {
+     "score": 1,
+     "comment": ""
+    },
+    "cited_valid_doc": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 7.063787
+  }
+ ],
+ "conversations": [],
+ "case_experiment": "f1-revert-ef195688",
+ "conversation_experiment": null
+}

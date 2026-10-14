@@ -19,7 +19,7 @@ Before any fix, each plan was checked against four questions:
 
 | # | Finding | Source | Runs affected | Reached a customer? | Status |
 |---|---|---|---|---|---|
-| F1 | Guards hold replies that restate a rule or refuse | agent | 50 of 57 guard-held | No (held) | Planned |
+| F1 | Guards hold replies that restate a rule or refuse | agent | 50 of 57 guard-held | No (held) | Not fixed: the attempt was reverted (see result) |
 | F2 | The agent repeats a customer's unverified figure while refusing it | agent | 5 | No (held) | Fixed: 1/6 → 15/15 |
 | F3 | The agent writes a price placeholder without pricing anything | agent | 3 | No (held) | Fixed (safety net; see result) |
 | F4 | The complaint acknowledgement is sent with no level in the ledger | agent | 4 | Yes (harmless template) | Fixed: 0/4 → 10/10 |
@@ -46,6 +46,15 @@ Example traces: `01a13742-316a-7cd1-8209-723deade07ee` (avail-and-rate), `01a137
 **Fix:** render the standing rules instead of letting the model paraphrase them. The model writes `{{policy:booking}}` (and `{{policy:no_discount}}`), and code inserts one fixed sentence, the same way prices work. The guards still scan everything the model typed, unchanged. A paraphrase, or a real claim next to the placeholder, still fires the guard, so the worst case is today's behavior. Free-form negations will still be held.
 
 **Measure:** guard-held replies before and after. The known-bad set must still be caught 100%, and escaped failures must not rise.
+
+**Result: the fix didn't work, and the prompt half was reverted.**
+- **Commits:** code `27d1356` (red), `b8920d8` (green); prompt v2 `4736ca3`. Measured in the full `v2` run (prompt v3, which also has the F2 to F5 fixes; none of those touch rule wording).
+- **The model used the placeholders, in 53 drafts, but kept paraphrasing the rule as well,** often adding detail from the documents ("…a deposit of 30% of your estimated total…"). booking_claim went from 46 to 49, and guard-held replies from 57 to 55. The worst case was today's behavior, as designed, so nothing got less safe. But there was no gain.
+- **It caused a regression.** confirm-booking-by-email (dev) went from 2/2 to 0/2: the agent answered with the placeholder and stopped escalating a request to confirm a booking. contract-call-request (dev) went from 2/2 to 1/2. The placeholder was also misused once ("Signature package: {{policy:booking}} is not the issue here…").
+- **Reverted:** prompt v4 drops the placeholder instructions (`668fe6a`); the gate still renders them if they appear. Targeted rerun `f1-revert`, 5 repetitions: confirm-booking-by-email and contract-call-request **10/10**, all escalated.
+- **Rejected next step:** giving the agent one retry when a guard fires ("rephrase this sentence"), as F2 does for numbers. That would teach our own loop to evade our own keyword guard: a real "your date is reserved!" would come back as "June 13 is all yours!", which the guard misses. Removing an unverified number genuinely fixes a reply; rephrasing around a keyword doesn't.
+- **Still open:** the false-alarm rate. Options, in the README's next steps: a stronger model that follows "don't restate it"; or a measured second-opinion classifier, never trusted without its miss rate on the known-bad set.
+- **Process note:** two of the v2 failures I read were holdout cases (quote-missing-guest-count, locked-in-claim). v2's holdout number was measured before I looked, so it stays blind. Any later run's holdout number isn't, and the revert was decided on the dev cases above.
 
 ## F2. The agent repeats a customer's unverified figure while refusing it (agent)
 
