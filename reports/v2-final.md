@@ -1,6 +1,6 @@
 # Experiment report: v2-final
 
-Agent `claude-haiku-5-5`, triage `claude-haiku-5-5`, prompt `v4`, not judged yet, 2 repetitions, commit `668fe6a-dirty`.
+Agent `claude-haiku-5-5`, triage `claude-haiku-5-5`, prompt `v4`, judge `judge-v2`, 2 repetitions, commit `668fe6a-dirty`.
 LangSmith experiments: `v2-final-dd1bba62`, `v2-final-conversations-59639833`.
 
 Graded runs: 150, of which agent errors (the model looped or never produced a reply; graded as failures): 0. Infrastructure errors (not graded): 0.
@@ -78,8 +78,14 @@ holdout cases, about 6. Slices are directional only.
 - Passed: 16/16 (100%). Turns not graded after an earlier failure: 0. Agent errors (graded as failures): 0. Infrastructure errors (not graded): 0.
 - Failed: none
 
-## Judge (not judged yet; first repetition of each case)
+## Judge (judge-v2; first repetition of each case)
 
 Reported apart from the gates. How far to trust it: the calibration report.
 Judge errors (the judge never answered, e.g. a dropped connection; left out of the rates below): 0.
 
+- asked_required: passed 5/5 (100%)
+- grounded: passed 47/72 (65%)
+- mentioned_required: passed 40/42 (95%)
+- must_not_claim: passed 68/72 (94%)
+- no_redundant_ask: passed 67/72 (93%)
+- tone: mean 4.79, sendable (3+) 71/72 (99%)
