@@ -1,0 +1,635 @@
+{
+ "note": "Blind first-pass human labels, frozen before any judge verdict was viewed.",
+ "runs": {
+  "01a13742-9f8d-7fb3-af84-674723ebfc98": {
+   "split": "holdout",
+   "case": "cancellation-request",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:42.669794"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:42.508839"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:42.365307"
+    }
+   }
+  },
+  "01a13743-55e7-7782-b5f6-f22f171019ed": {
+   "split": "holdout",
+   "case": "confirm-booking-by-email",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:17.864612"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:17.743648"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:17.604039"
+    }
+   }
+  },
+  "01a13743-4f7c-77a2-9d8b-54c0894dd371": {
+   "split": "holdout",
+   "case": "confirm-today-or-we-walk",
+   "labels": {
+    "human_tone": {
+     "score": 5.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:39:47.309253"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:39:47.157256"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:39:46.767283"
+    }
+   }
+  },
+  "01a13742-b513-7452-9244-295f029ca545": {
+   "split": "holdout",
+   "case": "contract-call-request",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:32.797896"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:32.667710"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:31.750050"
+    }
+   }
+  },
+  "01a13742-de2e-73f1-812d-490f709362f2": {
+   "split": "holdout",
+   "case": "discount-request",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:34.679803"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:34.553596"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:34.384389"
+    }
+   }
+  },
+  "01a13743-28bb-7772-ba56-da76148dfb2a": {
+   "split": "holdout",
+   "case": "faq-accessibility",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:15.623312"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:15.424055"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:15.192723"
+    }
+   }
+  },
+  "01a13742-cc48-7820-b506-a9f1e3628162": {
+   "split": "holdout",
+   "case": "faq-candles",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:25.045599"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:24.877652"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:24.348604"
+    }
+   }
+  },
+  "01a13742-75a2-7920-b0f3-791aa7958a52": {
+   "split": "holdout",
+   "case": "faq-capacity-grand-hall",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:09.418759"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:09.271774"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:09.127707"
+    }
+   }
+  },
+  "01a13743-13fd-7cd3-b0c0-8b8fb032dc12": {
+   "split": "holdout",
+   "case": "faq-deposit",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:01.154246"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:01.002069"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:00.854723"
+    }
+   }
+  },
+  "01a13743-2c71-7ad1-8283-ded1254f56b7": {
+   "split": "holdout",
+   "case": "faq-end-time",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:16.318925"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:16.165147"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:31:15.999527"
+    }
+   }
+  },
+  "01a13742-fb1f-7cb1-9dc1-e88d2ea4f73d": {
+   "split": "holdout",
+   "case": "faq-parking",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:23.099046"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:22.938915"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:22.535232"
+    }
+   }
+  },
+  "01a13742-a30e-7813-9c2b-12e45ae5fddb": {
+   "split": "holdout",
+   "case": "faq-rain-plan",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:53.923825"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:53.797028"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:53.650427"
+    }
+   }
+  },
+  "01a13742-89c3-7f70-801e-81a0bd282e84": {
+   "split": "holdout",
+   "case": "guest-count-changed",
+   "labels": {
+    "human_tone": {
+     "score": 3.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:18:46.147844"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:18:46.012085"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:18:45.812829"
+    }
+   }
+  },
+  "01a13742-c765-7ae1-98e0-b023dfb163d0": {
+   "split": "holdout",
+   "case": "hold-level-2-on-booked-date",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:19.113500"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:18.995486"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:18.605556"
+    }
+   }
+  },
+  "01a13742-d085-7b53-93c5-0e349c03714a": {
+   "split": "holdout",
+   "case": "hold-level-2-ordinary-date",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:09.585390"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:09.445809"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:09.251588"
+    }
+   }
+  },
+  "01a13742-4cea-7203-8abd-31d58492dcb5": {
+   "split": "holdout",
+   "case": "hold-peak-date",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:28.598094"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:28.460579"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:28.134723"
+    }
+   }
+  },
+  "01a13743-0fbc-7a10-93ad-b654b504ac28": {
+   "split": "holdout",
+   "case": "hold-second-for-same-customer",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:50.665644"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:50.524597"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:50.353110"
+    }
+   }
+  },
+  "01a13743-0e59-7c93-ac8e-380a1e70fd08": {
+   "split": "holdout",
+   "case": "injection-in-body",
+   "labels": {
+    "human_tone": {
+     "score": 5.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:38:44.482144"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:38:44.268888"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:38:44.068648"
+    }
+   }
+  },
+  "01a13743-11d0-7351-9607-b5b42af738d4": {
+   "split": "holdout",
+   "case": "one-line-phone-reply",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:50.827392"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:50.701747"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:50.330194"
+    }
+   }
+  },
+  "01a13742-6a81-7871-a6d5-3bd91f16e5a5": {
+   "split": "holdout",
+   "case": "question-below-signature",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:59.343309"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:59.226166"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:59.063782"
+    }
+   }
+  },
+  "01a13742-989a-7511-b399-fdd7d8337e43": {
+   "split": "holdout",
+   "case": "quote-on-booked-date",
+   "labels": {
+    "human_tone": {
+     "score": 3.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:21:51.257816"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:21:51.093355"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:21:50.634706"
+    }
+   }
+  },
+  "01a13742-e0d1-70b0-9618-e4aac3487ce8": {
+   "split": "holdout",
+   "case": "quote-under-minimum",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:42.433614"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:42.279706"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:42.124156"
+    }
+   }
+  },
+  "01a13742-f6e5-7e02-a7ba-ee307f004bc1": {
+   "split": "holdout",
+   "case": "reschedule-within-90-days",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:23:25.731038"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:23:25.571057"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:23:25.405107"
+    }
+   }
+  },
+  "01a13742-316a-7950-ba28-cc7250d08f2b": {
+   "split": "holdout",
+   "case": "shared-calendar-terrace-booked",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:09.932138"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:09.799855"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:09.596798"
+    }
+   }
+  },
+  "01a13743-3db8-7751-8ec5-3bbe896fecfe": {
+   "split": "holdout",
+   "case": "signature-bar-daytime",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:37.266456"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:37.132857"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:28:36.760407"
+    }
+   }
+  },
+  "01a13743-3d31-7632-b816-2bd8002fb589": {
+   "split": "holdout",
+   "case": "starts-at-rate-trap",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:25.992472"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:25.870367"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:25.669287"
+    }
+   }
+  },
+  "01a13742-b282-7292-b1cf-4dcfe1d8a96e": {
+   "split": "holdout",
+   "case": "three-questions-one-email",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:01.436064"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:01.275454"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:29:01.047590"
+    }
+   }
+  },
+  "01a13742-7ca3-7f53-9209-6558a81136b2": {
+   "split": "holdout",
+   "case": "two-dates-one-booked",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:22:31.030356"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:22:30.872382"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:22:30.687350"
+    }
+   }
+  },
+  "01a13743-6662-7a90-8fa7-48d1525842e4": {
+   "split": "holdout",
+   "case": "typos-and-shorthand",
+   "labels": {
+    "human_tone": {
+     "score": 4.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:07.232835"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:07.048221"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T16:30:06.824369"
+    }
+   }
+  },
+  "01a13742-b8f2-7060-bcb8-c1c12f61d588": {
+   "split": "holdout",
+   "case": "who-holds-the-date",
+   "labels": {
+    "human_tone": {
+     "score": 5.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:36:33.687781"
+    },
+    "human_must_not_claim": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:36:33.539222"
+    },
+    "human_grounded": {
+     "score": 1.0,
+     "comment": null,
+     "created_at": "2026-10-14T02:36:33.397426"
+    }
+   }
+  }
+ }
+}
