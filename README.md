@@ -74,17 +74,17 @@ If we've spoken before, you've heard about Gatherset, where I build AI email wor
 
 **Reversible vs. commitments.** Answering and checking are reversible: a wrong answer can be corrected. Holds and tours change the venue's calendar, so by default they wait for a person. Booking an event can't happen at all: no tool exists for it, and only a coordinator books, after the contract is signed and the deposit is paid.
 
-**Invariants** (I1–I10, [docs/implementation-plan.md](docs/implementation-plan.md) §6), each enforced in code and tested:
+**Invariants** (I1–I10, [docs/implementation-plan.md](docs/implementation-plan.md) §6). I1–I9 are enforced in code and tested; I10 is measured by the evals:
 - **Levels (I1):** no action runs above its level. The middleware decides; the model's arguments can't raise it.
-- **Unapproved writes (I2):** nothing changes the venue's world without approval.
+- **Unapproved writes (I2):** at the default levels, nothing changes the venue's world without approval. A venue can raise a write above level 1; it's then placed first and reviewed after (every one at level 2, a 10% sample at level 3).
 - **Double booking (I3):** no date and room held or booked twice. Every write is one `BEGIN IMMEDIATE` transaction with partial unique indexes, and race tests run the same write concurrently.
 - **Duplicates (I4):** a repeated tool call, approval or email never creates a second effect or reply. The inbound claim and idempotency keys prevent it.
 - **Partial writes (I5):** a failed write leaves nothing behind.
 - **Identity (I6):** a hold or tour is only ever for the sender. Identity comes from the email header, never from the model's arguments.
 - **Evidence (I7):** no required detail the customer never gave. Every date, guest count or package carries a `*_quote` of the customer's own words, checked in code. Unclear means ask, never guess.
 - **Expiry (I8):** an approval after 48 hours finds the action expired.
-- **Risky claims (I9):** claim guards hold any reply with a risky claim the system can't back.
-- **Misstatements (I10):** a reply that misstates a status in words the guards miss is caught by the judge's gates (`must_not_claim`, `grounded`).
+- **Risky claims (I9):** claim guards hold any reply that makes a guarded claim this run can't back: a date booked, a hold placed, a tour booked, a date available, a discount, a policy with no document search, an amount no tool or document produced, or a total typed outside a quote. Claims outside that list, such as a handoff, fall to I10.
+- **Misstatements (I10):** a reply that misstates a status in words the guards miss is caught by the judge's gates (`must_not_claim`, `grounded`) in evals. The judge doesn't run on live replies yet (section 8), so this is measured, not prevented: the false handoff claims in section 1 are this kind of failure.
 
 ## 4. Diagram
 
@@ -247,7 +247,7 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 **How I worked.** I settled the decisions and the plan with Claude before any code ([docs/decisions.md](docs/decisions.md), [docs/implementation-plan.md](docs/implementation-plan.md)). Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
 
 **What I checked myself.**
-- **The trust-critical code, line by line** (about 900 lines): the autonomy policy and middleware, the evidence checks, the world API and its transactions, the claim guards and reply gate, and the approval flow. The rest (pricing math, date parsing, retrieval, triage and the eval harness) I trusted to the tests and the evals.
+- **The trust-critical code and the eval code, line by line** (about 1,400 lines): the autonomy policy and middleware, the evidence checks, the world API and its transactions, the claim guards and reply gate, the approval flow, and the checks, judge and calibration behind every number. The rest (pricing math, date parsing, retrieval and triage) I trusted to the tests and the evals.
 - **Every eval label**, bucket by bucket, before the agent existed.
 - **Behaviour, by evals rather than by reading:** each fix was rerun on the cases it targeted at 5 repetitions, then on the full suite.
 - **The judge, and myself:** I labeled 30 replies blind, tested my own labeling on the known-bad set, then reviewed every disagreement. Claude Code built the labeling page and explained the judge's quoted evidence during the review; the decisions were mine.
