@@ -44,8 +44,11 @@ def _key(ctx: RunContext, tool: str, values: dict[str, Any]) -> str:
     return hashlib.sha256(body.encode()).hexdigest()[:32]
 
 
-# After this many needs_input results from one tool in a run, further calls are refused.
-MAX_NEEDS_INPUT = 3
+# Loop breaker (F5), counted per tool per run. A valid call always runs. After STOP_AFTER
+# needs_input results, one that needs input again is answered "ask the customer"; after
+# REFUSE_AFTER, the tool is refused outright, so the loop stays bounded.
+STOP_AFTER = 3
+REFUSE_AFTER = 6
 # How to fix a call, for the model (the `message` is worded for the customer).
 NEXT_STEP = {
     "day_without_month": "If the customer named the month in an earlier message, call again "
@@ -54,6 +57,15 @@ NEXT_STEP = {
     "no_date": "If the customer gave the date in an earlier message, quote those exact words. "
     "Otherwise don't call again: ask the customer.",
 }
+
+
+def _ask_customer(name: str, asked: int, what: str) -> dict[str, Any]:
+    return {
+        "status": "needs_input",
+        "reason": "ask_customer",
+        "message": f"{name} has needed more from the customer {asked} times in this run. "
+        f"Don't call it again: ask the customer. ({what})",
+    }
 
 
 def handle_call(name: str, args: dict[str, Any], ctx: RunContext) -> dict[str, Any]:
@@ -91,19 +103,10 @@ def handle_call(name: str, args: dict[str, Any], ctx: RunContext) -> dict[str, A
         if name in ctx.tool_failures:
             raise ToolUnavailable(f"{name} is unavailable right now")
 
-        # A loop breaker (F5): a tool that keeps needing input is refused, so the agent asks
-        # the customer instead of retrying with new wording until the step limit.
         asked = sum(1 for c in ctx.calls if c["tool"] == name and c["status"] == "needs_input")
-        if asked >= MAX_NEEDS_INPUT:
+        if asked >= REFUSE_AFTER:
             row["effective_level"] = effective_level(action, set(), ctx.overrides)
-            return finish(
-                {
-                    "status": "needs_input",
-                    "reason": "ask_customer",
-                    "message": f"{name} has needed more from the customer {asked} times in this "
-                    "run. Don't call it again: ask the customer for what's missing.",
-                }
-            )
+            return finish(_ask_customer(name, asked, "what's missing"))
 
         prep = prepare(name, args, ctx)
         if prep.values:
@@ -135,7 +138,9 @@ def handle_call(name: str, args: dict[str, Any], ctx: RunContext) -> dict[str, A
             )
         if not prep.ok:
             result = {"status": prep.status, "reason": prep.reason, "message": prep.message}
-            if prep.status == "needs_input":
+            if prep.status == "needs_input" and asked >= STOP_AFTER:
+                result = _ask_customer(name, asked, prep.message)
+            elif prep.status == "needs_input":
                 hint = NEXT_STEP.get(prep.reason or "")
                 if asked:
                     hint = "Stop retrying this call with other wording. " + (
