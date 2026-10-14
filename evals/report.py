@@ -118,10 +118,15 @@ def summarize(saved: dict[str, Any], splits: dict[str, str]) -> dict[str, Any]:
         "p95": round(lat[int(0.95 * (len(lat) - 1))], 1) if lat else None,
     }
     judge: dict[str, dict[str, Any]] = {}
+    out["judge_errors"] = 0
     for r in graded:
         for key, f in r["feedback"].items():
-            if key.startswith("judge:") and f["score"] is not None:
-                judge.setdefault(key, {"scores": []})["scores"].append(f["score"])
+            if not key.startswith("judge:") or f["score"] is None:
+                continue
+            if (f.get("comment") or "").startswith("judge_error"):
+                out["judge_errors"] += 1  # the judge never answered: not a grade
+                continue
+            judge.setdefault(key, {"scores": []})["scores"].append(f["score"])
     for key, j in judge.items():
         s = j.pop("scores")
         j["n"] = len(s)
@@ -233,6 +238,8 @@ def render(saved: dict[str, Any], s: dict[str, Any]) -> str:
         "## Judge (judge-v1, uncalibrated; first repetition of each case)",
         "",
         "Shown for reference only until phase 6 measures the judge against human labels.",
+        f"Judge errors (the judge never answered, e.g. a dropped connection; left out of the "
+        f"rates below): {s['judge_errors']}.",
         "",
     ]
     for key, j in sorted(s["judge"].items()):

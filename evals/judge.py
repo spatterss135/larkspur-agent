@@ -12,6 +12,7 @@ from __future__ import annotations
 import functools
 import json
 import os
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -23,6 +24,8 @@ from evals.schema import Anchor, Email, KnownBad, ThreadMessage, load_suite
 
 JUDGE_VERSION = "judge-v2"  # v2: rendered prices and standing rules are evidence (D21)
 JUDGE_MODEL = "gpt-6.1-sol"
+# Seconds to wait before each retry. A call that still fails after these is a judge_error.
+RETRY_DELAYS = (2, 8)
 
 
 @dataclass
@@ -367,13 +370,20 @@ def judge_reply(
             {"role": "user", "content": context},
         ]
         config = {"run_name": f"judge:{name}", "metadata": {"judge_version": JUDGE_VERSION}}
-        try:
-            judge = model.with_structured_output(c.schema, method="json_schema")
-            out = judge.invoke(messages, config=config)
-        except Exception as err:  # noqa: BLE001 - any failure must be visible, not a pass
-            results.append(EvalResult(name, False, gate=c.gate, comment=f"judge_error: {err!r}"))
-            continue
-        results.append(_result(name, c, out, inp))
+        judge = model.with_structured_output(c.schema, method="json_schema")
+        for delay in (*RETRY_DELAYS, None):
+            try:
+                out = judge.invoke(messages, config=config)
+                break
+            except Exception as err:  # noqa: BLE001 - any failure must be visible, not a pass
+                if delay is None:
+                    out = err
+                else:
+                    time.sleep(delay)
+        if isinstance(out, Exception):
+            results.append(EvalResult(name, False, gate=c.gate, comment=f"judge_error: {out!r}"))
+        else:
+            results.append(_result(name, c, out, inp))
     return results
 
 

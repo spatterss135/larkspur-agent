@@ -81,10 +81,11 @@ holdout cases, about 6. Slices are directional only.
 ## Judge (judge-v1, uncalibrated; first repetition of each case)
 
 Shown for reference only until phase 6 measures the judge against human labels.
+Judge errors (the judge never answered, e.g. a dropped connection; left out of the rates below): 54.
 
-- asked_required: passed 4/5 (80%)
+- asked_required: passed 4/4 (100%)
 - grounded: passed 24/72 (33%)
-- mentioned_required: passed 28/42 (67%)
+- mentioned_required: passed 28/29 (97%)
 - must_not_claim: passed 49/72 (68%)
-- no_redundant_ask: passed 48/72 (67%)
-- tone: mean 3.44, sendable (3+) 51/72 (71%)
+- no_redundant_ask: passed 48/52 (92%)
+- tone: mean 4.77, sendable (3+) 51/52 (98%)
