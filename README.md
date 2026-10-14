@@ -40,7 +40,7 @@ Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The hol
   - [v1 vs v2, case by case](https://smith.langchain.com/public/06e2f3ca-cdcd-4e78-8feb-119ecca1091c/d/compare?selectedSessions=75a68937-97ca-44b3-ad0d-573a99c640af%2C964e1c78-f00d-464d-8968-18d53af2d059). In LangSmith, v1's `judge:*` columns come from the uncalibrated judge-v1; the judge rows above grade both versions with judge-v2. The `human_*` columns on v1 are my calibration labels.
   - [All experiments on the case dataset](https://smith.langchain.com/public/06e2f3ca-cdcd-4e78-8feb-119ecca1091c/d), including the targeted reruns for each fix (`f1-…` to `f4-…`).
   - [A sample trace](https://smith.langchain.com/public/abf141b6-3085-41fe-bead-5618547c753c/r): a hold request. The agent checks availability, reads the hold policy and requests the hold, which waits for a coordinator's approval; the reply says so.
-- **Cost:** the agent and triage run on Claude Haiku 5.5; the whole eval program, baseline through v2, cost under $10 (D20). Most input tokens were prompt-cache reads.
+- **Cost:** kept low on purpose. The agent and triage run on Claude Haiku 5.5 with prompt caching (most input tokens were cache reads), and the judge grades one repetition per case (D20).
 
 ## 2. Why this problem
 
@@ -244,7 +244,7 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 
 ## 12. How AI assistants helped, and what I checked myself
 
-**How I worked.** I settled the decisions and the plan with Claude before any code ([docs/decisions.md](docs/decisions.md), [docs/implementation-plan.md](docs/implementation-plan.md)). Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
+**How I worked.** I settled the plan and the first 16 decisions with Claude before any code ([docs/decisions.md](docs/decisions.md), [docs/implementation-plan.md](docs/implementation-plan.md)); D17–D21 were made during the build. Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
 
 **What I checked myself.**
 - **The trust-critical code and the eval code, line by line** (about 1,400 lines): the autonomy policy and middleware, the evidence checks, the world API and its transactions, the claim guards and reply gate, the approval flow, and the checks, judge and calibration behind every number. The rest (pricing math, date parsing, retrieval and triage) I trusted to the tests and the evals.

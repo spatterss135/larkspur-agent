@@ -7,7 +7,7 @@ What the v1 baseline ([reports/v1-baseline.md](../reports/v1-baseline.md), tag `
 - **label:** the expected answer may be wrong
 - **corpus:** the venue documents are unclear
 
-Fixes are one per commit. Each is measured by rerunning only the affected cases (5 repetitions, no judge), and then the full suite for regressions. Trace IDs are LangSmith trace IDs in the experiments `v1-baseline-cc178d53` and `v1-baseline-conversations-11074e3e`.
+Fixes are one per commit. Each is measured by rerunning only the affected cases (5 repetitions, no judge), and then the full suite for regressions. Trace IDs are LangSmith trace IDs in the experiments `v1-baseline-cc178d53` and `v1-baseline-conversations-11074e3e`, except the v2 traces in F10 and F12, which are in `v2-final-dd1bba62`.
 
 Before any fix, each plan was checked against four questions:
 1. Does it need code to understand meaning?

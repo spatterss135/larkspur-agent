@@ -1,6 +1,6 @@
 # Decision records
 
-Each decision: what we decided, why, and what we rejected. Numbers (D1–D16) match the references in [implementation-plan.md](implementation-plan.md). The plan was drafted with Claude, reviewed by other models in three rounds, and frozen at v4. D13–D16 record those review rounds.
+Each decision: what we decided, why, and what we rejected. Numbers (D1–D16) match the references in [implementation-plan.md](implementation-plan.md). The plan was drafted with Claude, reviewed by other models in three rounds, and frozen at v4. D13–D15 record those review rounds, and D16 the check against the brief.
 
 Each record describes the decision as it was made. Where something later changed or didn't happen, a dated **Status** line says so.
 
@@ -59,7 +59,7 @@ No code, data, keys or prompts from my part-time job.
 - **Judge:** GPT-6.1 Sol (a different family from the agent).
 - **Embeddings:** text-embedding-3-small.
 - **Rejected:** a same-family judge; the most expensive judge by default; a single agent model with no comparison.
-- **Status:** superseded by D20. The agent and triage run on Claude Haiku 5.5, and the Sonnet 5.5 comparison wasn't run (README section 9).
+- **Status (2026-10-14):** superseded by D20. The agent and triage run on Claude Haiku 5.5, and the Sonnet 5.5 comparison wasn't run (README section 9).
 
 ## D10. README: story first, reference last
 The outline in [README.md](../README.md). The "what the evals taught me" section is written from real findings.
@@ -128,7 +128,7 @@ A throwaway spike on branch `spike/framework` (never merged) checked the plan's 
 - **What it costs in quality, and how we'll know.** Haiku may fail cases a larger model would pass. In phase 7, failing cases are rerun once on Sonnet 5.5 to separate design failures (both models fail) from capability failures (only Haiku fails). Running the full suite on stronger models is listed under next steps in the README.
 - **Kept:** all 75 cases. At about a cent per run, cutting cases would save very little and cost statistical power and approved labels.
 - **Rejected:** a full Sonnet comparison at 3 repetitions (most of the cost, little of the story); dropping cases to save money.
-- **Status (2026-10-14):** the phase 7 reruns on Sonnet 5.5 weren't done. A full Sonnet run is the first next step in README section 9.
+- **Status (2026-10-14):** the phase 7 reruns on Sonnet 5.5 weren't done. A full Sonnet run is the first next step in README section 9. Actual spend wasn't tallied against this budget.
 
 
 ## D21. What counts as evidence for "grounded" (judge-v2)
