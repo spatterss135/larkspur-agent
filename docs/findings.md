@@ -20,7 +20,7 @@ Before any fix, each plan was checked against four questions:
 | # | Finding | Source | Runs affected | Reached a customer? | Status |
 |---|---|---|---|---|---|
 | F1 | Guards hold replies that restate a rule or refuse | agent | 50 of 57 guard-held | No (held) | Planned |
-| F2 | The agent repeats a customer's unverified figure while refusing it | agent | 5 | No (held) | Planned |
+| F2 | The agent repeats a customer's unverified figure while refusing it | agent | 5 | No (held) | Fixed: 1/6 → 15/15 |
 | F3 | The agent writes a price placeholder without pricing anything | agent | 3 | No (held) | Fixed (safety net; see result) |
 | F4 | The complaint acknowledgement is sent with no level in the ledger | agent | 4 | Yes (harmless template) | Fixed: 0/4 → 10/10 |
 | F5 | The agent asks "which month?" and loops on a tool that needs input | agent | 2 | No | Fixed: loops 1/2 → 0/5; passes 0/2 → 2/5 |
@@ -62,6 +62,10 @@ Traces: `01a13742-fb5f-7411-9b29-f28d78376a82`, `01a13743-4f2e-7f12-9db0-7cae152
 **Fix (prompt v2):** never repeat an amount that no tool or document produced; call it "the figure you mentioned". The check stays as strict. A prompt change is a nudge, so the check is still what protects the customer.
 
 **Result, first attempt (prompt v3, `f1ae9e5`).** Targeted rerun `f2-figures`, 5 repetitions: 0/15 passed (baseline 1/6). Haiku still repeated the figure in every run ("I can't confirm the $4,000 figure from your planner"); the guard held all 15. The prompt change didn't move the number, which is the risk this plan named. Next: a structural fix, the same one-retry check as F3, extended to amounts no tool or document produced.
+
+**Result, second attempt (`458625f` red, `d22db24` green).** The agent node's draft check, added for F3, now also runs the gate's numbers check. An amount no tool or retrieved document produced gets the same one correction note and one more try, and the gate still checks the final draft. Targeted rerun `f2-figures-2`, 5 repetitions: **15/15 passed** (baseline 1/6, prompt-only attempt 0/15). coordinator-promised-discount still trips the discount guard in 5/5 runs: the model adds its own sentence about discounts next to `{{policy:no_discount}}`, so those replies are held for a person. That's safe, and it's counted under F1.
+
+The run's commit reads `82abde8-dirty`; the uncommitted change was an unrelated Makefile edit, not agent code.
 
 ## F3. The agent writes a price placeholder without pricing anything (agent)
 
