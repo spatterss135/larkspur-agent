@@ -1,4 +1,4 @@
-.PHONY: setup test lint ci sync eval pending
+.PHONY: setup test lint ci sync eval label pending
 
 setup:  ## Install Python and dependencies
 	uv sync
@@ -17,6 +17,9 @@ sync:  ## Push the YAML evals to LangSmith datasets (needs LANGSMITH_API_KEY)
 
 eval:  ## Run cases with the real models: make eval CASE=faq-parking [JUDGE=1]
 	uv run python -m evals.run $(foreach c,$(CASE),--case $(c)) $(if $(JUDGE),--judge,)
+
+label:  ## Label the calibration holdout in a local page: make label [ARGS=--all|--redo]
+	uv run python -m evals.label $(ARGS)
 
 pending:  ## What's waiting for a coordinator
 	uv run python -m agent.cli pending

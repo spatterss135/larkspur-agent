@@ -202,12 +202,12 @@ function render() {
   document.getElementById("prog").style.width = `${100 * (data.total - items.length + saved) / data.total}%`;
   if (!items.length || idx >= items.length) {
     document.getElementById("where").textContent = "";
-    app.innerHTML = `<div class="done-all"><h1>All done</h1><p class="muted">Run<br><code>uv run python -m evals.calibrate report reports/v1-baseline.json</code></p>${items.length ? '<button id="back">Back</button>' : ""}</div>`;
+    app.innerHTML = `<div class="done-all"><h1>All done</h1><p class="muted">Run<br><code>${esc(data.done_hint)}</code></p>${items.length ? '<button id="back">Back</button>' : ""}</div>`;
     const b = document.getElementById("back"); if (b) b.onclick = () => { idx = items.length - 1; render(); };
     return;
   }
   const it = items[idx], a = answers[it.run_id] || (answers[it.run_id] = {});
-  document.getElementById("where").textContent = `${idx + 1} / ${items.length} · ${it.case} · ${it.bucket} · today in the case: ${it.today}`;
+  document.getElementById("where").textContent = `${idx + 1} / ${items.length} · ${it.case} · ${it.bucket}${it.today ? " · today in the case: " + it.today : ""}`;
   const e = it.email;
   const thread = it.thread.map(m => `<div class="thread"><div class="who">${m.role === "agent" ? "earlier agent reply: NOT evidence" : "customer, earlier"}</div><div class="pre">${esc(m.body)}</div></div>`).join("");
   const reply = it.reply.map(s => s.system ? `<span class="sys pre">${esc(s.text)}</span>` : `<span class="pre">${tokenize(s.text)}</span>`).join("");

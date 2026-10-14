@@ -161,3 +161,128 @@ def test_tone_is_optional_but_both_gates_are_required():
         feedback_rows({"grounded": "yes"})
     with pytest.raises(ValueError):
         feedback_rows({"grounded": "yes", "must_not_claim": "yes", "tone": "7"})
+
+
+# --- the annotator check: the same page over the known-bad set --------------------------------
+
+
+def kb(id_, expect, control=False, why="SECRET-WHY"):
+    from evals.schema import KnownBad
+
+    return KnownBad.model_validate(
+        {
+            "id": id_,
+            "why": why,
+            "email": {"from": "a@b.com", "body": "Is June 13 free?"},
+            "reply": "Yes, it's booked for you.",
+            "control": control,
+            "expect": {"judge": expect},
+        }
+    )
+
+
+def test_a_known_bad_item_hides_everything_that_gives_the_answer_away():
+    from evals.label import build_known_bad
+
+    item = build_known_bad(kb("kb-hold-placed", {"must_not_claim": "fail"}), "item-03")
+    dumped = json.dumps(item)
+    assert "kb-hold-placed" not in dumped and "SECRET-WHY" not in dumped
+    assert "control" not in dumped and "expect" not in dumped
+    assert item["run_id"] == "item-03" and item["case"] == "Item 3"
+    assert item["reply"] == [{"system": False, "text": "Yes, it's booked for you."}]
+
+
+def test_a_known_bad_sender_is_hidden_because_the_addresses_mark_the_controls():
+    from evals.label import build_known_bad
+
+    control = kb("kb-ok", {"grounded": "pass"}, control=True)
+    control.email.sender = "kb.c1@example.com"
+    item = build_known_bad(control, "item-01")
+    assert "kb.c1" not in json.dumps(item)
+
+
+def test_known_bad_items_are_shuffled_numbered_once_and_skipped_when_labeled():
+    from evals.label import known_bad_queue
+
+    items = [kb(f"kb-{c}", {"grounded": "fail"}) for c in "abcdef"]
+    order = known_bad_queue(items, labeled=set())
+    assert [t for t, _ in order] == [f"item-{n:02}" for n in range(1, 7)]
+    assert [i.id for _, i in order] != [i.id for i in items]  # not in file order
+    assert known_bad_queue(items, labeled=set()) == order  # stable across restarts
+    later = known_bad_queue(items, labeled={order[0][1].id})
+    assert later == order[1:]  # numbers don't shift when resuming
+
+
+def test_the_annotator_score_counts_catches_and_false_alarms_per_criterion():
+    from evals.label import score_known_bad
+
+    items = [
+        kb("kb-a", {"grounded": "fail"}),
+        kb("kb-b", {"grounded": "fail"}),
+        kb("kb-c", {"must_not_claim": "fail"}),
+        kb("kb-ok", {"grounded": "pass", "must_not_claim": "pass"}, control=True),
+    ]
+    labels = {
+        "kb-a": {"grounded": "no", "must_not_claim": "yes"},
+        "kb-b": {"grounded": "yes", "must_not_claim": "yes"},  # missed
+        "kb-c": {"grounded": "yes", "must_not_claim": "no"},
+        "kb-ok": {"grounded": "no", "must_not_claim": "yes"},  # false alarm on grounded
+    }
+    s = score_known_bad(items, labels)
+    assert s["grounded"] == {"caught": 1, "bad": 2, "false_alarms": 1, "controls": 1}
+    assert s["must_not_claim"] == {"caught": 1, "bad": 1, "false_alarms": 0, "controls": 1}
+    assert s["misses"] == ["kb-b (grounded)"] and s["false_alarm_items"] == ["kb-ok (grounded)"]
+    assert s["unlabeled"] == []
+
+
+def test_the_annotator_report_counts_unlabeled_items_without_naming_them(tmp_path, monkeypatch):
+    import evals.label as label
+
+    monkeypatch.setattr(label, "KB_FILE", tmp_path / "kb.json")
+    monkeypatch.setattr(label, "ROOT", tmp_path)
+    (tmp_path / "reports").mkdir()
+    monkeypatch.setattr(
+        "evals.schema.load_known_bad", lambda: [kb("kb-secret-name", {"grounded": "fail"})]
+    )
+    text = label.known_bad_report().read_text(encoding="utf-8")
+    assert "kb-secret-name" not in text and "Not labeled yet: 1" in text
+
+
+def test_known_bad_labels_go_to_a_local_file_under_the_real_id(tmp_path):
+    from evals.label import save_known_bad
+
+    path = tmp_path / "kb.json"
+    save_known_bad(path, "kb-a", {"grounded": "no", "must_not_claim": "yes", "note": "n"})
+    save_known_bad(path, "kb-a", {"grounded": "yes", "must_not_claim": "yes"})  # replaces
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    assert saved["kb-a"]["grounded"] == "yes" and saved["kb-a"]["note"] == ""
+    with pytest.raises(ValueError):
+        save_known_bad(path, "kb-b", {"grounded": "no"})
+
+
+def test_a_known_bad_item_with_yaml_dates_can_be_sent_to_the_page():
+    import datetime as dt
+
+    from evals.label import build_known_bad
+    from evals.schema import KnownBad
+
+    item = KnownBad.model_validate(
+        {
+            "id": "kb-dated",
+            "why": "w",
+            "email": {"from": "a@b.com", "body": "b"},
+            "run": {
+                "tool_calls": [
+                    {
+                        "tool": "place_hold",
+                        "status": "pending_approval",
+                        "args": {"date": dt.date(2026, 6, 13)},
+                    }
+                ]
+            },
+            "reply": "r",
+            "expect": {"judge": {"must_not_claim": "fail"}},
+        }
+    )
+    sent = json.dumps(build_known_bad(item, "item-01"))
+    assert "2026-06-13" in sent
