@@ -7,6 +7,7 @@ without a person). An infrastructure error is reported as infra_error and never 
 The judge grades the first repetition of each case only, to keep cost down (D20).
 
     uv run python -m evals.experiment --name v1-baseline --reps 2 --judge
+    uv run python -m evals.experiment --judge-saved reports/v2.json   # judge offline, later
 """
 
 from __future__ import annotations
@@ -243,6 +244,59 @@ def select_examples(examples: list[Any], cases: tuple[str, ...] | None, limit: i
     return examples[:limit] if limit else examples
 
 
+def judge_saved(path: Path, model: Any = None, push: bool = True) -> None:
+    """Judge a saved experiment offline: the first repetition of each case, with the current
+    judge. Scores go into the saved file (and onto the LangSmith runs when `push`). The
+    agent doesn't run again."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    from evals import judge
+    from evals.schema import load_suite
+
+    cases = {c.id: c for c in load_suite().cases}
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    first: dict[str, dict[str, Any]] = {}
+    for row in saved["cases"]:
+        if row["id"] in cases and (row.get("outputs") or {}).get("text"):
+            first.setdefault(row["id"], row)
+
+    def grade(row: dict[str, Any]) -> None:
+        case, out = cases[row["id"]], row["outputs"]
+        res, exp = out["result"], cases[row["id"]].expected.reply
+        inp = judge.JudgeInput(
+            email=case.email,
+            reply=out["text"],
+            thread=case.thread,
+            tool_calls=res.get("tool_calls", []),
+            retrieved=res.get("retrieved", []),
+            sources=res.get("sources", []),
+            must_ask=exp.must_ask,
+            must_not_ask=exp.must_not_ask,
+            must_mention=exp.must_mention,
+            must_not_claim=exp.must_not_claim,
+        )
+        for f in _feedback(judge.judge_reply(inp, model)):
+            row["feedback"][f"judge:{f['key']}"] = {"score": f["score"], "comment": f["comment"]}
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(grade, first.values()))
+    saved["metadata"]["judge_version"] = judge.JUDGE_VERSION
+    path.write_text(json.dumps(saved, indent=1, default=str), encoding="utf-8")
+    if push:
+        _push_feedback(first.values())
+
+
+def _push_feedback(rows: Any) -> None:
+    from langsmith import Client
+    from urllib3.util.retry import Retry
+
+    client = Client(retry_config=Retry(total=8, connect=8, read=8, backoff_factor=2))
+    for row in rows:
+        for key, f in row["feedback"].items():
+            if key.startswith("judge:"):
+                client.create_feedback(row["run_id"], key, score=f["score"], comment=f["comment"])
+
+
 def run_experiment(
     name: str,
     *,
@@ -349,7 +403,8 @@ def _row(row: Any) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--name", required=True)
+    p.add_argument("--name")
+    p.add_argument("--judge-saved", type=Path, help="judge a saved experiment offline and exit")
     p.add_argument("--reps", type=int, default=2)
     p.add_argument("--judge", action="store_true")
     p.add_argument("--agent", default="haiku")
@@ -363,6 +418,12 @@ def main(argv: list[str] | None = None) -> int:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env")
+    if args.judge_saved:
+        judge_saved(args.judge_saved)
+        print(f"judged the first repetition of each case in {args.judge_saved}")
+        return 0
+    if not args.name:
+        p.error("--name is required")
     os.environ.setdefault("LANGSMITH_TRACING", "true")
     os.environ.setdefault("LANGSMITH_PROJECT", "larkspur-agent")
     saved = run_experiment(
