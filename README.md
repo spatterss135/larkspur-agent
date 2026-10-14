@@ -11,16 +11,21 @@ An email inquiry agent for a fictional event venue. It answers questions from th
 - Code enforces everything that matters: autonomy levels, evidence for every customer detail, prices rendered from records, claim guards and a single world API with database invariants.
 - An eval suite measures the agent before and after each fix.
 
-<!-- TODO(v2): before→after table from reports/v1-baseline.md and reports/v2.md -->
+Full reports: [v1 baseline](reports/v1-baseline.md), [v2](reports/v2-final.md). What changed and why: [docs/findings.md](docs/findings.md).
 
 | | v1 baseline | v2 |
 |---|---|---|
-| Dev cases passed (both repetitions) | 53/59 (90%) | TODO |
-| Holdout cases passed | 16/16 | TODO |
-| Conversations passed | 10/16 (62%) | TODO |
-| Bold failures, and how many escaped to a customer without a person | 12, 2 escaped | TODO |
-| Replies held for a person | 58/150 (39%) | TODO |
-| Held by a guard on a reply that passed every gate (likely false alarms) | 50 | TODO |
+| Dev cases passed (both repetitions) | 53/59 (90%) | **58/59 (98%)** |
+| Holdout cases passed | 16/16 | 14/16 (88%) |
+| Conversations passed | 10/16 (62%) | **16/16 (100%)** |
+| Bold failures (did or said too much) | 12 | 8 |
+| ...of which escaped to a customer without a person | 2 | **0** |
+| Replies held by a guard that passed every gate (likely false alarms) | 50 | 47 (not fixed; see F1) |
+| Agent loops | 1 | 0 |
+| Latency per email, p50 / p95 | 5.6 s / 8.0 s | 5.9 s / 9.8 s |
+<!-- TODO(calibration): judge rows (grounded, forbidden claims, tone) for v1 and v2 with the calibrated judge -->
+
+Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The holdout cases dropped from 16 to 14, and both failures are new failure modes the fixes didn't generalize to (section 7). Fixing them would turn them into dev cases, so they're listed instead.
 
 - **Recording (≤5 min):** TODO
 - **LangSmith:** TODO links to the v1 vs v2 comparison and a sample trace (made public)
@@ -135,16 +140,18 @@ Each held reply or hold request gets its own small approval graph (`review` paus
 
 Full record: [docs/findings.md](docs/findings.md). Each finding is tagged by source (agent, evaluator, label, corpus) and was fixed one per commit. Each fix was measured by rerunning just the affected cases at 5 repetitions, then the full suite.
 
-- **F1, guards held replies that stated a rule correctly** (50 of 57 guard-held replies passed every gate). The guards can't tell "your date is reserved" from "a date is only reserved once the contract is signed". Teaching them negation would make every exception a possible hole. Instead, the agent writes `{{policy:booking}}` and code inserts one approved sentence, the same way prices work; the guards still scan everything the model typed. <!-- TODO(v2): result -->
+- **F1, guards held replies that stated a rule correctly** (50 of 57 guard-held replies passed every gate). The guards can't tell "your date is reserved" from "a date is only reserved once the contract is signed". Teaching them negation would make every exception a possible hole. the agent writes `{{policy:booking}}` and code inserts one approved sentence, the same way prices work; the guards still scan everything the model typed. <!-- TODO(v2): result -->
 - **F2, the agent repeated a customer's unverified figure while refusing it** ("I can't confirm the $4,000…"). A prompt change did nothing: 0/15. A structural fix did: after drafting, the agent gets one retry when a number in its reply has no source, and the gate still checks. Result: 15/15.
 - **F3, placeholders with no price behind them.** Same retry. It never fired in the targeted rerun, so the improvement there isn't credited to it; I checked separately that it works with the real model.
 - **F4, the complaint template was sent with no level in the ledger.** The fail-closed audit check caught it. The policy now sets the template's level like any other action. Result: 10/10.
-- **F5, the agent looped 17 times on a date tool that needed input.** My first loop breaker refused a *correct* call. The targeted rerun showed it, so the spec changed first, test-first. Now loops: 0/5 runs; passes: 0/2 → 3/5.
+- **F5, the agent looped 17 times on a date tool that needed input.** My first loop breaker refused a *correct* call. The targeted rerun showed it, so the spec changed first, test-first. Now there are no loops (0/5 runs), and the conversation passes 3/5 (it was 0/2).
 - **F7–F9, evaluator bugs:** an agent loop was filed as an infrastructure error, and dropped judge connections were counted as failed grades. Both made a number wrong, so both were fixed before anything else.
 
 ## 7. Known failures and what I'm unsure about
 
-<!-- TODO(v2): add anything v2 surfaces -->
+- **Totals stated in prose** (holdout, quote-missing-guest-count, 2/2): the model writes "priced per guest at $135, and the total also includes…". F2's retry covers amounts with no source, but $135 is in the documents. The separate "no totals outside a quote" check catches it, and that check has no retry, so the reply is held. The fix generalized narrowly.
+- **Triage skipped an email that needed a reply** once (holdout, change-your-autonomy-level, 1/2).
+- **F1, guard false alarms:** 47 replies held that passed every gate. Safe, but a coordinator reviews about a third of all replies.
 - **F6:** asked "did you get my hold request?", the agent files the request again. A duplicate is blocked by the database in real use, and the agent has no tool to see pending requests.
 - **Free-form refusals still trip the guards.** Sentences like "I'm not able to produce a discounted quote" are held for a person: safe, but extra review.
 - **Small numbers.** With 2 repetitions and 16 holdout cases, one case moves the holdout rate by about 6 points. Targeted reruns use 5 repetitions, which is still small.
