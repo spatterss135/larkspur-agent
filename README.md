@@ -28,6 +28,7 @@ An email inquiry agent for a fictional event venue. It answers questions from th
 ## 9. What I'd do next
 <!-- Filled in from the findings. Already planned: -->
 - **Stronger models.** The agent and triage run on Claude Haiku 5.5 to keep the eval program cheap (see D20). Next: run the full suite on Sonnet 5.5 and compare gate pass rate against cost and latency. Phase 7's targeted Sonnet rerun of failing cases shows which failures are the model's and which are the design's.
+- **Separate gathering from drafting.** Today one `create_agent` loop both calls tools and writes the reply in its last turn. Next: a gather node (tools only), then a draft node with no tools that sees only an explicit evidence packet: retrieved docs and every tool result with its exact status. Gains: the writer structurally can't act, "grounded" means "supported by the packet" and the judge grades against that same packet, each stage gets its own eval, and the writer can run on a stronger model than the gatherer. Costs: one more model call per email, the writer can't go back for a missing fact without an edge back to gathering, and the handoff must keep every status exactly ("pending", not "done"). I kept the loop for v1 so phase 7's before→after changes one thing at a time; I'd build the split as its own graph and compare it against the loop on the same dataset for pass rate, grounded score, cost and latency.
 
 ## 10. Quickstart
 
