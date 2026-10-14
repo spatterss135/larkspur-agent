@@ -79,6 +79,29 @@ def test_an_infra_error_is_not_graded():
     assert fb["key"] == "infra_error" and fb["score"] == 1
 
 
+LOOP = "GraphRecursionError: Recursion limit of 30 reached without hitting a stop condition."
+
+
+def test_an_agent_loop_is_graded_as_a_failure_not_an_infra_error():
+    # The model looping is the agent's behavior, not the infrastructure's (baseline finding).
+    run = SimpleNamespace(outputs={"error": LOOP, "result": {}})
+    fb = {r["key"]: r for r in code_evaluator(run, as_example(CASE_EX["faq-parking"]))["results"]}
+    assert "infra_error" not in fb
+    assert fb["agent_error"]["score"] == 1 and fb["run_passed"]["score"] == 0
+    # nothing reached the customer: a person follows up, so it is a cautious miss
+    assert fb["cautious_misses"]["score"] == 1 and fb["escaped_bold_failures"]["score"] == 0
+
+
+def test_an_agent_loop_fails_the_conversation():
+    convo = SUITE.conversations[0]
+    run = SimpleNamespace(outputs={"error": LOOP, "turns": [], "texts": [], "end": {}})
+    fb = {
+        r["key"]: r for r in conversation_evaluator(run, as_example(CONVO_EX[convo.id]))["results"]
+    }
+    assert "infra_error" not in fb
+    assert fb["agent_error"]["score"] == 1 and fb["conversation_passed"]["score"] == 0
+
+
 def test_turns_after_a_failed_turn_are_not_graded():
     convo = next(c for c in SUITE.conversations if len(c.turns) >= 2)
     example = as_example(CONVO_EX[convo.id])

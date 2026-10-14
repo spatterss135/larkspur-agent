@@ -76,3 +76,38 @@ def test_bold_escaped_and_guard_counts():
 def test_the_uncalibrated_judge_is_reported_separately():
     s = summarize(SAVED, SPLITS)
     assert s["judge"]["judge:tone"]["n"] == 1
+
+
+def infra(case, bucket, comment):
+    return {
+        "id": case,
+        "bucket": bucket,
+        "feedback": {"infra_error": {"score": 1, "comment": comment}},
+        "trace_id": f"t-{case}",
+        "latency_s": 5.0,
+    }
+
+
+def test_an_agent_loop_saved_as_an_infra_error_is_counted_as_a_failure():
+    # Runs saved before the fix carry the loop as infra_error; the report regrades them.
+    saved = {
+        **SAVED,
+        "cases": SAVED["cases"] + [infra("faq-parking", "normal", "GraphRecursionError: x")],
+    }
+    s = summarize(saved, SPLITS)
+    assert s["infra_errors"] == 0 and s["agent_errors"] == 1
+    assert s["dev"]["runs"] == (3, 5) and s["dev"]["cases"] == (0, 2)
+
+
+def test_conversation_errors_are_reported_not_dropped():
+    saved = {
+        **SAVED,
+        "conversations": [
+            {"id": "c1", "feedback": {"conversation_passed": {"score": 1, "comment": None}}},
+            infra("c2", "convo", "GraphRecursionError: x"),
+            infra("c3", "convo", "APIConnectionError: x"),
+        ],
+    }
+    c = summarize(saved, SPLITS)["conversations"]
+    assert c["passed"] == (1, 2) and c["failed"] == ["c2"]
+    assert c["agent_errors"] == 1 and c["infra_errors"] == 1
