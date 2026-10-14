@@ -256,6 +256,7 @@ def run_experiment(
     cases: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     from langsmith import Client, evaluate
+    from urllib3.util.retry import Retry
 
     from agent.prompts import PROMPT_VERSION
     from evals.datasets import CASES, CONVERSATIONS
@@ -263,7 +264,17 @@ def run_experiment(
     from evals.run import MODELS, git_sha, real_models, shared_retriever
 
     models = real_models(agent)
-    client = Client()
+    # The network here drops connections now and then. One dropped call at the end of an
+    # experiment once lost a whole run's results, so every call retries patiently.
+    retry = Retry(
+        total=8,
+        connect=8,
+        read=8,
+        backoff_factor=2,
+        allowed_methods=None,
+        status_forcelist=(429, 500, 502, 503, 504),
+    )
+    client = Client(retry_config=retry)
     metadata = {
         "git_sha": git_sha(),
         "prompt_version": PROMPT_VERSION,
@@ -290,6 +301,7 @@ def run_experiment(
         res = evaluate(
             target,
             data=data,
+            client=client,
             evaluators=evals,
             experiment_prefix=prefix,
             metadata=metadata,

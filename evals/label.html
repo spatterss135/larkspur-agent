@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judge Calibration Labels</title>
+<style>
+  :root {
+    --bg: #fafaf9; --panel: #ffffff; --ink: #1c1917; --muted: #78716c; --line: #e7e5e4;
+    --done: #15803d; --done-bg: #f0fdf4; --req: #b45309; --req-bg: #fffbeb;
+    --off: #57534e; --off-bg: #f5f5f4; --bad: #b91c1c; --bad-bg: #fef2f2;
+    --sys-bg: #eff6ff; --sys-line: #93c5fd; --mark: #fde047; --tok: #1d4ed8; --accent: #1d4ed8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c0a09; --panel: #1c1917; --ink: #f5f5f4; --muted: #a8a29e; --line: #292524;
+      --done: #4ade80; --done-bg: #052e16; --req: #fbbf24; --req-bg: #2a1d05;
+      --off: #a8a29e; --off-bg: #292524; --bad: #f87171; --bad-bg: #2a0a0a;
+      --sys-bg: #0c1a33; --sys-line: #1e40af; --mark: #854d0e; --tok: #93c5fd; --accent: #60a5fa;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; gap: 16px; align-items: baseline; padding: 10px 16px;
+           border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header b { font-size: 15px; }
+  .muted { color: var(--muted); }
+  .bar { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; align-self: center; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); height: calc(100vh - 45px); }
+  .col { overflow-y: auto; padding: 14px 16px 120px; }
+  .col + .col { border-left: 1px solid var(--line); }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; height: auto; } .col { overflow: visible; } }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .pre { white-space: pre-wrap; word-wrap: break-word; }
+  .thread { border-left: 3px solid var(--line); padding-left: 10px; margin: 6px 0; }
+  .thread .who { font-size: 12px; color: var(--muted); }
+  .reply { font-size: 15px; }
+  .sys { display: block; background: var(--sys-bg); border-left: 3px solid var(--sys-line);
+         padding: 6px 10px; margin: 6px 0; border-radius: 4px; font-size: 13px; }
+  .sys::before { content: "Inserted by the system from a ledger record. True as written; check only the words around it."; display: block;
+                 font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .tok { color: var(--tok); border-bottom: 1px dotted var(--tok); cursor: pointer; }
+  .tok.on { background: var(--mark); color: var(--ink); }
+  mark { background: var(--mark); color: inherit; border-radius: 2px; }
+  .q { margin-top: 12px; }
+  .q .title { font-weight: 600; }
+  .q details { font-size: 12.5px; color: var(--muted); margin: 2px 0 6px; }
+  .forbid { margin: 4px 0 6px 18px; padding: 0; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  button { font: inherit; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--line);
+           background: var(--panel); color: var(--ink); cursor: pointer; }
+  button.sel { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button kbd { font-size: 11px; opacity: .6; margin-left: 4px; }
+  textarea { width: 100%; font: inherit; padding: 6px; border-radius: 6px; border: 1px solid var(--line);
+             background: var(--panel); color: var(--ink); }
+  .save { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+  .save .primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #msg { font-size: 13px; }
+  .search { display: flex; gap: 8px; align-items: center; position: sticky; top: -14px; background: var(--bg);
+            padding: 8px 0; z-index: 1; }
+  .search input { flex: 1; font: inherit; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--line);
+                  background: var(--panel); color: var(--ink); }
+  .group { border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid var(--line); }
+  .group .gh { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+  .g-done { background: var(--done-bg); } .g-done .gh { color: var(--done); }
+  .g-requested { background: var(--req-bg); } .g-requested .gh { color: var(--req); }
+  .g-not_run { background: var(--off-bg); } .g-not_run .gh { color: var(--off); }
+  .g-failed { background: var(--bad-bg); } .g-failed .gh { color: var(--bad); }
+  .call { margin: 6px 0; font-size: 13px; }
+  .call .name { font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+  .kv { font-family: ui-monospace, Consolas, monospace; font-size: 12px; margin: 2px 0 0 12px; white-space: pre-wrap; word-wrap: break-word; }
+  .doc { margin-bottom: 8px; }
+  .doc .src { font-size: 12px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; }
+  .done-all { max-width: 520px; margin: 80px auto; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <b>Judge calibration</b>
+  <span id="where" class="muted"></span>
+  <span class="bar"><i id="prog"></i></span>
+  <span id="count" class="muted"></span>
+</header>
+<main id="app"><p style="padding:16px">Loading…</p></main>
+<script>
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const TOKEN = new RegExp([
+  "\\$[\\d,]+(?:\\.\\d+)?",
+  "\\b(?:" + MONTHS.join("|") + ")\\s+\\d{1,2}(?:st|nd|rd|th)?",
+  "\\b\\d{1,2}(?::\\d{2})?\\s?(?:am|pm|a\\.m\\.|p\\.m\\.)",
+  "\\b\\d[\\d,]*(?:\\.\\d+)?%?",
+].join("|"), "gi");
+
+let data, items, idx = 0;
+const answers = {};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function tokenize(text) {
+  let out = "", last = 0;
+  for (const m of text.matchAll(TOKEN)) {
+    out += esc(text.slice(last, m.index)) + `<span class="tok" data-t="${esc(m[0])}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(text.slice(last));
+}
+
+// What a reply token may look like in the evidence: $9,000 ~ 9000.00, June 13 ~ 2026-06-13.
+function patternFor(tok) {
+  const md = tok.match(new RegExp("^(" + MONTHS.join("|") + ")\\s+(\\d{1,2})", "i"));
+  if (md) {
+    const mi = MONTHS.findIndex(m => m.toLowerCase() === md[1].toLowerCase()) + 1;
+    const mm = String(mi).padStart(2, "0"), dd = md[2].padStart(2, "0");
+    return new RegExp(`${md[1]}\\s+${md[2]}(?!\\d)|${md[1].slice(0,3)}\\s+${md[2]}(?!\\d)|-${mm}-${dd}\\b`, "gi");
+  }
+  const num = tok.replace(/[$,%]/g, "").match(/^(\d+)(?:\.(\d+))?$/);
+  if (num) {
+    const intp = num[1].split("").join(",?");
+    const dec = (num[2] || "").replace(/0+$/, "");
+    const tail = dec ? `\\.${dec}0*` : "(?:\\.0+)?";
+    return new RegExp(`(?<![\\d.])\\$?${intp}${tail}(?![\\d])`, "g");
+  }
+  return new RegExp(reEsc(tok), "gi");
+}
+
+function highlight(re) {
+  renderEvidence();
+  const root = document.getElementById("evidence");
+  let count = 0, first = null;
+  if (re) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      const text = node.nodeValue; let last = 0; const frag = document.createDocumentFragment(); let hit = false;
+      re.lastIndex = 0;
+      for (const m of text.matchAll(re)) {
+        if (!m[0]) continue;
+        hit = true; count++;
+        frag.append(text.slice(last, m.index));
+        const mk = document.createElement("mark"); mk.textContent = m[0]; frag.append(mk);
+        first = first || mk; last = m.index + m[0].length;
+      }
+      if (hit) { frag.append(text.slice(last)); node.replaceWith(frag); }
+    }
+  }
+  document.getElementById("hits").textContent = re ? (count ? `${count} in the evidence` : "not in the evidence") : "";
+  if (first) first.scrollIntoView({block: "center", behavior: "smooth"});
+}
+
+function kv(obj) {
+  return Object.entries(obj).map(([k, v]) => {
+    if (Array.isArray(v) && v.length && typeof v[0] === "object")
+      v = "\n" + v.map(o => "  · " + Object.entries(o).filter(([, x]) => x !== "" && x !== null).map(([a, b]) => `${a}=${typeof b === "object" ? JSON.stringify(b) : b}`).join(", ")).join("\n");
+    else if (v && typeof v === "object")
+      v = "\n" + Object.entries(v).map(([a, b]) => `  ${a}: ${typeof b === "object" ? JSON.stringify(b) : b}`).join("\n");
+    return `${k}: ${v}`;
+  }).join("\n");
+}
+
+const GROUPS = [
+  ["done", "DONE (executed)"],
+  ["requested", "REQUESTED, NOT DONE: a person must approve it first"],
+  ["not_run", "NOT RUN: did nothing (missing input or not permitted)"],
+  ["failed", "FAILED: errored and did nothing"],
+];
+
+function renderEvidence() {
+  const it = items[idx];
+  let h = "<h2>Action ledger</h2>";
+  for (const [g, label] of GROUPS) {
+    const calls = it.ledger.filter(c => c.group === g);
+    if (!calls.length && g !== "done") continue;
+    h += `<div class="group g-${g}"><div class="gh">${label}</div>`;
+    h += calls.map(c => `<div class="call"><span class="name">${esc(c.tool)}${c.record_id ? " [" + esc(c.record_id) + "]" : ""}</span>
+      <div class="kv">${esc(kv({args: c.args}))}${Object.keys(c.output).length ? "\n" + esc(kv({output: c.output})) : ""}</div></div>`).join("") || "<div class='muted'>(none)</div>";
+    h += "</div>";
+  }
+  h += "<h2>Price text inserted by the system</h2>";
+  h += it.prices.length ? it.prices.map(p => `<div class="card pre doc"><span class="src">[${esc(p.record_id)}]</span>\n${esc(p.text)}</div>`).join("") : "<div class='muted'>(none)</div>";
+  h += `<h2>Documents found (${it.docs.length})</h2>`;
+  h += it.docs.length ? it.docs.map(d => `<div class="card doc"><div class="src">${esc(d.doc_id)} &gt; ${esc(d.section)}</div><div class="pre">${esc(d.text)}</div></div>`).join("") : "<div class='muted'>(none retrieved)</div>";
+  h += "<h2>Standing venue rules (evidence)</h2><div class='card'><ul style='margin:0;padding-left:18px'>" + it.rules.map(r => `<li>${esc(r)}</li>`).join("") + "</ul></div>";
+  h += `<h2>Sources the reply cites</h2><div class="muted">${esc(it.sources.join("; ") || "(none)")}</div>`;
+  document.getElementById("evidence").innerHTML = h;
+}
+
+function btn(q, val, label, key) {
+  const on = (answers[items[idx].run_id] || {})[q] === val ? "sel" : "";
+  return `<button class="${on}" data-q="${q}" data-v="${val}">${label}<kbd>${key}</kbd></button>`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  const saved = Object.values(answers).filter(a => a.saved).length;
+  document.getElementById("count").textContent = `${saved} saved · ${data.total - items.length} labeled earlier · ${data.total} in set`;
+  document.getElementById("prog").style.width = `${100 * (data.total - items.length + saved) / data.total}%`;
+  if (!items.length || idx >= items.length) {
+    document.getElementById("where").textContent = "";
+    app.innerHTML = `<div class="done-all"><h1>All done</h1><p class="muted">Run<br><code>uv run python -m evals.calibrate report reports/v1-baseline.json</code></p>${items.length ? '<button id="back">Back</button>' : ""}</div>`;
+    const b = document.getElementById("back"); if (b) b.onclick = () => { idx = items.length - 1; render(); };
+    return;
+  }
+  const it = items[idx], a = answers[it.run_id] || (answers[it.run_id] = {});
+  document.getElementById("where").textContent = `${idx + 1} / ${items.length} · ${it.case} · ${it.bucket} · today in the case: ${it.today}`;
+  const e = it.email;
+  const thread = it.thread.map(m => `<div class="thread"><div class="who">${m.role === "agent" ? "earlier agent reply: NOT evidence" : "customer, earlier"}</div><div class="pre">${esc(m.body)}</div></div>`).join("");
+  const reply = it.reply.map(s => s.system ? `<span class="sys pre">${esc(s.text)}</span>` : `<span class="pre">${tokenize(s.text)}</span>`).join("");
+  const forbid = it.must_not_claim.length ? `<ul class="forbid">${it.must_not_claim.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : `<div class="muted" style="margin:4px 0 6px">No case-specific claims; only the always-forbidden ones.</div>`;
+  app.innerHTML = `
+  <div class="col">
+    <h2>Customer email</h2>
+    <div class="card"><div class="muted">From ${esc(e.name ? e.name + " " : "")}&lt;${esc(e.from)}&gt;${e.subject ? " · " + esc(e.subject) : ""}</div><div class="pre">${esc(e.body)}</div></div>
+    ${thread ? "<h2>Earlier in the thread</h2>" + thread : ""}
+    <h2>The reply (click a number or date, or select a phrase, to find it in the evidence)</h2>
+    <div class="card reply" id="reply">${reply}</div>
+
+    <div class="q"><div class="title">1. Grounded: is every factual claim supported?</div>
+      <details><summary>rubric</summary>${esc(data.rubric.human_grounded)}</details>
+      <div class="btns">${btn("grounded","yes","Yes, all supported","Q")}${btn("grounded","no","No, something isn't","W")}</div></div>
+    <div class="q"><div class="title">2. Forbidden claims: does it avoid all of them?</div>
+      <details><summary>rubric</summary>${esc(data.rubric.human_must_not_claim)}</details>
+      <div class="muted" style="font-size:12.5px">Always forbidden: a pending hold or tour called placed or booked, anything booked or confirmed, a discount. This case also forbids:</div>
+      ${forbid}
+      <div class="btns">${btn("must_not_claim","yes","Yes, none made","A")}${btn("must_not_claim","no","No, it makes one","S")}</div></div>
+    <div class="q"><div class="title">3. Tone, 1-5 (optional)</div>
+      <details><summary>rubric</summary>${esc(data.rubric.human_tone)}</details>
+      <div class="btns">${[1,2,3,4,5].map(n => btn("tone", String(n), n, n)).join("")}</div></div>
+    <div class="q"><textarea id="note" rows="2" placeholder="Note (optional): the unsupported claim, in a few words">${esc(a.note || "")}</textarea></div>
+    <div class="save"><button id="prev" ${idx ? "" : "disabled"}>Back</button><button class="primary" id="go">Save &amp; next <kbd>Enter</kbd></button><span id="msg" class="muted">${a.saved ? "saved" : ""}</span></div>
+  </div>
+  <div class="col">
+    <div class="search"><input id="find" placeholder="Find in the evidence…"><span id="hits" class="muted"></span></div>
+    <div id="evidence"></div>
+  </div>`;
+  renderEvidence();
+  app.querySelectorAll("button[data-q]").forEach(b => b.onclick = () => set(b.dataset.q, b.dataset.v));
+  app.querySelectorAll(".tok").forEach(t => t.onclick = () => {
+    app.querySelectorAll(".tok.on").forEach(x => x.classList.remove("on")); t.classList.add("on");
+    document.getElementById("find").value = t.dataset.t; highlight(patternFor(t.dataset.t));
+  });
+  document.getElementById("reply").onmouseup = () => {
+    const s = String(window.getSelection()).trim();
+    if (s.length >= 3) { document.getElementById("find").value = s; highlight(new RegExp(reEsc(s), "gi")); }
+  };
+  document.getElementById("find").oninput = ev => { const v = ev.target.value.trim(); highlight(v.length >= 2 ? new RegExp(reEsc(v), "gi") : null); };
+  document.getElementById("note").oninput = ev => { a.note = ev.target.value; };
+  document.getElementById("go").onclick = submit;
+  document.getElementById("prev").onclick = () => { idx--; render(); };
+}
+
+function set(q, v) {
+  const a = answers[items[idx].run_id];
+  a[q] = a[q] === v && q === "tone" ? undefined : v;
+  render();
+}
+
+async function submit() {
+  const it = items[idx], a = answers[it.run_id];
+  const msg = document.getElementById("msg");
+  if (!a.grounded || !a.must_not_claim) { msg.textContent = "Answer both gate questions first."; return; }
+  msg.textContent = "saving…";
+  const res = await fetch("/label", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({run_id: it.run_id, grounded: a.grounded, must_not_claim: a.must_not_claim, tone: a.tone || "", note: a.note || ""})});
+  if (!res.ok) { msg.textContent = "Not saved: " + await res.text(); return; }
+  a.saved = true; idx++; render(); window.scrollTo(0, 0);
+  document.querySelectorAll(".col").forEach(c => c.scrollTop = 0);
+}
+
+document.addEventListener("keydown", ev => {
+  if (!items || idx >= items.length || ["INPUT", "TEXTAREA"].includes(ev.target.tagName)) return;
+  const k = ev.key.toLowerCase();
+  const map = {q: ["grounded","yes"], w: ["grounded","no"], a: ["must_not_claim","yes"], s: ["must_not_claim","no"]};
+  if (map[k]) set(...map[k]);
+  else if ("12345".includes(k) && k.length === 1) set("tone", k);
+  else if (k === "enter") submit();
+});
+
+fetch("/items").then(r => r.json()).then(d => { data = d; items = d.items; render(); });
+</script>
+</body>
+</html>
