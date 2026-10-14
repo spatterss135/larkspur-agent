@@ -125,7 +125,7 @@ def test_a_rejection_carries_the_coordinators_note():
 
 
 def test_the_prompt_is_versioned_and_states_the_core_rules():
-    assert PROMPT_VERSION == "v1"
+    assert PROMPT_VERSION == "v2"
     for rule in ("{{quote:", "_quote", "requested", "escalate", "Never type a price"):
         assert rule in SYSTEM_PROMPT
 
@@ -176,3 +176,9 @@ def test_the_rule_sentences_match_the_standing_rules_the_judge_accepts():
 
     assert POLICY_TEXT["booking"] == SYSTEM_RULES[2]
     assert POLICY_TEXT["hold"] == f"{SYSTEM_RULES[0]} {SYSTEM_RULES[1]}"
+
+
+def test_the_prompt_tells_the_agent_to_render_the_standing_rules():
+    # F1, prompt half (v2): the placeholders exist only if the model uses them.
+    for name in ("booking", "hold", "no_discount"):
+        assert f"{{{{policy:{name}}}}}" in SYSTEM_PROMPT
