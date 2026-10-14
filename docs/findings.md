@@ -61,6 +61,8 @@ Traces: `01a13742-fb5f-7411-9b29-f28d78376a82`, `01a13743-4f2e-7f12-9db0-7cae152
 
 **Fix (prompt v2):** never repeat an amount that no tool or document produced; call it "the figure you mentioned". The check stays as strict. A prompt change is a nudge, so the check is still what protects the customer.
 
+**Result, first attempt (prompt v3, `f1ae9e5`).** Targeted rerun `f2-figures`, 5 repetitions: 0/15 passed (baseline 1/6). Haiku still repeated the figure in every run ("I can't confirm the $4,000 figure from your planner"); the guard held all 15. The prompt change didn't move the number, which is the risk this plan named. Next: a structural fix, the same one-retry check as F3, extended to amounts no tool or document produced.
+
 ## F3. The agent writes a price placeholder without pricing anything (agent)
 
 These runs are question-buried-in-long-reply ×1 and convo-clarification-loop ×2 (turn 1 `{{rate:R1}}`, turn 2 `{{quote:Q1}}`). The gate caught all three and held them. Sent unread, the customer would have seen the literal placeholder text.
