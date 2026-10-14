@@ -184,18 +184,35 @@ def test_quoting_the_month_from_an_earlier_message_resolves_the_date():
     assert r["status"] == "executed"
 
 
-def test_a_tool_that_keeps_needing_input_is_stopped_so_the_agent_asks():
+def test_a_tool_that_keeps_needing_input_is_told_to_stop_so_the_agent_asks():
     # F5: one baseline run called check_availability 17 times, each needs_input.
     c = ctx(texts=THREAD)
     first = handle_call("check_availability", avail(["The 20th"]), c)
     second = handle_call("check_availability", avail(["the 20th"]), c)
     assert "next_step" in first and "Stop" in second["next_step"]
-    third = handle_call("check_availability", avail(["20th"]), c)
-    after = handle_call("check_availability", avail(["September", "The 20th"]), c)
-    assert (after["status"], after["reason"]) == ("needs_input", "ask_customer")
-    assert "ask the customer" in after["message"].lower()
-    assert third["status"] == "needs_input"
-    assert len(c.calls) == 4  # every call, refused or not, is on the ledger
+    handle_call("check_availability", avail(["20th"]), c)
+    fourth = handle_call("check_availability", avail(["The 20th"]), c)
+    assert (fourth["status"], fourth["reason"]) == ("needs_input", "ask_customer")
+    assert "ask the customer" in fourth["message"].lower()
+
+
+def test_a_valid_call_still_runs_after_earlier_ones_needed_input():
+    # The first version refused every call after 3 needs_input. In the targeted rerun that
+    # blocked the agent's fourth, correct call (["June", "the 13th"]).
+    c = ctx(texts=THREAD)
+    for quote in (["The 20th"], ["the 20th"], ["20th"]):
+        handle_call("check_availability", avail(quote), c)
+    r = handle_call("check_availability", avail(["September", "The 20th"]), c)
+    assert r["status"] == "executed"
+
+
+def test_a_tool_that_needed_input_six_times_is_refused_outright():
+    c = ctx(texts=THREAD)
+    for _ in range(6):
+        handle_call("check_availability", avail(["The 20th"]), c)
+    r = handle_call("check_availability", avail(["September", "The 20th"]), c)
+    assert (r["status"], r["reason"]) == ("needs_input", "ask_customer")
+    assert len(c.calls) == 7  # every call, refused or not, is on the ledger
 
 
 def test_a_fixed_call_on_the_second_try_still_runs():
