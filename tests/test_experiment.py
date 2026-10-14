@@ -168,7 +168,13 @@ def test_a_targeted_rerun_of_only_conversations_skips_the_empty_case_experiment(
     convo = SimpleNamespace(metadata={"id": "convo-x"})
     ran = []
 
+    clients, used = [], []
+
     class FakeClient:
+        def __init__(self, **kw):
+            self.kw = kw
+            clients.append(self)
+
         def list_examples(self, dataset_name, splits):
             return [convo] if "conversation" in dataset_name and splits == ["dev"] else []
 
@@ -179,7 +185,9 @@ def test_a_targeted_rerun_of_only_conversations_skips_the_empty_case_experiment(
     monkeypatch.setattr(
         langsmith,
         "evaluate",
-        lambda target, data, **kw: ran.append([e.metadata["id"] for e in data]) or Res(),
+        lambda target, data, **kw: (
+            ran.append([e.metadata["id"] for e in data]) or used.append(kw.get("client")) or Res()
+        ),
     )
     monkeypatch.setattr(run, "real_models", lambda agent: (None, None))
     monkeypatch.setattr(run, "shared_retriever", lambda: None)
@@ -188,3 +196,7 @@ def test_a_targeted_rerun_of_only_conversations_skips_the_empty_case_experiment(
     saved = ex.run_experiment("t", reps=1, splits=("dev",), cases=("convo-x",))
     assert ran == [["convo-x"]]
     assert saved["cases"] == [] and saved["case_experiment"] is None
+    # Two runs were lost when one LangSmith call dropped at the very end: one client with
+    # patient connection retries is used for everything.
+    (client,) = clients
+    assert client.kw["retry_config"].connect >= 5 and used == [client]
