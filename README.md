@@ -242,11 +242,7 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 - **Add a tool:** add its schema to [agent/tools.py](agent/tools.py), its input checks to `prepare`, and its action and level to [venue/autonomy.yaml](venue/autonomy.yaml). The middleware runs it. A tool not in the policy resolves to level 0.
 - **Read a trace:** each email is one `larkspur-inquiry` trace. Under it are the triage call and `larkspur-agent`, with its model calls and one span per tool call (named after the tool, with its status in the output). The run's outputs carry the reply level, the guards that fired and the reply status.
 
-## 12. Playbook notes
-
-<!-- TODO: optional; what would transfer to a client engagement -->
-
-## 13. How AI assistants helped, and what I checked myself
+## 12. How AI assistants helped, and what I checked myself
 
 <!-- TODO(you): review and put in your own words -->
 - **Claude Code wrote most of the code and tests** under my direction, test-first: every fix is a red commit, then a green one.
@@ -263,6 +259,6 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
   - judge errors counted as failures (F9)
   - an accidental full-suite run caused by a missing option
 
-## 14. Decision records
+## 13. Decision records
 
 See [docs/decisions.md](docs/decisions.md) (D1–D21) and [docs/findings.md](docs/findings.md).
