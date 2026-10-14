@@ -244,7 +244,7 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 
 ## 12. How AI assistants helped, and what I checked myself
 
-**How I worked.** I settled the decisions and the plan with Claude before any code ([DECISIONS.md](DECISIONS.md), [docs/implementation-plan.md](docs/implementation-plan.md)). Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
+**How I worked.** I settled the decisions and the plan with Claude before any code ([docs/decisions.md](docs/decisions.md), [docs/implementation-plan.md](docs/implementation-plan.md)). Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
 
 **What I checked myself.**
 - **The trust-critical code, line by line** (about 900 lines): the autonomy policy and middleware, the evidence checks, the world API and its transactions, the claim guards and reply gate, and the approval flow. The rest (pricing math, date parsing, retrieval, triage and the eval harness) I trusted to the tests and the evals.
