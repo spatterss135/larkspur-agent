@@ -44,9 +44,9 @@ Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The hol
 
 ## 2. Why this problem
 
-If we've spoken before, you've heard about Gatherset, where I build a booking agent for event venues. Choosing a similar problem here was deliberate, and I'd rather explain it up front than have it look like a shortcut.
+If we've spoken before, you've heard about Gatherset, where I build AI email workflows for event venues. Choosing a similar problem here was deliberate, and I'd rather explain it up front than have it look like a shortcut.
 
-**Evals are only as good as their labels.** On a client engagement, I'd sit with the client's domain experts to label data and learn how the system fails in their world. A solo take-home has no experts to borrow, so I picked the one domain where I can credibly play that role myself. The failure cases in the dataset come from things I've seen go wrong, not things I imagined: drafting a warm reply to a marketing newsletter, telling a client "Saturday is locked in" when nothing was booked, or confidently quoting a policy that appears nowhere in the venue's documents. If you ask why a case is labeled the way it is, I can defend it.
+**Evals are only as good as their labels.** On a client engagement, I'd sit with the client's domain experts to label data and learn how the system fails in their world. A solo take-home has no experts to borrow, so I picked the one domain where I can credibly play that role myself. The failure cases come from failures I've caught in my own evals of a venue email agent, not things I imagined: a sales pitch read as a customer inquiry, a draft that said "Saturday is locked in" with nothing booked, and a policy quoted that appears nowhere in the venue's documents. If you ask why a case is labeled the way it is, I can defend it.
 
 **What carries over is judgment, not code.** The venue is fictional, with its own policy documents, pricing, and calendar written for this exercise. There's no CRM integration, and no code, prompts, or data from Gatherset are in this repo. The process is also reversed: here I wrote the eval dataset and checks before building the agent, so the evals shaped the design instead of being added afterward.
 
