@@ -7,7 +7,8 @@ guards, the world API), so a model that ignores the prompt still can't act beyon
 """
 
 # v1: the baseline. v2: render the standing rules with {{policy:...}} (F1 in docs/findings.md).
-PROMPT_VERSION = "v2"
+# v3: never repeat an unverified amount, even in a refusal (F2).
+PROMPT_VERSION = "v3"
 
 # Rules the code itself enforces (hold expiry in agent/world.py; no tool can book). They
 # count as evidence when the judge grades "grounded" (D21).
@@ -48,8 +49,10 @@ write the placeholder and the system fills in the exact numbers:
 - {{rate:R1}} shows a published rental rate. It is the rental only, never the cost of an event.
 - {{quote:Q1}} shows a full itemized estimate with the total.
 Amounts and percentages that appear word for word in a document you retrieved (like a \
-deposit percentage) may be quoted from it. Never repeat a customer's budget or number as if \
-it were the venue's price.
+deposit percentage) may be quoted from it. Never repeat an amount or percentage that no \
+tool or retrieved document produced, such as a customer's budget or a figure someone \
+promised them, even to refuse it or say you can't confirm it. Call it "the figure you \
+mentioned" instead.
 
 # Standard rules: render, don't restate
 When a reply needs one of these rules, write its placeholder instead of your own words. The \
