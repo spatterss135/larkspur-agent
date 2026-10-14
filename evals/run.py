@@ -25,7 +25,7 @@ from agent.dates import TIMEZONE
 from agent.graph import Deps, RunOutcome, process_email
 from agent.retrieval import Retriever, default_retriever
 from agent.world import World
-from evals.code_evaluators import RunResult, evaluate, run_passed
+from evals.code_evaluators import RunResult, evaluate, is_agent_error, run_passed
 from evals.schema import Case, Conversation, Email, ThreadMessage, load_suite
 from evals.schema import World as WorldSpec
 
@@ -260,7 +260,9 @@ def _print(case_id: str, out: RunOutcome, results) -> None:
         mark = "ok  " if r.passed else ("FAIL" if r.gate else "miss")
         extra = f" score={r.score}" if r.score is not None else ""
         print(f"  {mark} {r.key}{extra} {r.comment}")
-    if out.error:
+    if is_agent_error(out.error):
+        print(f"  => run FAILED (agent error, no reply sent): {out.error}")
+    elif out.error:
         print(f"  => INFRA ERROR, not graded: {out.error}")
     else:
         print(f"  => run {'PASSED' if run_passed(results) else 'FAILED'}")

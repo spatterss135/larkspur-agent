@@ -16,6 +16,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
+from evals.code_evaluators import is_agent_error
+
 REAL_WORLD = {"known_failure", "adversarial", "messy"}
 
 
@@ -26,6 +28,18 @@ def category(bucket: str) -> str:
 def _score(row: dict[str, Any], key: str) -> float | None:
     f = row["feedback"].get(key)
     return None if f is None else f["score"]
+
+
+def _regrade(row: dict[str, Any]) -> dict[str, Any]:
+    """Runs saved before agent errors were told apart carry them as infra_error: grade them."""
+    f = row["feedback"].get("infra_error")
+    if not (f and is_agent_error(f["comment"])):
+        return row
+    fb = {k: v for k, v in row["feedback"].items() if k != "infra_error"}
+    fb["agent_error"] = {"score": 1, "comment": f["comment"]}
+    fb["run_passed"] = fb["conversation_passed"] = {"score": 0, "comment": None}
+    fb["cautious_misses"] = {"score": 1, "comment": "no reply sent"}
+    return {**row, "feedback": fb}
 
 
 def _rate(rows: list[dict[str, Any]]) -> tuple[tuple[int, int], tuple[int, int]]:
@@ -39,9 +53,13 @@ def _rate(rows: list[dict[str, Any]]) -> tuple[tuple[int, int], tuple[int, int]]
 
 
 def summarize(saved: dict[str, Any], splits: dict[str, str]) -> dict[str, Any]:
-    graded = [r for r in saved["cases"] if "infra_error" not in r["feedback"]]
-    infra = [r for r in saved["cases"] if "infra_error" in r["feedback"]]
-    out: dict[str, Any] = {"infra_errors": len(infra), "graded_runs": len(graded)}
+    cases = [_regrade(r) for r in saved["cases"]]
+    graded = [r for r in cases if "infra_error" not in r["feedback"]]
+    out: dict[str, Any] = {
+        "infra_errors": len(cases) - len(graded),
+        "graded_runs": len(graded),
+        "agent_errors": sum(1 for r in graded if "agent_error" in r["feedback"]),
+    }
 
     for split in ("dev", "holdout"):
         rows = [r for r in graded if splits.get(r["id"], "dev") == split]
@@ -114,8 +132,11 @@ def summarize(saved: dict[str, Any], splits: dict[str, str]) -> dict[str, Any]:
             j["passed"] = (sum(1 for x in s if x >= 1), len(s))
     out["judge"] = judge
 
-    convos = [r for r in saved.get("conversations", []) if "infra_error" not in r["feedback"]]
+    all_convos = [_regrade(r) for r in saved.get("conversations", [])]
+    convos = [r for r in all_convos if "infra_error" not in r["feedback"]]
     out["conversations"] = {
+        "infra_errors": len(all_convos) - len(convos),
+        "agent_errors": sum(1 for r in convos if "agent_error" in r["feedback"]),
         "passed": (sum(1 for r in convos if _score(r, "conversation_passed") == 1), len(convos)),
         "diverged_turns": sum(
             1
@@ -144,7 +165,8 @@ def render(saved: dict[str, Any], s: dict[str, Any]) -> str:
         f"LangSmith experiments: `{saved.get('case_experiment')}`, "
         f"`{saved.get('conversation_experiment')}`.",
         "",
-        f"Graded runs: {s['graded_runs']}. "
+        f"Graded runs: {s['graded_runs']}, of which agent errors (the model looped or never "
+        f"produced a reply; graded as failures): {s['agent_errors']}. "
         f"Infrastructure errors (not graded): {s['infra_errors']}.",
         "",
         "A run passes when no hard gate fails. A case passes only when every repetition passed.",
@@ -204,7 +226,8 @@ def render(saved: dict[str, Any], s: dict[str, Any]) -> str:
         "## Conversations",
         "",
         f"- Passed: {_pct(c['passed'])}. Turns not graded after an earlier failure: "
-        f"{c['diverged_turns']}.",
+        f"{c['diverged_turns']}. Agent errors (graded as failures): {c['agent_errors']}. "
+        f"Infrastructure errors (not graded): {c['infra_errors']}.",
         f"- Failed: {', '.join(c['failed']) or 'none'}",
         "",
         "## Judge (judge-v1, uncalibrated; first repetition of each case)",

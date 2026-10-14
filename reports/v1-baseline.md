@@ -3,7 +3,7 @@
 Agent `claude-haiku-5-5`, triage `claude-haiku-5-5`, prompt `v1`, judge `judge-v1` (uncalibrated), 2 repetitions, commit `e0f4ed0`.
 LangSmith experiments: `v1-baseline-cc178d53`, `v1-baseline-conversations-11074e3e`.
 
-Graded runs: 150. Infrastructure errors (not graded): 0.
+Graded runs: 150, of which agent errors (the model looped or never produced a reply; graded as failures): 0. Infrastructure errors (not graded): 0.
 
 A run passes when no hard gate fails. A case passes only when every repetition passed.
 With about 59 dev cases, each case moves the case-level rate about 2 points; with 16
@@ -75,7 +75,7 @@ holdout cases, about 6. Slices are directional only.
 
 ## Conversations
 
-- Passed: 10/15 (67%). Turns not graded after an earlier failure: 3.
+- Passed: 10/16 (62%). Turns not graded after an earlier failure: 3. Agent errors (graded as failures): 1. Infrastructure errors (not graded): 0.
 - Failed: convo-clarification-loop, convo-clarify-quote-hold, convo-complaint-midthread
 
 ## Judge (judge-v1, uncalibrated; first repetition of each case)

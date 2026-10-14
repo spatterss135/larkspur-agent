@@ -37,7 +37,7 @@ class RunResult:
     new_pending: list[dict[str, Any]] = field(default_factory=list)
     retrieved: list[dict[str, str]] = field(default_factory=list)
     customer_texts: list[str] = field(default_factory=list)
-    error: str | None = None  # an infrastructure error: the run is not graded, never a pass
+    error: str | None = None  # an error: infrastructure ones are not graded, never a pass
 
 
 @dataclass
@@ -48,6 +48,15 @@ class EvalResult:
     direction: str | None = None  # bold | cautious | None
     comment: str = ""
     score: float | None = None  # scored checks only (tone 1-5, share of items found)
+
+
+# Errors caused by the model's own behavior (looping, never producing a valid reply). They are
+# graded as failures; every other error is infrastructure and is not graded.
+AGENT_ERRORS = ("GraphRecursionError", "StructuredOutputValidationError")
+
+
+def is_agent_error(error: str | None) -> bool:
+    return bool(error) and error.split(":", 1)[0].strip() in AGENT_ERRORS
 
 
 def run_passed(results: list[EvalResult]) -> bool:

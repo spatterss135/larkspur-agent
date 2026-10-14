@@ -22,7 +22,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from evals.code_evaluators import RunResult, evaluate, run_passed
+from evals.code_evaluators import RunResult, evaluate, is_agent_error, run_passed
 from evals.schema import Email, EndState, Expected, ThreadMessage
 from evals.schema import World as WorldSpec
 
@@ -121,15 +121,19 @@ def _feedback(results) -> list[dict[str, Any]]:
 def code_evaluator(run: Any, example: Any) -> dict[str, list[dict[str, Any]]]:
     outputs = run.outputs or {}
     if outputs.get("error") or "result" not in outputs or not outputs["result"]:
-        return {
-            "results": [
-                {
-                    "key": "infra_error",
-                    "score": 1,
-                    "comment": str(outputs.get("error") or "no output"),
-                }
-            ]
-        }
+        error = str(outputs.get("error") or "no output")
+        if is_agent_error(error):
+            # No reply went out and a person follows up: a failure, in the cautious direction.
+            return {
+                "results": [
+                    {"key": "agent_error", "score": 1, "comment": error},
+                    {"key": "run_passed", "score": 0},
+                    {"key": "bold_failures", "score": 0},
+                    {"key": "cautious_misses", "score": 1, "comment": "no reply sent"},
+                    {"key": "escaped_bold_failures", "score": 0},
+                ]
+            }
+        return {"results": [{"key": "infra_error", "score": 1, "comment": error}]}
     expected = Expected.model_validate(example.outputs["expected"])
     result = _result(outputs["result"])
     results = evaluate(expected, result)
@@ -161,6 +165,13 @@ def code_evaluator(run: Any, example: Any) -> dict[str, list[dict[str, Any]]]:
 def conversation_evaluator(run: Any, example: Any) -> dict[str, list[dict[str, Any]]]:
     outputs = run.outputs or {}
     if outputs.get("error"):
+        if is_agent_error(outputs["error"]):
+            return {
+                "results": [
+                    {"key": "agent_error", "score": 1, "comment": outputs["error"]},
+                    {"key": "conversation_passed", "score": 0},
+                ]
+            }
         return {"results": [{"key": "infra_error", "score": 1, "comment": outputs["error"]}]}
     expected_turns = [Expected.model_validate(t) for t in example.outputs["turns"]]
     feedback, diverged, all_ok = [], False, True
