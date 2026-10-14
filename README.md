@@ -244,21 +244,20 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 
 ## 12. How AI assistants helped, and what I checked myself
 
-**How I worked.** I settled the plan and the first 16 decisions with Claude before any code ([docs/decisions.md](docs/decisions.md), [docs/implementation-plan.md](docs/implementation-plan.md)); D17–D21 were made during the build. Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
+**How I worked.** I settled the plan and the first 16 decisions with Claude before any code ([docs/decisions.md](docs/decisions.md), [docs/implementation-plan.md](docs/implementation-plan.md)). Other models reviewed the plan in three rounds before it was frozen (D13–D15), and D17–D21 were made during the build. Claude Code wrote most of the code and tests against that plan, test-first (about 50 red → green commit pairs). I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
 
-**What I checked myself.**
-- **The trust-critical code and the eval code, line by line** (about 1,400 lines): the autonomy policy and middleware, the evidence checks, the world API and its transactions, the claim guards and reply gate, the approval flow, and the checks, judge and calibration behind every number. The rest (pricing math, date parsing, retrieval and triage) I trusted to the tests and the evals.
-- **Every eval label**, bucket by bucket, before the agent existed.
-- **Behaviour, by evals rather than by reading:** each fix was rerun on the cases it targeted at 5 repetitions, then on the full suite.
-- **The judge, and myself:** I labeled 30 replies blind, tested my own labeling on the known-bad set, then reviewed every disagreement. Claude Code built the labeling page and explained the judge's quoted evidence during the review; the decisions were mine.
+**What I read, and what I left to tests.** When an AI writes both the code and its tests, everything can pass while a requirement is wrong or missing. So I spent my own attention on what tests can't verify, and let tests and evals verify the rest:
+- **I read the specs and the checks:** every eval label before the agent existed, the judge's questions, the tests behind invariants I1–I9 in section 3 (to confirm each proves what its name says), the code where order and transactions decide safety (the autonomy middleware, the evidence checks, the world API, the claim guards and reply gate, and the approval flow), and the eval code behind every number.
+- **I read outputs, not just code:** 30 replies labeled blind, the 22 known-bad items, and every disagreement with the judge.
+- **I left to tests what has an exact answer or can't be seen by reading:** pricing (golden quotes), date and quote parsing, retrieval, concurrency (race tests), crash recovery, and 566 tests in CI. Real-model behavior is measured by the evals: 75 cases and 8 conversations at 2 repetitions, with every fix rerun at 5 repetitions on the cases it targeted, then on the full suite.
 
-**What those checks caught.**
-- A loop breaker that refused correct calls (F5), caught by its targeted rerun.
-- A prompt fix that did nothing (F2), and a gain credited to a retry that never fired (F3).
-- Judge rows that mixed in 14 stale scores from the old judge, caught because the counts didn't match (75 replies vs 72).
-- The code gates' "0 escaped failures" was true but incomplete: checking the judge's failures by hand found a false handoff claim that reached a customer in each version.
+**These AI mistakes were caught by running things and reading the results,** not by re-reading code:
+- A targeted rerun showed a loop breaker refusing correct calls (F5).
+- Reruns showed a prompt fix doing nothing (F2: 0/15), and traces showed a gain credited to a retry that never fired (F3).
+- A count that didn't match (75 replies vs 72) exposed 14 stale judge scores.
+- Checking the judge's failures by hand found false handoff claims that reached customers ([F10](docs/findings.md#f10-the-reply-claims-a-coordinator-handoff-that-never-happened-agent)): a requirement nobody wrote, so no test could have caught it.
 
-**A lesson about working with AI.** I ran several Claude Code sessions on the same repo, and one swept another's uncommitted files into its own commits (`f7efdaf`, `82abde8`). Next time: one session per branch or worktree.
+**A lesson about working with AI.** I ran several Claude Code sessions in one checkout. One swept another's uncommitted files into its commits (`f7efdaf`, `82abde8`), and both v2 experiments started from a tree with uncommitted edits ([D17](docs/decisions.md#d17-framework-spike-findings)). Next time: one worktree per session.
 
 ## 13. Decision records
 
