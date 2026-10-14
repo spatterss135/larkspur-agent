@@ -45,3 +45,12 @@ def test_the_split_is_stratified_by_bucket_and_deterministic(seed):
     assert len(tune) == len(hold) == 10
     assert sum(i["bucket"] == "normal" for i in tune) == 5
     assert split_tune_holdout(items, seed=seed) == (tune, hold)
+
+
+def test_cases_already_inspected_are_forced_into_the_tuning_half():
+    # Cases whose judge output or reply was read while designing judge-v2 can't measure it.
+    items = [{"case": f"c{i}", "bucket": "normal"} for i in range(20)]
+    tune, hold = split_tune_holdout(items, force_tune={"c3", "c7"})
+    assert {"c3", "c7"} <= {i["case"] for i in tune}
+    assert not {"c3", "c7"} & {i["case"] for i in hold}
+    assert len(tune) + len(hold) == 20

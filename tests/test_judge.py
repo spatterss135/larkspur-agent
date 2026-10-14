@@ -112,6 +112,40 @@ def test_the_context_has_chunks_tool_outputs_sources_and_the_reply():
 # --- what the judge is asked -----------------------------------------------------------
 
 
+RATE_CALL = {
+    "tool": "get_published_rate",
+    "status": "executed",
+    "record_id": "R1",
+    "args": {},
+    "output": {
+        "status": "executed",
+        "record_id": "R1",
+        "rate": {
+            "room": "grand_hall",
+            "day_type": "fri",
+            "month": 10,
+            "season": "peak",
+            "rental": "7000.00",
+        },
+    },
+}
+
+
+def test_the_judge_sees_the_exact_price_text_the_system_inserted():
+    # Option 1 (D21): text our code renders from a record is evidence by construction.
+    text = render_context(simple(tool_calls=[RATE_CALL]))
+    assert "inserted by the system" in text
+    assert "the Grand Hall rental on Fridays, May through October" in text
+
+
+def test_the_judge_sees_the_three_standing_rules_as_evidence():
+    from agent.prompts import SYSTEM_RULES
+
+    text = render_context(simple())
+    assert len(SYSTEM_RULES) == 3
+    assert all(rule in text for rule in SYSTEM_RULES)
+
+
 def test_every_schema_puts_evidence_before_the_verdict():
     for name, criterion in CRITERIA.items():
         fields = list(criterion.schema.model_fields)
