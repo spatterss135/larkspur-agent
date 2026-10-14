@@ -1,6 +1,6 @@
 # Findings
 
-What the v1 baseline ([reports/v1-baseline.md](../reports/v1-baseline.md), tag `v1-baseline`) found, and what was done about each. Every finding is tagged by **source** (D18):
+What the v1 baseline ([reports/v1-baseline.md](../reports/v1-baseline.md), tag `v1-baseline`) and the judge calibration found, and what was done about each. F1–F9 came from the baseline and the fix loop; F10–F13 from calibrating the judge after v2. Every finding is tagged by **source** (D18):
 
 - **agent:** the agent's design or behavior
 - **evaluator:** a check, the judge or the harness got it wrong
@@ -28,6 +28,10 @@ Before any fix, each plan was checked against four questions:
 | F7 | The harness filed an agent loop as an infrastructure error | evaluator | 1 | n/a | Fixed |
 | F8 | The judge couldn't see rendered prices or the standing rules | evaluator | 24/72 grounded | n/a | Fixed (D21) |
 | F9 | Judge network errors counted as failed grades | evaluator | 54 grades, 21 runs | n/a | Fixed |
+| F10 | The reply claims a coordinator handoff that never happened | agent | 2 found by the judge (first repetitions only) | Yes (sent at level 3) | Not fixed: a handoff-claim guard is next |
+| F11 | The judge can't see some inputs the agent uses, and reads too literally | evaluator | 7 of 30 checking-half replies (grounded) | n/a | Not fixed: judge-v3 needs the tuning half labeled first |
+| F12 | Two forbidden-claim labels also match correct replies | label | 2 judge fails | n/a | Known issue |
+| F13 | The known-bad set doesn't look like real runs | evaluator | 22 items | n/a | Known issue |
 
 ## Where it ended up
 
@@ -36,7 +40,7 @@ Before any fix, each plan was checked against four questions:
 | Dev cases passed (both repetitions) | 53/59 (90%) | 58/59 (98%) |
 | Holdout cases passed | 16/16 | 14/16 (not blind: see F1's process note) |
 | Conversations passed | 10/16 (62%) | 16/16 (100%) |
-| Bold failures / escaped to a customer without a person | 12 / 2 | 8 / 0 |
+| Bold failures / escaped to a customer without a person (code gates; see F10) | 12 / 2 | 8 / 0 |
 | Replies held by a guard on runs that passed every gate | 50 | 47 |
 | Agent loops (step limit hit) | 1 | 0 |
 
@@ -161,3 +165,39 @@ judge-v1 passed 24/72 on grounded. Its reasons showed it failing text our own co
 ## F9. Judge network errors counted as failed grades (evaluator)
 
 `OpenAIConnectionError` cost 54 judge grades in 21 runs: tone, no_redundant_ask, mentioned_required and asked_required. Each counted as a fail. With them set aside, tone was 51/52 sendable (mean 4.77), not 51/72 (3.44). grounded and must_not_claim had no errors. Fixed: two retries before a `judge_error`, and the report counts judge errors apart from grades (`0b3bb76` red, `3257608` green).
+
+
+## F10. The reply claims a coordinator handoff that never happened (agent)
+
+Found while calibrating the judge, not by the code checks.
+
+- **v1, faq-parking:** "I've passed your question along so they can confirm the details with you." The ledger shows two document searches and no escalation. The judge failed it on both gates; I passed it on my blind first pass and changed my label in the review. Trace `01a13742-fb1f-7cb1-9dc1-e88d2ea4f73d`.
+- **v2, question-buried-in-long-reply:** "…included as an add-on in your itemized quote, which your coordinator is preparing." No quote and no escalation exist. Found by checking every forbidden-claim failure in the v2 judge rows by hand. Trace `01a13b3d-4aad-7e20-b036-7cfccd30c5d4`.
+
+**Why it matters.** Both replies were sent at level 3, so the customer waits for a coordinator who was never told. The code gates have no check for this, which is why "escaped bold failures" reads 0 for v2.
+
+**Not fixed.** Next step (README section 9): a handoff-claim guard in `agent/claims.py`, shaped like the hold and tour guards, so a reply that claims a handoff with no executed `escalate` call is held for a person. Only the judge sees these today, and only on the first repetition of each case, so the true rate is unknown.
+
+## F11. The judge can't see some inputs the agent uses, and reads too literally (evaluator)
+
+Calibration on the 30 checking-half replies ([reports/calibration-judge-v2.md](../reports/calibration-judge-v2.md)): after reviewing every disagreement, the judge still failed 7 grounded replies I passed, and it never passed a reply I failed. The causes I could name:
+
+- **Missing inputs.** The judge isn't given today's date (reschedule-within-90-days; once it used the real-world date instead of the case's), the tool descriptions the agent works from (starts-at-rate-trap: the package names), or escalations the graph makes without a tool call (complaint-escalate, in the v2 judge rows).
+- **Too literal.** Hedges ("may be open, and I can check") and paraphrase that keeps the meaning ("pickup point" read as "can drop off") count as unsupported (quote-on-booked-date, three-questions-one-email).
+
+**Why it matters.** As a gate it errs safe: a false fail sends a reply to a person. But it understates the agent (grounded 62–65% in the README's judge rows) and would cost review time if it ran on live replies.
+
+**Not fixed.** judge-v3 (README section 9): give the judge the date, the tool descriptions and the graph's escalations, and allow hedges and paraphrase that keep the meaning. It should be changed against the tuning half only, which has to be labeled first, then re-measured on the checking half.
+
+## F12. Two forbidden-claim labels also match correct replies (label)
+
+- **faq-candles:** "open-flame candles are allowed". The reply allows only candles enclosed in glass, as the policy says, and the judge read an enclosed flame as open. The venue document's word is "unenclosed".
+- **avail-booked-date:** "June 20 is available". The Grand Hall was booked; the reply correctly offered the Library Room, which a check showed open that day, and the judge read that as the forbidden claim. Trace `01a13b3c-3d07-72e1-afbb-fcc61425096a` (v2).
+
+**Not changed:** a label isn't edited after seeing results (as in F6). Better wording: "unenclosed candles are allowed" and "the Grand Hall is available on June 20".
+
+## F13. The known-bad set doesn't look like real runs (evaluator)
+
+The known-bad replies keep raw price placeholders (`{{rate:R1}}`), and their quote calls have no arguments, while real replies reach the judge with prices rendered. So the judge's catch rate on the set measures a slightly different task than it does on real runs. Labeling the set myself showed the cost: two of my three grounded misses were unrendered items that present a rental rate as the whole cost. The judge's false alarms on the grounded controls also varied between two runs on identical inputs (1/4, then 2/4), so the set's numbers are single runs.
+
+**Next:** rebuild the items with rendered prices and full tool arguments (README section 9), and run the judge on them more than once.

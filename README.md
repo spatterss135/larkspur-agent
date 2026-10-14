@@ -33,7 +33,7 @@ Full reports: [v1 baseline](reports/v1-baseline.md), [v2](reports/v2-final.md). 
 - **One in v2 was held by a guard** for a person.
 - **One per version reached the customer:** a reply claiming a handoff that never happened. In v1 it was "I've passed your question along" with no escalation; in v2, "your itemized quote, which your coordinator is preparing" with no quote and no handoff. The code gates don't check handoff claims, so their "escaped: 0" doesn't cover this. The fix is in section 9.
 
-Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The holdout cases dropped from 16 to 14, and both failures are new failure modes the fixes didn't generalize to (section 7). Fixing them would turn them into dev cases, so they're listed instead.
+Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The holdout cases dropped from 16 to 14, and both failures are new failure modes the fixes didn't generalize to (section 7). Fixing them would turn them into dev cases, so they're listed instead. Two holdout failures were read after the first v2 run, so this number isn't fully blind (findings F1).
 
 - **Recording (≤5 min):** TODO
 - **LangSmith** (public, no login):
@@ -55,7 +55,7 @@ If we've spoken before, you've heard about Gatherset, where I build AI email wor
 - *HOA policy assistant:* mostly Q&A, with few actions where trust is actually at stake.
 - *A domain I don't know:* I couldn't defend the labels, which defeats the point of the exercise.
 
-**The tradeoff.** Familiarity cuts both ways. My dataset probably shares Gatherset's blind spots, since I'm drawing on the same experience. To push against that, I didn't let my labels be the only check. A general "grounded" question, graded by a judge from a different model family, catches unsupported claims no case anticipated. It flagged a reply claiming a coordinator handoff that never happened, which I'd passed. I tested myself on the known-bad set before trusting my labels, and missed 3 of 10 "right number, wrong description" errors. Holdout cases were never looked at during fixes. What's left is a real limitation: one person wrote the cases and labeled them (section 7).
+**The tradeoff.** Familiarity cuts both ways. My dataset probably shares Gatherset's blind spots, since I'm drawing on the same experience. To push against that, I didn't let my labels be the only check. A general "grounded" question, graded by a judge from a different model family, catches unsupported claims no case anticipated. It flagged a reply claiming a coordinator handoff that never happened, which I'd passed. I tested myself on the known-bad set before trusting my labels, and missed 3 of 10 "right number, wrong description" errors. Holdout cases were never used to choose a fix. What's left is a real limitation: one person wrote the cases and labeled them (section 7).
 
 ## 3. What the agent may do, what needs a person, and what can never happen
 
@@ -124,7 +124,7 @@ Each held reply or hold request gets its own small approval graph (`review` paus
 | Conversations | 8 | Several emails from one customer, checked turn by turn and on the final state |
 | Known-bad | 22: 17 bad replies, 5 controls | Replies built to contain a violation: they test the evaluators, not the agent |
 
-- **Splits:** 59 dev cases are studied and fixed against. 16 holdout cases were never inspected during the fixes; they show whether improvements generalize.
+- **Splits:** 59 dev cases are studied and fixed against. 16 holdout cases are never used to choose a fix; they show whether improvements generalize. Two holdout failures were read after the first v2 run, so v2's holdout number isn't fully blind ([findings](docs/findings.md), F1).
 - **Labels:** every label was approved by me before the baseline. A label isn't changed after seeing results (F6 is listed as a known issue instead).
 
 **Two kinds of grader:**
@@ -262,7 +262,7 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 
 ## 13. Decision records
 
-[docs/decisions.md](docs/decisions.md) has 21 decisions, each with why and what was rejected. A dated status line marks anything that later changed or didn't happen, such as the coordinator screen that wasn't built and the v2 runs that started from uncommitted files. [docs/findings.md](docs/findings.md) has every finding from the eval loop (F1–F9). If you read five:
+[docs/decisions.md](docs/decisions.md) has 21 decisions; where there was a real alternative, the record says what was rejected. A dated status line marks anything that later changed or didn't happen, such as the coordinator screen that wasn't built and the v2 runs that started from uncommitted files. [docs/findings.md](docs/findings.md) has every finding with its source and status: F1–F9 from the fix loop, F10–F13 from calibrating the judge. If you read five decisions:
 
 - [**D5, the trust model**](docs/decisions.md#d5-trust-model-a-per-action-autonomy-ladder): autonomy per action, and why not one global switch.
 - [**D11, architecture**](docs/decisions.md#d11-architecture): why approvals don't pause the agent.

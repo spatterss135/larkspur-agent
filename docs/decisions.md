@@ -28,7 +28,7 @@ No code, data, keys or prompts from my part-time job.
 - **Labels have three outcomes:** must handle, must escalate, either is fine.
 - **Promotion and demotion** are documented and simulated: promote per slice after enough approvals with no substantive edits, demote immediately on an error that reached a customer.
 - **Rejected:** one global autonomy switch (one shaky action holds back the safe ones); acting with no checks; the model stating prices or availability itself.
-- **Status (2026-10-14):** promotion and demotion are documented, not built or simulated (README section 8). The approval records they'd use are stored: each decision with its draft, its final version and whether the edit was substantive.
+- **Status (2026-10-14):** promotion and demotion are documented, not built or simulated (README section 8). The approval records they'd use are stored: each decision with its draft, its final version and whether the edit was substantive. Labels also have a fourth outcome, `must_skip`, for emails that need no reply.
 
 ## D6. Eval unit: email, mostly single messages, plus scripted conversations
 - About 85% of cases are one inbound email, with hand-written earlier messages as context where needed. Five to eight scripted conversations cover what single emails can't: errors that compound, endless clarification, state across turns.
@@ -86,7 +86,7 @@ Added: a headline that matches the contract (reversible actions can be automated
 ## D16. Checked against the brief after the freeze
 Added: a dev/holdout split (about 15 cases never looked at during the improvement phase), no eval case ever used as a prompt example, public trace links tested in a logged-out browser, the quickstart tested on a fresh clone, results reported in the brief's three categories, and every regression listed.
 
-**Status (2026-10-14):** done. The quickstart passed from a fresh clone with no API keys, and the public LangSmith links load without logging in.
+**Status (2026-10-14):** done, with one exception: two holdout failures were read after the first v2 run (findings F1, process note), so v2-final's holdout number isn't fully blind. No fix was chosen from them. The quickstart passed from a fresh clone with no API keys, and the public LangSmith links load without logging in.
 
 ## D17. Framework spike findings
 A throwaway spike on branch `spike/framework` (never merged) checked the plan's eight risky assumptions against the real libraries (langchain 1.4.5, langgraph 1.2.15, langsmith 0.14.8) and real models. All eight held. What the build relies on:
