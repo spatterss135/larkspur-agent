@@ -126,6 +126,16 @@ def _backed(sentence: str, ledger_dates: set[tuple[int, int]], any_ledger: bool)
     return bool(named) and named <= ledger_dates if named else any_ledger
 
 
+def unbacked_placeholders(reply: str, run: RunView) -> list[str]:
+    """Placeholders with no executed pricing call of the right kind behind them."""
+    bad = []
+    for kind, record_id in PLACEHOLDER.findall(reply):
+        ok = any(c.get("record_id") == record_id for c in run.executed(PLACEHOLDER_TOOL[kind]))
+        if not ok:
+            bad.append(f"{{{{{kind}:{record_id}}}}}")
+    return bad
+
+
 def check_reply(reply: str, run: RunView) -> ReplyChecks:
     guards: dict[str, list[str]] = {}
 
@@ -133,11 +143,7 @@ def check_reply(reply: str, run: RunView) -> ReplyChecks:
         guards.setdefault(name, []).append(sentence.strip())
 
     # Placeholders must point at an executed pricing call of the right kind.
-    bad_placeholders = []
-    for kind, record_id in PLACEHOLDER.findall(reply):
-        ok = any(c.get("record_id") == record_id for c in run.executed(PLACEHOLDER_TOOL[kind]))
-        if not ok:
-            bad_placeholders.append(f"{{{{{kind}:{record_id}}}}}")
+    bad_placeholders = unbacked_placeholders(reply, run)
 
     # Typed amounts must appear in a retrieved doc. The customer's words don't count:
     # repeating a customer's number back as the venue's price is the failure.

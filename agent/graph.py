@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from agent import notify
 from agent.approvals import Approvals
+from agent.claims import RunView, unbacked_placeholders
 from agent.context import RunContext
 from agent.dates import local_today
 from agent.gate import gate
@@ -107,6 +108,14 @@ class _State(TypedDict, total=False):
     draft: str
     sources: list[dict[str, str]]
     error: str
+
+
+def _missing_note(placeholders: list[str]) -> str:
+    return (
+        f"[System check] Your reply uses {', '.join(placeholders)}, but no pricing call in this "
+        "run returned that record. Call get_published_rate or quote_package for it, or remove "
+        "the price and say a coordinator will send it. Then give your full reply again."
+    )
 
 
 def render_email(email: Email, thread: list[ThreadMessage], today: dt.date) -> str:
@@ -228,15 +237,22 @@ def process_email(
                 "prompt_version": PROMPT_VERSION,
             },
         }
-        try:
-            result = deps.agent().invoke(
-                {"messages": [HumanMessage(render_email(email, thread, today))]},
-                context=ctx,
-                config=config,
-            )
+
+        def ask(messages: list[Any]) -> tuple[Any, Any]:
+            result = deps.agent().invoke({"messages": messages}, context=ctx, config=config)
             reply = result.get("structured_response")
             if reply is None:
                 raise RuntimeError("the agent finished without a reply")
+            return result, reply
+
+        try:
+            result, reply = ask([HumanMessage(render_email(email, thread, today))])
+            # F3: a price placeholder must name a record a pricing call returned in this
+            # run. One retry with a note saying which; a second miss goes to the gate,
+            # which holds the reply for a person.
+            missing = unbacked_placeholders(reply.reply, RunView(tool_calls=ctx.calls))
+            if missing:
+                result, reply = ask([*result["messages"], HumanMessage(_missing_note(missing))])
         except Exception as err:  # noqa: BLE001 - no automated reply; a person follows up
             world.escalate(run_id, "model_error", None, now)
             out.escalated = True
