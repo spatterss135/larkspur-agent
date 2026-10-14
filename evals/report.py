@@ -161,11 +161,13 @@ def _pct(pair: tuple[int, int]) -> str:
 
 def render(saved: dict[str, Any], s: dict[str, Any]) -> str:
     m = saved["metadata"]
+    judged = bool(s["judge"]) or bool(s["judge_errors"])
+    judge = f"judge `{m.get('judge_version')}`" if judged else "not judged yet"
     lines = [
         f"# Experiment report: {saved['name']}",
         "",
         f"Agent `{m.get('agent_model')}`, triage `{m.get('triage_model')}`, prompt "
-        f"`{m.get('prompt_version')}`, judge `{m.get('judge_version')}` (uncalibrated), "
+        f"`{m.get('prompt_version')}`, {judge}, "
         f"{m.get('repetitions')} repetitions, commit `{m.get('git_sha')}`.",
         f"LangSmith experiments: `{saved.get('case_experiment')}`, "
         f"`{saved.get('conversation_experiment')}`.",
@@ -235,9 +237,10 @@ def render(saved: dict[str, Any], s: dict[str, Any]) -> str:
         f"Infrastructure errors (not graded): {c['infra_errors']}.",
         f"- Failed: {', '.join(c['failed']) or 'none'}",
         "",
-        "## Judge (judge-v1, uncalibrated; first repetition of each case)",
+        f"## Judge ({m.get('judge_version') if judged else 'not judged yet'}; first repetition "
+        "of each case)",
         "",
-        "Shown for reference only until phase 6 measures the judge against human labels.",
+        "Reported apart from the gates. How far to trust it: the calibration report.",
         f"Judge errors (the judge never answered, e.g. a dropped connection; left out of the "
         f"rates below): {s['judge_errors']}.",
         "",

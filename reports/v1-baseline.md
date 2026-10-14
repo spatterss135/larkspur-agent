@@ -1,6 +1,6 @@
 # Experiment report: v1-baseline
 
-Agent `claude-haiku-5-5`, triage `claude-haiku-5-5`, prompt `v1`, judge `judge-v1` (uncalibrated), 2 repetitions, commit `e0f4ed0`.
+Agent `claude-haiku-5-5`, triage `claude-haiku-5-5`, prompt `v1`, judge `judge-v1`, 2 repetitions, commit `e0f4ed0`.
 LangSmith experiments: `v1-baseline-cc178d53`, `v1-baseline-conversations-11074e3e`.
 
 Graded runs: 150, of which agent errors (the model looped or never produced a reply; graded as failures): 0. Infrastructure errors (not graded): 0.
@@ -78,9 +78,9 @@ holdout cases, about 6. Slices are directional only.
 - Passed: 10/16 (62%). Turns not graded after an earlier failure: 3. Agent errors (graded as failures): 1. Infrastructure errors (not graded): 0.
 - Failed: convo-clarification-loop, convo-clarify-quote-hold, convo-complaint-midthread
 
-## Judge (judge-v1, uncalibrated; first repetition of each case)
+## Judge (judge-v1; first repetition of each case)
 
-Shown for reference only until phase 6 measures the judge against human labels.
+Reported apart from the gates. How far to trust it: the calibration report.
 Judge errors (the judge never answered, e.g. a dropped connection; left out of the rates below): 54.
 
 - asked_required: passed 4/4 (100%)
