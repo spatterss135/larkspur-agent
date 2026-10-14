@@ -25,6 +25,7 @@ actions:
   # Always available.
   escalate:           {tool: escalate, level: 3, ceiling: 3}
   triage_skip:        {level: 2, ceiling: 2}
+  complaint_ack:      {level: 3, ceiling: 3}     # fixed template sent on a complaint (F4)
 
   # Documented, never built: commitments stay with people.
   modify_hold:        {level: 0, ceiling: 2}

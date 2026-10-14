@@ -26,7 +26,7 @@ from agent.context import RunContext
 from agent.dates import local_today
 from agent.gate import gate
 from agent.middleware import AutonomyMiddleware
-from agent.policy import WRITE_TOOLS, sampled_for_review
+from agent.policy import WRITE_TOOLS, effective_level, sampled_for_review
 from agent.prompts import PROMPT_VERSION, SYSTEM_PROMPT
 from agent.retrieval import Retriever
 from agent.tools import TOOLS
@@ -178,12 +178,37 @@ def process_email(
         deps.approvals.add_review("skip", message_id, run_id, "skip", now)
         return {}
 
+    def deliver(text: str, level: int, guards: dict[str, list[str]]) -> None:
+        """Send at level 2-3 (level 2 is reviewed after, level 3 sampled); below that, hold
+        the reply for a person."""
+        out.text = text
+        if level >= 2:
+            if world.send_reply(message_id, run_id, sender, text, now):
+                out.reply_status = "sent"
+            if level == 2:
+                deps.approvals.add_review("reply", message_id, run_id, "level_2", now)
+            elif sampled_for_review(run_id):
+                deps.approvals.add_review("reply", message_id, run_id, "sample", now)
+        else:
+            deps.approvals.queue_reply(
+                run_id=run_id,
+                message_id=message_id,
+                to=sender,
+                text=text,
+                guards=guards,
+                level=level,
+                now=now,
+            )
+            out.reply_status = "pending_approval"
+
     def complaint(state: _State) -> _State:
         world.escalate(run_id, "complaint", "complaint", now)
         out.escalated = True
-        text = notify.complaint_ack(email.name)
-        if world.send_reply(message_id, run_id, sender, text, now):
-            out.reply_status, out.text = "sent", text
+        # A code template, but still an action: the policy sets its level and the ledger
+        # records it, like every other reply (F4).
+        level = effective_level("complaint_ack", overrides=ctx.overrides)
+        out.reply_level = out.base_level = level
+        deliver(notify.complaint_ack(email.name), level, guards={})
         return {}
 
     def triage_error(state: _State) -> _State:
@@ -222,30 +247,8 @@ def process_email(
         if "draft" not in state:
             return {}
         g = gate(state["draft"], ctx)
-        out.reply_level, out.base_level, out.guards, out.text = (
-            g.level,
-            g.base_level,
-            g.guards,
-            g.text,
-        )
-        if g.level >= 2:
-            if world.send_reply(message_id, run_id, sender, g.text, now):
-                out.reply_status = "sent"
-            if g.level == 2:
-                deps.approvals.add_review("reply", message_id, run_id, "level_2", now)
-            elif sampled_for_review(run_id):
-                deps.approvals.add_review("reply", message_id, run_id, "sample", now)
-        else:
-            deps.approvals.queue_reply(
-                run_id=run_id,
-                message_id=message_id,
-                to=sender,
-                text=g.text,
-                guards=g.guards,
-                level=g.level,
-                now=now,
-            )
-            out.reply_status = "pending_approval"
+        out.reply_level, out.base_level, out.guards = g.level, g.base_level, g.guards
+        deliver(g.text, g.level, g.guards)
         for c in ctx.calls:  # executed writes are reviewed: every level 2, a sample of level 3
             if c["tool"] in WRITE_TOOLS and c["status"] == "executed":
                 if c["effective_level"] == 2:
