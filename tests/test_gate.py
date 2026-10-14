@@ -125,7 +125,7 @@ def test_a_rejection_carries_the_coordinators_note():
 
 
 def test_the_prompt_is_versioned_and_states_the_core_rules():
-    assert PROMPT_VERSION == "v2"
+    assert PROMPT_VERSION == "v3"
     for rule in ("{{quote:", "_quote", "requested", "escalate", "Never type a price"):
         assert rule in SYSTEM_PROMPT
 
@@ -182,3 +182,9 @@ def test_the_prompt_tells_the_agent_to_render_the_standing_rules():
     # F1, prompt half (v2): the placeholders exist only if the model uses them.
     for name in ("booking", "hold", "no_discount"):
         assert f"{{{{policy:{name}}}}}" in SYSTEM_PROMPT
+
+
+def test_the_prompt_forbids_repeating_an_unverified_amount_even_in_a_refusal():
+    # F2 (v3): "as if it were the venue's price" read as permission to repeat it in a refusal.
+    assert "as if it were the venue's price" not in SYSTEM_PROMPT
+    assert "the figure you mentioned" in SYSTEM_PROMPT
