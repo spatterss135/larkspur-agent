@@ -23,7 +23,7 @@ Before any fix, each plan was checked against four questions:
 | F2 | The agent repeats a customer's unverified figure while refusing it | agent | 5 | No (held) | Planned |
 | F3 | The agent writes a price placeholder without pricing anything | agent | 3 | No (held) | Planned |
 | F4 | The complaint acknowledgement is sent with no level in the ledger | agent | 4 | Yes (harmless template) | Fixed: 0/4 → 10/10 |
-| F5 | The agent asks "which month?" and loops on a tool that needs input | agent | 2 | No | Planned |
+| F5 | The agent asks "which month?" and loops on a tool that needs input | agent | 2 | No | Fixed: loops 1/2 → 0/5; passes 0/2 → 2/5 |
 | F6 | The agent re-requests a hold that's already pending | label / agent | 2 | No (pending) | Known issue |
 | F7 | The harness filed an agent loop as an infrastructure error | evaluator | 1 | n/a | Fixed |
 | F8 | The judge couldn't see rendered prices or the standing rules | evaluator | 24/72 grounded | n/a | Fixed (D21) |
@@ -98,6 +98,10 @@ Traces: `01a137e5-3c61-77a0-8e71-855eb05b9b16`, `01a137e5-9e6e-7c10-aa63-348c429
 2. A loop breaker in the middleware: after the same tool returns `needs_input` twice for the same reason in one run, the agent is told to stop calling it and ask the customer.
 
 Both push toward asking.
+
+**Result.** Commits `961476c` (red), `c2212b5` (green), then `457f517` (red), `a05729b` (green).
+- **First attempt** (`f5-month-loop`, 5 repetitions): no loops (at most 6 tool calls per turn, down from 17), but 0/5 passes. The trace showed why: the breaker refused every call after 3 `needs_input`, including the agent's fourth call, which was correct (`["June", "the 13th"]`). My spec was wrong, so the test changed first (`457f517`). A valid call now always runs, a call that would need input again after 3 gets `ask_customer`, and after 6 the tool is refused outright.
+- **Second attempt** (`f5-month-loop-2`): no loops; the agent resolved June 13 in 3/5 runs and the conversation passed 2/5 (baseline 0/2). The other 3 failures are F3 (a `{{rate:R1}}` or `{{quote:Q1}}` with no record), so the F3 fix should lift this case further.
 
 ## F6. The agent re-requests a hold that's already pending (label / agent)
 
