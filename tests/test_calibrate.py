@@ -54,3 +54,42 @@ def test_cases_already_inspected_are_forced_into_the_tuning_half():
     assert {"c3", "c7"} <= {i["case"] for i in tune}
     assert not {"c3", "c7"} & {i["case"] for i in hold}
     assert len(tune) + len(hold) == 20
+
+
+def test_rejudge_grades_the_saved_replies_with_the_current_judge(tmp_path, monkeypatch):
+    import json
+
+    import evals.calibrate as cal
+    import evals.judge as judge
+    from evals.code_evaluators import EvalResult
+
+    seen = []
+
+    def fake_judge(inp, model=None, criteria=None):
+        seen.append((inp, criteria))
+        return [
+            EvalResult("grounded", True, gate=True),
+            EvalResult("must_not_claim", False, gate=True, comment="claims a booking"),
+            EvalResult("tone", True, score=4),
+        ]
+
+    monkeypatch.setattr(judge, "judge_reply", fake_judge)
+    monkeypatch.setattr(cal, "SET_FILE", tmp_path / "set.json")
+    result = {"tool_calls": [], "retrieved": [], "sources": []}
+    saved = {
+        "cases": [
+            {"run_id": "r1", "id": "hold-request", "outputs": {"text": "Hi", "result": result}}
+        ]
+    }
+    (tmp_path / "saved.json").write_text(json.dumps(saved))
+    item = {"run_id": "r1", "case": "hold-request", "bucket": "normal", "judge": {"grounded": 0}}
+    cal.SET_FILE.write_text(json.dumps({"queue_id": "q", "tune": [item], "holdout": []}))
+
+    cal.rejudge(tmp_path / "saved.json")
+
+    out = json.loads(cal.SET_FILE.read_text())
+    assert out["judge_version"] == judge.JUDGE_VERSION
+    assert out["tune"][0]["judge"] == {"grounded": 1, "must_not_claim": 0, "tone": 4}
+    inp, criteria = seen[0]
+    assert criteria == ["grounded", "must_not_claim", "tone"]
+    assert inp.reply == "Hi" and inp.must_not_claim  # the case's forbidden claims are passed
