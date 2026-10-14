@@ -13,6 +13,7 @@ One annotator and about 28 holdout labels can show the judge agrees with that pe
 They can't show the judge is independently valid, and the report says so.
 
     uv run python -m evals.calibrate push reports/v1-baseline.json
+    uv run python -m evals.calibrate rejudge reports/v1-baseline.json   # judge-v2 scores
     uv run python -m evals.calibrate report reports/v1-baseline.json
 """
 
@@ -184,6 +185,44 @@ def push(saved_path: Path) -> None:
     print(f"queued {len(items)} runs ({len(tune)} tune, {len(hold)} holdout) in '{QUEUE}'")
 
 
+LABELED = ["grounded", "must_not_claim", "tone"]
+
+
+def rejudge(saved_path: Path, model: Any = None) -> None:
+    """Grade the saved replies in the calibration set with the current judge version. Only
+    the judge runs again; the agent's replies are the baseline's, unchanged."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    from evals import judge
+    from evals.schema import load_suite
+
+    cases = {c.id: c for c in load_suite().cases}
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    rows = {r["run_id"]: r for r in saved["cases"]}
+    cal = json.loads(SET_FILE.read_text(encoding="utf-8"))
+
+    def grade(item: dict[str, Any]) -> None:
+        case, out = cases[item["case"]], rows[item["run_id"]]["outputs"]
+        res = out["result"]
+        inp = judge.JudgeInput(
+            email=case.email,
+            reply=out["text"],
+            thread=case.thread,
+            tool_calls=res.get("tool_calls", []),
+            retrieved=res.get("retrieved", []),
+            sources=res.get("sources", []),
+            must_not_claim=case.expected.reply.must_not_claim,
+        )
+        results = judge.judge_reply(inp, model, criteria=LABELED)
+        item["judge"] = {r.key: r.score if r.score is not None else int(r.passed) for r in results}
+        item["judge_comments"] = {r.key: r.comment for r in results}
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(grade, cal["tune"] + cal["holdout"]))
+    cal["judge_version"] = judge.JUDGE_VERSION
+    SET_FILE.write_text(json.dumps(cal, indent=1), encoding="utf-8")
+
+
 def human_labels(run_ids: list[str]) -> dict[str, dict[str, float]]:
     from langsmith import Client
 
@@ -250,13 +289,16 @@ def known_bad_catch_rates(model: Any = None) -> dict[str, Any]:
 
 
 def report(saved_path: Path, with_known_bad: bool = True) -> Path:
-    from evals.judge import JUDGE_VERSION
+    from evals.judge import JUDGE_VERSION as CURRENT
 
     cal = json.loads(SET_FILE.read_text(encoding="utf-8"))
+    version = cal.get("judge_version", "judge-v1")
+    if version != CURRENT:
+        raise SystemExit(f"the set was judged by {version}; run rejudge for {CURRENT}")
     labels = human_labels([i["run_id"] for i in cal["tune"] + cal["holdout"]])
     tune, hold = _table(cal["tune"], labels), _table(cal["holdout"], labels)
     lines = [
-        f"# Judge calibration: {JUDGE_VERSION}",
+        f"# Judge calibration: {version}",
         "",
         f"Human labels found for {len(labels)} of {len(cal['tune']) + len(cal['holdout'])} runs "
         "(dev cases only; holdout cases stay unseen). One annotator: this measures agreement "
@@ -298,7 +340,7 @@ def report(saved_path: Path, with_known_bad: bool = True) -> Path:
             )
         if kb["misses"]:
             lines.append(f"- Missed: {', '.join(kb['misses'])}")
-    out = ROOT / "reports" / f"calibration-{JUDGE_VERSION}.md"
+    out = ROOT / "reports" / f"calibration-{version}.md"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return out
 
@@ -311,6 +353,9 @@ def main(argv: list[str] | None = None) -> int:
     cmd, path = args[0], Path(args[1])
     if cmd == "push":
         push(path)
+    elif cmd == "rejudge":
+        rejudge(path)
+        print(f"re-graded the calibration set with the current judge into {SET_FILE}")
     elif cmd == "report":
         print(f"wrote {report(path)}")
     return 0
