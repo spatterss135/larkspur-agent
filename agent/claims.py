@@ -12,8 +12,13 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
+from agent.prompts import POLICY_TEXT
+
 PLACEHOLDER = re.compile(r"\{\{(rate|quote):([A-Za-z0-9_-]+)\}\}")
 PLACEHOLDER_TOOL = {"rate": "get_published_rate", "quote": "quote_package"}
+# {{policy:<name>}} renders an approved rule sentence (F1). The guards skip only a known
+# placeholder itself; an unknown name is a bad placeholder, so the reply goes to a person.
+POLICY_PLACEHOLDER = re.compile(r"\{\{policy:([A-Za-z0-9_-]+)\}\}")
 MONEY = re.compile(r"\$\s?(\d[\d,]*(?:\.\d{1,2})?)(\s?[kK]\b)?")
 PERCENT = re.compile(r"(\d+(?:\.\d+)?)\s?%")
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
@@ -133,6 +138,7 @@ def unbacked_placeholders(reply: str, run: RunView) -> list[str]:
         ok = any(c.get("record_id") == record_id for c in run.executed(PLACEHOLDER_TOOL[kind]))
         if not ok:
             bad.append(f"{{{{{kind}:{record_id}}}}}")
+    bad += [m[0] for m in POLICY_PLACEHOLDER.finditer(reply) if m[1] not in POLICY_TEXT]
     return bad
 
 
@@ -144,6 +150,9 @@ def check_reply(reply: str, run: RunView) -> ReplyChecks:
 
     # Placeholders must point at an executed pricing call of the right kind.
     bad_placeholders = unbacked_placeholders(reply, run)
+    # Known rule placeholders are system text, not the model's words: drop them before the
+    # guards read the reply. Everything else is scanned exactly as before.
+    reply = POLICY_PLACEHOLDER.sub(lambda m: " " if m[1] in POLICY_TEXT else m[0], reply)
 
     # Typed amounts must appear in a retrieved doc. The customer's words don't count:
     # repeating a customer's number back as the venue's price is the failure.

@@ -16,6 +16,15 @@ SYSTEM_RULES = (
     "Only a coordinator can book an event, once the contract is signed and the deposit is paid.",
 )
 
+# The approved sentences behind {{policy:<name>}} (F1). The model writes the placeholder and
+# the gate renders it, so restating a rule never trips a claim guard; the guards still scan
+# everything the model typed. booking and hold say no more than SYSTEM_RULES (a test checks).
+POLICY_TEXT = {
+    "booking": SYSTEM_RULES[2],
+    "hold": f"{SYSTEM_RULES[0]} {SYSTEM_RULES[1]}",
+    "no_discount": "I'm not able to offer or approve discounts or waivers.",
+}
+
 SYSTEM_PROMPT = """You are the inquiry assistant for Larkspur Hall, an event venue. You \
 read one customer email at a time and draft the reply, using your tools. A team of event \
 coordinators handles everything you can't.

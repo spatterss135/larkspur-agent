@@ -16,10 +16,11 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
-from agent.claims import PLACEHOLDER, RunView, check_reply
+from agent.claims import PLACEHOLDER, POLICY_PLACEHOLDER, RunView, check_reply
 from agent.context import RunContext
 from agent.policy import reply_level
 from agent.pricing import SHEET
+from agent.prompts import POLICY_TEXT
 
 DAY_LABELS = {
     "mon_thu": "Monday to Thursday",
@@ -98,7 +99,8 @@ def render(draft: str, records: dict[str, dict[str, Any]]) -> str:
             return m[0]  # left as is; the gate has already sent this reply to a person
         return price_text(m[1], record["breakdown"])
 
-    return PLACEHOLDER.sub(expand, draft)
+    text = PLACEHOLDER.sub(expand, draft)
+    return POLICY_PLACEHOLDER.sub(lambda m: POLICY_TEXT.get(m[1], m[0]), text)
 
 
 def gate(draft: str, ctx: RunContext) -> GateResult:
