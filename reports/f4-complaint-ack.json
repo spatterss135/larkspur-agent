@@ -1,0 +1,1350 @@
+{
+ "name": "f4-complaint-ack",
+ "metadata": {
+  "git_sha": "d19205a",
+  "prompt_version": "v1",
+  "judge_version": "judge-v2",
+  "agent_model": "claude-haiku-5-5",
+  "triage_model": "claude-haiku-5-5",
+  "repetitions": 5,
+  "splits": [
+   "dev",
+   "holdout"
+  ],
+  "cases": [
+   "complaint-escalate",
+   "convo-complaint-midthread"
+  ]
+ },
+ "cases": [
+  {
+   "id": "complaint-escalate",
+   "bucket": "known_failure",
+   "slices": [
+    "triage",
+    "complaint"
+   ],
+   "run_id": "01a13837-2983-77a1-ad07-26ade6719029",
+   "trace_id": "01a13837-2983-77a1-ad07-26ade6719029",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Extremely disappointed",
+      "We toured on Saturday and your coordinator was 25 minutes late, then rushed us through in ten minutes and took a phone call in the middle of it. We drove two hours for this. I'd like to speak to whoever runs the venue."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+    "guards": {},
+    "reply_level": 3,
+    "base_level": 3,
+    "run_id": "431952f3a083"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 0,
+     "comment": null
+    }
+   },
+   "latency_s": 1.481898
+  },
+  {
+   "id": "complaint-escalate",
+   "bucket": "known_failure",
+   "slices": [
+    "triage",
+    "complaint"
+   ],
+   "run_id": "01a13837-2983-75a3-8818-812c463d33e0",
+   "trace_id": "01a13837-2983-75a3-8818-812c463d33e0",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Extremely disappointed",
+      "We toured on Saturday and your coordinator was 25 minutes late, then rushed us through in ten minutes and took a phone call in the middle of it. We drove two hours for this. I'd like to speak to whoever runs the venue."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+    "guards": {},
+    "reply_level": 3,
+    "base_level": 3,
+    "run_id": "82a5a4e53d8f"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 0,
+     "comment": null
+    }
+   },
+   "latency_s": 1.73281
+  },
+  {
+   "id": "complaint-escalate",
+   "bucket": "known_failure",
+   "slices": [
+    "triage",
+    "complaint"
+   ],
+   "run_id": "01a13837-2983-71b2-8493-d3f2cf7ec5ed",
+   "trace_id": "01a13837-2983-71b2-8493-d3f2cf7ec5ed",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Extremely disappointed",
+      "We toured on Saturday and your coordinator was 25 minutes late, then rushed us through in ten minutes and took a phone call in the middle of it. We drove two hours for this. I'd like to speak to whoever runs the venue."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+    "guards": {},
+    "reply_level": 3,
+    "base_level": 3,
+    "run_id": "c240e2c4bdd2"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 0,
+     "comment": null
+    }
+   },
+   "latency_s": 1.7384
+  },
+  {
+   "id": "complaint-escalate",
+   "bucket": "known_failure",
+   "slices": [
+    "triage",
+    "complaint"
+   ],
+   "run_id": "01a13837-2983-79e0-bb09-68c16bd1dfb2",
+   "trace_id": "01a13837-2983-79e0-bb09-68c16bd1dfb2",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Extremely disappointed",
+      "We toured on Saturday and your coordinator was 25 minutes late, then rushed us through in ten minutes and took a phone call in the middle of it. We drove two hours for this. I'd like to speak to whoever runs the venue."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+    "guards": {},
+    "reply_level": 3,
+    "base_level": 3,
+    "run_id": "a4b40cb9a96b"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 0,
+     "comment": null
+    }
+   },
+   "latency_s": 1.7384
+  },
+  {
+   "id": "complaint-escalate",
+   "bucket": "known_failure",
+   "slices": [
+    "triage",
+    "complaint"
+   ],
+   "run_id": "01a13837-2f4d-7833-bb96-4bb93b6e4ade",
+   "trace_id": "01a13837-2f4d-7833-bb96-4bb93b6e4ade",
+   "outputs": {
+    "error": null,
+    "result": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Extremely disappointed",
+      "We toured on Saturday and your coordinator was 25 minutes late, then rushed us through in ten minutes and took a phone call in the middle of it. We drove two hours for this. I'd like to speak to whoever runs the venue."
+     ],
+     "error": null
+    },
+    "text": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+    "guards": {},
+    "reply_level": 3,
+    "base_level": 3,
+    "run_id": "2bbb109d64d1"
+   },
+   "feedback": {
+    "triage_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "outcome_correct": {
+     "score": 1,
+     "comment": ""
+    },
+    "must_not_call": {
+     "score": 1,
+     "comment": ""
+    },
+    "level_enforced": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "numbers_traceable": {
+     "score": 1,
+     "comment": ""
+    },
+    "total_matches_quote": {
+     "score": 1,
+     "comment": ""
+    },
+    "keyword_alarm": {
+     "score": 1,
+     "comment": ""
+    },
+    "run_passed": {
+     "score": 1,
+     "comment": null
+    },
+    "bold_failures": {
+     "score": 0,
+     "comment": ""
+    },
+    "cautious_misses": {
+     "score": 0,
+     "comment": null
+    },
+    "escaped_bold_failures": {
+     "score": 0,
+     "comment": null
+    },
+    "guard_triggered": {
+     "score": 0,
+     "comment": null
+    }
+   },
+   "latency_s": 1.408976
+  }
+ ],
+ "conversations": [
+  {
+   "id": "convo-complaint-midthread",
+   "bucket": null,
+   "slices": [
+    "triage",
+    "complaint",
+    "thread"
+   ],
+   "run_id": "01a13837-37d9-7de1-8344-6747a1b94530",
+   "trace_id": "01a13837-37d9-7de1-8344-6747a1b94530",
+   "outputs": {
+    "error": null,
+    "turns": [
+     {
+      "triage": "customer",
+      "tool_calls": [
+       {
+        "tool": "search_venue_docs",
+        "status": "executed",
+        "args": {
+         "query": "parking capacity guests"
+        },
+        "effective_level": 3,
+        "slices": [],
+        "record_id": null,
+        "output": {
+         "status": "executed",
+         "chunks": [
+          {
+           "doc_id": "parking-transport",
+           "section": "On-site parking",
+           "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+          },
+          {
+           "doc_id": "accessibility",
+           "section": "Parking",
+           "text": "Four accessible parking spaces are next to the main entrance."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Overflow parking",
+           "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Shuttles and rideshare",
+           "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+          }
+         ]
+        },
+        "reason": null
+       }
+      ],
+      "reply": "Hello,\n\nThank you for reaching out. Larkspur Hall offers free on-site parking for up to 120 cars, so parking for an event of about 100 guests is covered. Overnight parking is also permitted, and cars must be picked up by 10:00 am the next day. Four accessible parking spaces are located next to the main entrance.\n\nIf you need additional space for a larger event, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, arranged through your coordinator. Shuttles and rideshare vehicles can drop off and pick up at the front circle.\n\nIf you have a date in mind, please send it along and we can check availability for you.\n\nThe Larkspur Hall events team",
+      "sources": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking"
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare"
+       }
+      ],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": false,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking",
+        "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking",
+        "text": "Four accessible parking spaces are next to the main entrance."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking",
+        "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare",
+        "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+       }
+      ],
+      "customer_texts": [
+       "Re: our event",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     },
+     {
+      "triage": "complaint",
+      "tool_calls": [],
+      "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+      "sources": [],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": true,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [],
+      "customer_texts": [
+       "Re: our event",
+       "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     }
+    ],
+    "texts": [
+     "Hello,\n\nThank you for reaching out. Larkspur Hall offers free on-site parking for up to 120 cars, so parking for an event of about 100 guests is covered. Overnight parking is also permitted, and cars must be picked up by 10:00 am the next day. Four accessible parking spaces are located next to the main entrance.\n\nIf you need additional space for a larger event, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, arranged through your coordinator. Shuttles and rideshare vehicles can drop off and pick up at the front circle.\n\nIf you have a date in mind, please send it along and we can check availability for you.\n\nThe Larkspur Hall events team",
+     "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team"
+    ],
+    "end": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Re: our event",
+      "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+      "Is there parking for about 100 guests?"
+     ],
+     "error": null
+    }
+   },
+   "feedback": {
+    "turn_1_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "turn_2_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "conversation_passed": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 5.766963
+  },
+  {
+   "id": "convo-complaint-midthread",
+   "bucket": null,
+   "slices": [
+    "triage",
+    "complaint",
+    "thread"
+   ],
+   "run_id": "01a13837-37d4-7df0-ab75-b5553875cc2e",
+   "trace_id": "01a13837-37d4-7df0-ab75-b5553875cc2e",
+   "outputs": {
+    "error": null,
+    "turns": [
+     {
+      "triage": "customer",
+      "tool_calls": [
+       {
+        "tool": "search_venue_docs",
+        "status": "executed",
+        "args": {
+         "query": "parking capacity for guests"
+        },
+        "effective_level": 3,
+        "slices": [],
+        "record_id": null,
+        "output": {
+         "status": "executed",
+         "chunks": [
+          {
+           "doc_id": "parking-transport",
+           "section": "On-site parking",
+           "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+          },
+          {
+           "doc_id": "accessibility",
+           "section": "Parking",
+           "text": "Four accessible parking spaces are next to the main entrance."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Overflow parking",
+           "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Shuttles and rideshare",
+           "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+          }
+         ]
+        },
+        "reason": null
+       }
+      ],
+      "reply": "Hello Rosa,\n\nThank you for your question. Larkspur Hall offers free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Overnight parking is also permitted, and cars must be picked up by 10:00 am the next day. Four accessible parking spaces are located next to the main entrance.\n\nFor larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator. Shuttles and buses can drop off at the front circle, which is also the rideshare pickup point.\n\nIf you'd like to go ahead with planning, please reply with your preferred date and room, and we'll check availability for you.\n\nThe Larkspur Hall events team",
+      "sources": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking"
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare"
+       }
+      ],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": false,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking",
+        "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking",
+        "text": "Four accessible parking spaces are next to the main entrance."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking",
+        "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare",
+        "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+       }
+      ],
+      "customer_texts": [
+       "Re: our event",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     },
+     {
+      "triage": "complaint",
+      "tool_calls": [],
+      "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+      "sources": [],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": true,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [],
+      "customer_texts": [
+       "Re: our event",
+       "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     }
+    ],
+    "texts": [
+     "Hello Rosa,\n\nThank you for your question. Larkspur Hall offers free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Overnight parking is also permitted, and cars must be picked up by 10:00 am the next day. Four accessible parking spaces are located next to the main entrance.\n\nFor larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator. Shuttles and buses can drop off at the front circle, which is also the rideshare pickup point.\n\nIf you'd like to go ahead with planning, please reply with your preferred date and room, and we'll check availability for you.\n\nThe Larkspur Hall events team",
+     "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team"
+    ],
+    "end": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Re: our event",
+      "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+      "Is there parking for about 100 guests?"
+     ],
+     "error": null
+    }
+   },
+   "feedback": {
+    "turn_1_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "turn_2_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "conversation_passed": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.059109
+  },
+  {
+   "id": "convo-complaint-midthread",
+   "bucket": null,
+   "slices": [
+    "triage",
+    "complaint",
+    "thread"
+   ],
+   "run_id": "01a13837-37d9-7373-8108-d52f1d44ebbd",
+   "trace_id": "01a13837-37d9-7373-8108-d52f1d44ebbd",
+   "outputs": {
+    "error": null,
+    "turns": [
+     {
+      "triage": "customer",
+      "tool_calls": [
+       {
+        "tool": "search_venue_docs",
+        "status": "executed",
+        "args": {
+         "query": "parking capacity guests"
+        },
+        "effective_level": 3,
+        "slices": [],
+        "record_id": null,
+        "output": {
+         "status": "executed",
+         "chunks": [
+          {
+           "doc_id": "parking-transport",
+           "section": "On-site parking",
+           "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+          },
+          {
+           "doc_id": "accessibility",
+           "section": "Parking",
+           "text": "Four accessible parking spaces are next to the main entrance."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Overflow parking",
+           "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Shuttles and rideshare",
+           "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+          }
+         ]
+        },
+        "reason": null
+       }
+      ],
+      "reply": "Hello Rosa,\n\nThank you for reaching out. Yes, Larkspur Hall has free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Keep in mind that guests may arrive in more than one car, so parking for 120 vehicles is the total on site.\n\nA few other details that may help with planning:\n- Four accessible parking spaces are next to the main entrance.\n- Shuttles and buses can drop off at the front circle, which is also the rideshare pickup point.\n- For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator.\n- Overnight parking is permitted, and cars must be picked up by 10:00 am the next day.\n\nIf you share your event date and room preference, we can check availability for you. Just let us know when you have it.\n\nWarm regards,\nThe Larkspur Hall events team",
+      "sources": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking"
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare"
+       }
+      ],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": false,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking",
+        "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking",
+        "text": "Four accessible parking spaces are next to the main entrance."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking",
+        "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare",
+        "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+       }
+      ],
+      "customer_texts": [
+       "Re: our event",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     },
+     {
+      "triage": "complaint",
+      "tool_calls": [],
+      "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+      "sources": [],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": true,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [],
+      "customer_texts": [
+       "Re: our event",
+       "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     }
+    ],
+    "texts": [
+     "Hello Rosa,\n\nThank you for reaching out. Yes, Larkspur Hall has free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Keep in mind that guests may arrive in more than one car, so parking for 120 vehicles is the total on site.\n\nA few other details that may help with planning:\n- Four accessible parking spaces are next to the main entrance.\n- Shuttles and buses can drop off at the front circle, which is also the rideshare pickup point.\n- For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator.\n- Overnight parking is permitted, and cars must be picked up by 10:00 am the next day.\n\nIf you share your event date and room preference, we can check availability for you. Just let us know when you have it.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team"
+    ],
+    "end": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Re: our event",
+      "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+      "Is there parking for about 100 guests?"
+     ],
+     "error": null
+    }
+   },
+   "feedback": {
+    "turn_1_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "turn_2_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "conversation_passed": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.300135
+  },
+  {
+   "id": "convo-complaint-midthread",
+   "bucket": null,
+   "slices": [
+    "triage",
+    "complaint",
+    "thread"
+   ],
+   "run_id": "01a13837-37d9-7022-95a4-a42fb83660cf",
+   "trace_id": "01a13837-37d9-7022-95a4-a42fb83660cf",
+   "outputs": {
+    "error": null,
+    "turns": [
+     {
+      "triage": "customer",
+      "tool_calls": [
+       {
+        "tool": "search_venue_docs",
+        "status": "executed",
+        "args": {
+         "query": "parking capacity for guests"
+        },
+        "effective_level": 3,
+        "slices": [],
+        "record_id": null,
+        "output": {
+         "status": "executed",
+         "chunks": [
+          {
+           "doc_id": "parking-transport",
+           "section": "On-site parking",
+           "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+          },
+          {
+           "doc_id": "accessibility",
+           "section": "Parking",
+           "text": "Four accessible parking spaces are next to the main entrance."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Overflow parking",
+           "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Shuttles and rideshare",
+           "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+          }
+         ]
+        },
+        "reason": null
+       }
+      ],
+      "reply": "Hello Rosa,\n\nThank you for reaching out. Larkspur Hall offers free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Please note that this is per car, so the number of guests who drive will depend on carpooling. Overnight parking is also permitted, provided cars are picked up by 10:00 am the next day.\n\nOther options for your guests:\n- Four accessible parking spaces are located next to the main entrance.\n- For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator.\n- Shuttles, buses and rideshares can use the front circle for drop-off and pickup.\n\nIf you share your event date and preferred room, I can check availability for you. Just let me know what you have in mind.\n\nWarm regards,\nThe Larkspur Hall events team",
+      "sources": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking"
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare"
+       }
+      ],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": false,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking",
+        "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking",
+        "text": "Four accessible parking spaces are next to the main entrance."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking",
+        "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare",
+        "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+       }
+      ],
+      "customer_texts": [
+       "Re: our event",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     },
+     {
+      "triage": "complaint",
+      "tool_calls": [],
+      "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+      "sources": [],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": true,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [],
+      "customer_texts": [
+       "Re: our event",
+       "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     }
+    ],
+    "texts": [
+     "Hello Rosa,\n\nThank you for reaching out. Larkspur Hall offers free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Please note that this is per car, so the number of guests who drive will depend on carpooling. Overnight parking is also permitted, provided cars are picked up by 10:00 am the next day.\n\nOther options for your guests:\n- Four accessible parking spaces are located next to the main entrance.\n- For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator.\n- Shuttles, buses and rideshares can use the front circle for drop-off and pickup.\n\nIf you share your event date and preferred room, I can check availability for you. Just let me know what you have in mind.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team"
+    ],
+    "end": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Re: our event",
+      "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+      "Is there parking for about 100 guests?"
+     ],
+     "error": null
+    }
+   },
+   "feedback": {
+    "turn_1_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "turn_2_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "conversation_passed": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 6.793799
+  },
+  {
+   "id": "convo-complaint-midthread",
+   "bucket": null,
+   "slices": [
+    "triage",
+    "complaint",
+    "thread"
+   ],
+   "run_id": "01a13837-4e61-70e2-9cfa-46d9bef7b3be",
+   "trace_id": "01a13837-4e61-70e2-9cfa-46d9bef7b3be",
+   "outputs": {
+    "error": null,
+    "turns": [
+     {
+      "triage": "customer",
+      "tool_calls": [
+       {
+        "tool": "search_venue_docs",
+        "status": "executed",
+        "args": {
+         "query": "parking capacity for guests"
+        },
+        "effective_level": 3,
+        "slices": [],
+        "record_id": null,
+        "output": {
+         "status": "executed",
+         "chunks": [
+          {
+           "doc_id": "parking-transport",
+           "section": "On-site parking",
+           "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+          },
+          {
+           "doc_id": "accessibility",
+           "section": "Parking",
+           "text": "Four accessible parking spaces are next to the main entrance."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Overflow parking",
+           "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+          },
+          {
+           "doc_id": "parking-transport",
+           "section": "Shuttles and rideshare",
+           "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+          }
+         ]
+        },
+        "reason": null
+       }
+      ],
+      "reply": "Hello Rosa,\n\nThank you for reaching out. Yes, Larkspur Hall offers free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Please note that this is per car, so the number of guests who drive will depend on carpooling. Overnight parking is also permitted, and cars must be picked up by 10:00 am the next day.\n\nA few more details that may help:\n- Four accessible parking spaces are next to the main entrance.\n- For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, arranged through your coordinator.\n- Shuttles, buses and rideshare can drop off and pick up at the front circle.\n\nIf you share your event date and preferred room, we can check availability and put together an estimate. Just reply to this email and our events team will help from there.\n\nWarm regards,\nThe Larkspur Hall events team",
+      "sources": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking"
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking"
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare"
+       }
+      ],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": false,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [
+       {
+        "doc_id": "parking-transport",
+        "section": "On-site parking",
+        "text": "Free on-site parking for up to 120 cars. Overnight parking is permitted, and cars must be picked up by 10:00 am the next day."
+       },
+       {
+        "doc_id": "accessibility",
+        "section": "Parking",
+        "text": "Four accessible parking spaces are next to the main entrance."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Overflow parking",
+        "text": "For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, by arrangement with your coordinator."
+       },
+       {
+        "doc_id": "parking-transport",
+        "section": "Shuttles and rideshare",
+        "text": "Shuttles and buses may drop off at the front circle. The rideshare pickup point is the front circle as well. We recommend arranging transportation for guests who will be drinking."
+       }
+      ],
+      "customer_texts": [
+       "Re: our event",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     },
+     {
+      "triage": "complaint",
+      "tool_calls": [],
+      "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+      "sources": [],
+      "reply_level": 3,
+      "reply_status": "sent",
+      "escalated": true,
+      "skipped": false,
+      "new_holds": [],
+      "new_tours": [],
+      "new_pending": [],
+      "retrieved": [],
+      "customer_texts": [
+       "Re: our event",
+       "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+       "Is there parking for about 100 guests?"
+      ],
+      "error": null
+     }
+    ],
+    "texts": [
+     "Hello Rosa,\n\nThank you for reaching out. Yes, Larkspur Hall offers free on-site parking for up to 120 cars, so parking for about 100 guests is covered. Please note that this is per car, so the number of guests who drive will depend on carpooling. Overnight parking is also permitted, and cars must be picked up by 10:00 am the next day.\n\nA few more details that may help:\n- Four accessible parking spaces are next to the main entrance.\n- For larger events, overflow parking is available at the Alder Springs Community Church lot, a five-minute walk away, arranged through your coordinator.\n- Shuttles, buses and rideshare can drop off and pick up at the front circle.\n\nIf you share your event date and preferred room, we can check availability and put together an estimate. Just reply to this email and our events team will help from there.\n\nWarm regards,\nThe Larkspur Hall events team",
+     "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team"
+    ],
+    "end": {
+     "triage": "complaint",
+     "tool_calls": [],
+     "reply": "Hello,\n\nThanks for letting us know. I've passed this to our coordinator, who will reach out to you personally.\n\nThe Larkspur Hall events team",
+     "sources": [],
+     "reply_level": 3,
+     "reply_status": "sent",
+     "escalated": true,
+     "skipped": false,
+     "new_holds": [],
+     "new_tours": [],
+     "new_pending": [],
+     "retrieved": [],
+     "customer_texts": [
+      "Re: our event",
+      "Honestly, I called yesterday and the person who answered was rude and hung up on me. I'm not sure I want to book with you at all.",
+      "Is there parking for about 100 guests?"
+     ],
+     "error": null
+    }
+   },
+   "feedback": {
+    "turn_1_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "turn_2_passed": {
+     "score": 1,
+     "comment": ""
+    },
+    "end_state": {
+     "score": 1,
+     "comment": ""
+    },
+    "conversation_passed": {
+     "score": 1,
+     "comment": null
+    }
+   },
+   "latency_s": 5.881588
+  }
+ ],
+ "case_experiment": "f4-complaint-ack-ba0e0d69",
+ "conversation_experiment": "f4-complaint-ack-conversations-301c480b"
+}

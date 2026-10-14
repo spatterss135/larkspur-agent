@@ -22,7 +22,7 @@ Before any fix, each plan was checked against four questions:
 | F1 | Guards hold replies that restate a rule or refuse | agent | 50 of 57 guard-held | No (held) | Planned |
 | F2 | The agent repeats a customer's unverified figure while refusing it | agent | 5 | No (held) | Planned |
 | F3 | The agent writes a price placeholder without pricing anything | agent | 3 | No (held) | Planned |
-| F4 | The complaint acknowledgement is sent with no level in the ledger | agent | 4 | Yes (harmless template) | Planned |
+| F4 | The complaint acknowledgement is sent with no level in the ledger | agent | 4 | Yes (harmless template) | Fixed: 0/4 → 10/10 |
 | F5 | The agent asks "which month?" and loops on a tool that needs input | agent | 2 | No | Planned |
 | F6 | The agent re-requests a hold that's already pending | label / agent | 2 | No (pending) | Known issue |
 | F7 | The harness filed an agent loop as an infrastructure error | evaluator | 1 | n/a | Fixed |
@@ -79,7 +79,9 @@ Traces: `01a13742-85e6-72a3-a415-b065f887c923`, `01a13744-240b-7c72-9ef1-e6c533a
 
 **Rejected plan:** write "level 3" into the ledger. That makes the check pass without anything deciding the level.
 
-**Fix:** the autonomy policy governs the template like any other action. A `complaint_ack` entry in the policy config (default 3) is recorded with the send, and below level 2 the acknowledgement is queued for a person instead of sent.
+**Fix:** the autonomy policy governs the template like any other action. A `complaint_ack` entry in the policy config (default 3) is recorded with the send, and below level 2 the acknowledgement is queued for a person instead of sent. Commits `367aa5a` (red), `d19205a` (green).
+
+**Result:** targeted rerun `f4-complaint-ack` ([reports/f4-complaint-ack.json](../reports/f4-complaint-ack.json)), 5 repetitions: complaint-escalate 5/5, convo-complaint-midthread 5/5 (baseline 0/2 and 0/2).
 
 ## F5. The agent asks "which month?" and loops on a tool that needs input (agent)
 
