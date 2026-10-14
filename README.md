@@ -244,20 +244,21 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 
 ## 12. How AI assistants helped, and what I checked myself
 
-<!-- TODO(you): review and put in your own words -->
-- **Claude Code wrote most of the code and tests** under my direction, test-first: every fix is a red commit, then a green one.
-- **I made the design calls:**
-  - the autonomy ladder
-  - what counts as grounded evidence (D21)
-  - the guard fix (rule placeholders instead of negation-aware regexes)
-  - keeping the agent loop for v1 instead of splitting gather and draft
-- **I approved every eval label.** For calibration I labeled 30 replies and the 22 known-bad items blind, then reviewed each disagreement with the judge. Claude Code built the labeling page; during the review it explained the judge's quoted evidence, and the decisions were mine. It also caught a likely misclick in my review, which I changed and noted in the file.
-- **The process caught AI mistakes:**
-  - a loop breaker that refused correct calls (F5)
-  - a prompt fix that didn't work (F2)
-  - a retry credited with a gain it didn't cause (F3)
-  - judge errors counted as failures (F9)
-  - an accidental full-suite run caused by a missing option
+**How I worked.** I settled the decisions and the plan with Claude before any code ([DECISIONS.md](DECISIONS.md), [docs/implementation-plan.md](docs/implementation-plan.md)). Then Claude Code built against them test-first: about 50 red → green commit pairs. I made the design calls: the autonomy ladder, what counts as grounded evidence (D21), the F1 rule-placeholder experiment (it failed, and I reverted it), and keeping the agent loop for v1 instead of splitting gathering from drafting.
+
+**What I checked myself.**
+- **The trust-critical code, line by line** (about 900 lines): the autonomy policy and middleware, the evidence checks, the world API and its transactions, the claim guards and reply gate, and the approval flow. The rest (pricing math, date parsing, retrieval, triage and the eval harness) I trusted to the tests and the evals.
+- **Every eval label**, bucket by bucket, before the agent existed.
+- **Behaviour, by evals rather than by reading:** each fix was rerun on the cases it targeted at 5 repetitions, then on the full suite.
+- **The judge, and myself:** I labeled 30 replies blind, tested my own labeling on the known-bad set, then reviewed every disagreement. Claude Code built the labeling page and explained the judge's quoted evidence during the review; the decisions were mine.
+
+**What those checks caught.**
+- A loop breaker that refused correct calls (F5), caught by its targeted rerun.
+- A prompt fix that did nothing (F2), and a gain credited to a retry that never fired (F3).
+- Judge rows that mixed in 14 stale scores from the old judge, caught because the counts didn't match (75 replies vs 72).
+- The code gates' "0 escaped failures" was true but incomplete: checking the judge's failures by hand found a false handoff claim that reached a customer in each version.
+
+**A lesson about working with AI.** I ran several Claude Code sessions on the same repo, and one swept another's uncommitted files into its own commits (`f7efdaf`, `82abde8`). Next time: one session per branch or worktree.
 
 ## 13. Decision records
 
