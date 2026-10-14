@@ -163,6 +163,48 @@ def test_a_day_without_a_month_needs_input():
     assert (r["status"], r["reason"]) == ("needs_input", "day_without_month")
 
 
+THREAD = ["We're thinking about September for the Library Room.", "The 20th would be lovely."]
+
+
+def avail(quote):
+    return {"start_date": "2026-09-20", "start_date_quote": quote}
+
+
+def test_a_missing_month_says_how_to_fix_the_call():
+    # F5: the model quoted only "the 20th" and retried instead of adding the earlier words.
+    c = ctx(texts=THREAD)
+    r = handle_call("check_availability", avail(["The 20th"]), c)
+    assert r["reason"] == "day_without_month"
+    assert "earlier message" in r["next_step"] and "ask" in r["next_step"]
+
+
+def test_quoting_the_month_from_an_earlier_message_resolves_the_date():
+    c = ctx(texts=THREAD)
+    r = handle_call("check_availability", avail(["September", "The 20th"]), c)
+    assert r["status"] == "executed"
+
+
+def test_a_tool_that_keeps_needing_input_is_stopped_so_the_agent_asks():
+    # F5: one baseline run called check_availability 17 times, each needs_input.
+    c = ctx(texts=THREAD)
+    first = handle_call("check_availability", avail(["The 20th"]), c)
+    second = handle_call("check_availability", avail(["the 20th"]), c)
+    assert "next_step" in first and "Stop" in second["next_step"]
+    third = handle_call("check_availability", avail(["20th"]), c)
+    after = handle_call("check_availability", avail(["September", "The 20th"]), c)
+    assert (after["status"], after["reason"]) == ("needs_input", "ask_customer")
+    assert "ask the customer" in after["message"].lower()
+    assert third["status"] == "needs_input"
+    assert len(c.calls) == 4  # every call, refused or not, is on the ledger
+
+
+def test_a_fixed_call_on_the_second_try_still_runs():
+    c = ctx(texts=THREAD)
+    handle_call("check_availability", avail(["The 20th"]), c)
+    r = handle_call("check_availability", avail(["September", "The 20th"]), c)
+    assert r["status"] == "executed"
+
+
 # --- writes and levels --------------------------------------------------------------------
 
 
