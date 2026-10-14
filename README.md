@@ -19,11 +19,19 @@ Full reports: [v1 baseline](reports/v1-baseline.md), [v2](reports/v2-final.md). 
 | Holdout cases passed | 16/16 | 14/16 (88%) |
 | Conversations passed | 10/16 (62%) | **16/16 (100%)** |
 | Bold failures (did or said too much) | 12 | 8 |
-| ...of which escaped to a customer without a person | 2 | **0** |
+| ...of which escaped to a customer without a person (code gates) | 2 | **0** |
+| ...false handoff claims sent without a person (judge, checked by hand) | 1 | 1 |
 | Replies held by a guard that passed every gate (likely false alarms) | 50 | 47 (not fixed; see F1) |
 | Agent loops | 1 | 0 |
 | Latency per email, p50 / p95 | 5.6 s / 8.0 s | 5.9 s / 9.8 s |
-<!-- TODO(calibration): judge rows (grounded, forbidden claims, tone) for v1 and v2 with the calibrated judge -->
+| Judge: grounded | 45/72 (62%) | 47/72 (65%) |
+| Judge: no forbidden claim | 69/72 (96%) | 68/72 (94%) |
+| Judge: tone sendable (3+ of 5) | 71/72 | 71/72 |
+
+**Judge rows:** the calibrated judge (judge-v2) graded the first repetition of each case in both versions: [v1](reports/v1-baseline-judge-v2.md), [v2](reports/v2-final.md). The original v1 report used the uncalibrated judge-v1. Calibration showed the judge over-flags grounded (7 false fails in 30 after review), so both grounded rates understate the agent. With 72 replies, the v1→v2 differences are within noise. I checked every forbidden-claim failure by hand:
+- **Two are judge errors in both versions.** Complaint escalations are made by the graph, not a tool call, so the judge doesn't see them. One case label ("June 20 is available") also matches a reply that correctly offers the open room.
+- **One in v2 was held by a guard** for a person.
+- **One per version reached the customer:** a reply claiming a handoff that never happened. In v1 it was "I've passed your question along" with no escalation; in v2, "your itemized quote, which your coordinator is preparing" with no quote and no handoff. The code gates don't check handoff claims, so their "escaped: 0" doesn't cover this. The fix is in section 9.
 
 Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The holdout cases dropped from 16 to 14, and both failures are new failure modes the fixes didn't generalize to (section 7). Fixing them would turn them into dev cases, so they're listed instead.
 
@@ -33,7 +41,18 @@ Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The hol
 
 ## 2. Why this problem
 
-<!-- TODO(you): why event-venue inquiries, in your own words. Don't mention employer code or data. -->
+If we've spoken before, you've heard about Gatherset, where I build a booking agent for event venues. Choosing a similar problem here was deliberate, and I'd rather explain it up front than have it look like a shortcut.
+
+**Evals are only as good as their labels.** On a client engagement, I'd sit with the client's domain experts to label data and learn how the system fails in their world. A solo take-home has no experts to borrow, so I picked the one domain where I can credibly play that role myself. The failure cases in the dataset come from things I've seen go wrong, not things I imagined: drafting a warm reply to a marketing newsletter, telling a client "Saturday is locked in" when nothing was booked, or confidently quoting a policy that appears nowhere in the venue's documents. If you ask why a case is labeled the way it is, I can defend it.
+
+**What carries over is judgment, not code.** The venue is fictional, with its own policy documents, pricing, and calendar written for this exercise. There's no CRM integration, and no code, prompts, or data from Gatherset are in this repo. The process is also reversed: here I wrote the eval dataset and checks before building the agent, so the evals shaped the design instead of being added afterward.
+
+**What I rejected:**
+- *Refund/returns support:* generic enough that my failure cases would be guesses.
+- *HOA policy assistant:* mostly Q&A, with few actions where trust is actually at stake.
+- *A domain I don't know:* I couldn't defend the labels, which defeats the point of the exercise.
+
+**The tradeoff.** Familiarity cuts both ways. My dataset probably shares Gatherset's blind spots, since I'm drawing on the same experience. To push against that, I didn't let my labels be the only check. A general "grounded" question, graded by a judge from a different model family, catches unsupported claims no case anticipated. It flagged a reply claiming a coordinator handoff that never happened, which I'd passed. I tested myself on the known-bad set before trusting my labels, and missed 3 of 10 "right number, wrong description" errors. Holdout cases were never looked at during fixes. What's left is a real limitation: one person wrote the cases and labeled them (section 7).
 
 ## 3. What the agent may do, what needs a person, and what can never happen
 
@@ -141,7 +160,7 @@ Each held reply or hold request gets its own small approval graph (`review` paus
 Reviewing only the disagreements can only move agreement up, so the raw column is the headline.
 
 - **What it means:** the judge never passed a reply I failed. As a gate, it errs toward sending a reply to a person. Its remaining false fails have named causes:
-  - **Missing inputs.** It isn't given today's date (once it used the real-world date instead of the case's) or the tool descriptions the agent works from (the package names).
+  - **Missing inputs.** It isn't given today's date (once it used the real-world date instead of the case's), the tool descriptions the agent works from (the package names) or escalations the graph makes without a tool call (complaints).
   - **Too literal.** It counts hedges ("may be open, I can check") and meaning-preserving paraphrase ("pickup point" → "can drop off") as unsupported.
   - **An ambiguous label.** "Open-flame candles are allowed" also matched a reply that allows only enclosed candles.
 - **Its best catch** was a reply saying "I've passed your question along" when no escalation was in the ledger. I missed it on the blind pass.
@@ -171,6 +190,7 @@ Full record: [docs/findings.md](docs/findings.md). Each finding is tagged by sou
 - **F6:** asked "did you get my hold request?", the agent files the request again. A duplicate is blocked by the database in real use, and the agent has no tool to see pending requests.
 - **Free-form refusals still trip the guards.** Sentences like "I'm not able to produce a discounted quote" are held for a person: safe, but extra review.
 - **Small numbers.** With 2 repetitions and 16 holdout cases, one case moves the holdout rate by about 6 points. Targeted reruns use 5 repetitions, which is still small.
+- **False handoff claims reach customers.** In each version, one reply sent without a person claimed a coordinator handoff that never happened (v1: faq-parking; v2: question-buried-in-long-reply). Only the judge catches this today; the code gates' "escaped: 0" doesn't cover it.
 - **One annotator.** Calibration measures agreement with me, and the known-bad check shows I miss about 3 in 10 "right number, wrong description" errors.
 - **The judge model differs from the agent model** on purpose, so the agent doesn't grade itself. Its blind spots are measured only on the known-bad set and my labels.
 - **The judge's known blind spots** (section 5): no access to today's date or the tool descriptions, and too literal about hedges and paraphrase. Its errors make it over-flag, so they cost review time rather than letting bad replies through.
