@@ -313,3 +313,35 @@ def test_a_venue_can_make_complaint_acknowledgments_wait_for_a_person():
     assert out.reply_status == "pending_approval" and out.reply_level == 1
     assert outbox(d.world) == [] and out.escalated
     assert [r["kind"] for r in d.approvals.pending()] == ["reply"]
+
+
+# --- F3: a placeholder with no price record gets one retry --------------------------------
+
+
+class Recording(Scripted):
+    """Also keeps every message list the agent was invoked with."""
+
+    seen: list = []
+
+    def _generate(self, messages, *args, **kw):
+        self.seen.append(list(messages))
+        return super()._generate(messages, *args, **kw)
+
+
+def test_an_invented_price_placeholder_gets_one_retry():
+    script = [reply("The extra hour is {{quote:Q1}}."), reply("A coordinator will send the price.")]
+    d = deps([])
+    d.agent_model = Recording(messages=iter(script), seen=[])
+    out = process_email(d, email("How much is the extra hour?"), [], "m-15")
+    assert out.text == "A coordinator will send the price."
+    assert out.reply_status == "sent"  # the corrected reply needs no person
+    note = d.agent_model.seen[-1][-1].content
+    assert "{{quote:Q1}}" in note and "no pricing call" in note
+
+
+def test_a_second_invented_placeholder_is_held_for_a_person_and_not_retried_again():
+    script = [reply("It's {{rate:R1}}."), reply("It's {{rate:R2}}."), reply("never used")]
+    d = deps(script)
+    out = process_email(d, email("How much is the Grand Hall?"), [], "m-16")
+    assert out.reply_status == "pending_approval" and out.reply_level == 1
+    assert "{{rate:R2}}" in out.text
