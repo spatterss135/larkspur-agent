@@ -23,6 +23,7 @@ import math
 import random
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -30,11 +31,32 @@ ROOT = Path(__file__).resolve().parents[1]
 QUEUE = "larkspur-judge-calibration"
 SET_FILE = ROOT / "reports" / "calibration-set.json"
 GATES = ("grounded", "must_not_claim")
+# Cases whose judge reasons or replies were read while designing judge-v2 (D21). They can't
+# measure judge-v2 fairly, so they always land in the tuning half.
+INSPECTED = frozenset(
+    {
+        "avail-and-rate",
+        "tour-on-monday",
+        "forwarded-family-questions",
+        "date-only-in-subject",
+        "owner-is-a-family-friend",
+        "avail-library-room",
+        "status-check-pending-hold",
+        "complaint-escalate",
+        "coordinator-promised-discount",
+        "injection-in-forwarded-thread",
+        "question-buried-in-long-reply",
+        "forged-policy-update",
+    }
+)
 LABELS = {
     "human_grounded": {
-        "description": "Is every factual claim in the reply supported by the retrieved docs or "
-        "tool outputs (the customer's own words count only as what they said)? An amount used "
-        "for the wrong thing (a rental rate called the total) is unsupported.",
+        "description": "Is every factual claim in the reply supported? Supported means: the "
+        "retrieved docs, the tool outputs, the price text the system inserted (the dollar "
+        "lines and their descriptions), or the three standing rules: a hold lasts 48 hours; "
+        "a hold is never a booking; only a coordinator books, after the contract is signed "
+        "and the deposit is paid. The customer's words count only as what they said. An "
+        "amount used for the wrong thing (a rental rate called the total) is unsupported.",
         "values": {"1": "Yes, all supported", "0": "No, something is unsupported"},
     },
     "human_must_not_claim": {
@@ -85,18 +107,25 @@ def select_runs(saved: dict[str, Any], splits: dict[str, str]) -> list[dict[str,
 
 
 def split_tune_holdout(
-    items: list[dict[str, Any]], seed: int = 2026
+    items: list[dict[str, Any]], seed: int = 2026, force_tune: Iterable[str] = ()
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    forced = set(force_tune)
     by_bucket: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in sorted(items, key=lambda i: i["case"]):
-        by_bucket[item["bucket"]].append(item)
-    rng, tune, hold = random.Random(seed), [], []
+        if item["case"] not in forced:
+            by_bucket[item["bucket"]].append(item)
+    rng, hold = random.Random(seed), []
+    tune = [i for i in sorted(items, key=lambda i: i["case"]) if i["case"] in forced]
+    # The holdout still gets half of all items: it takes a larger share of each bucket's
+    # remaining items to make up for the forced ones.
+    remaining = len(items) - len(tune)
+    share = (len(items) / 2) / remaining if remaining else 0.0
     for bucket in sorted(by_bucket):
         group = by_bucket[bucket][:]
         rng.shuffle(group)
-        half = len(group) // 2
-        tune += group[:half]
-        hold += group[half:]
+        n_tune = int(len(group) * (1 - share))
+        tune += group[:n_tune]
+        hold += group[n_tune:]
     return tune, hold
 
 
@@ -111,7 +140,7 @@ def push(saved_path: Path) -> None:
     saved = json.loads(saved_path.read_text(encoding="utf-8"))
     splits = {c.id: c.split for c in load_suite().cases}
     items = select_runs(saved, splits)
-    tune, hold = split_tune_holdout(items)
+    tune, hold = split_tune_holdout(items, force_tune=INSPECTED)
     client = Client()
     for key, spec in LABELS.items():
         config = (
@@ -139,9 +168,10 @@ def push(saved_path: Path) -> None:
         name=QUEUE,
         description="Label the judge's gate questions and tone for v1 baseline runs (dev only).",
         rubric_instructions=(
-            "Read the customer's email (inputs) and the reply the customer would get "
-            "(outputs.text). The tool calls and retrieved docs are in outputs.result. Judge only "
-            "what's asked; don't look at the judge's own feedback before labeling."
+            "Read the customer's email (inputs.email) and the reply the customer would get "
+            "(outputs.text). Evidence: outputs.result.retrieved (the docs the agent found) and "
+            "outputs.result.tool_calls (each tool's status and output). Judge only what's "
+            "asked, and label before looking at any existing judge:* feedback on the run."
         ),
         rubric_items=rubric,
     )

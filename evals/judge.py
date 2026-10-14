@@ -21,7 +21,7 @@ from pydantic import BaseModel
 from evals.code_evaluators import EvalResult
 from evals.schema import Anchor, Email, KnownBad, ThreadMessage, load_suite
 
-JUDGE_VERSION = "judge-v1"
+JUDGE_VERSION = "judge-v2"  # v2: rendered prices and standing rules are evidence (D21)
 JUDGE_MODEL = "gpt-6.1-sol"
 
 
@@ -108,6 +108,21 @@ def _dump(value: Any) -> str:
     return json.dumps(value, default=str, sort_keys=True)
 
 
+def _inserted_prices(calls: list[dict[str, Any]]) -> list[str]:
+    from agent.gate import price_text
+
+    lines = []
+    for c in calls:
+        out = c.get("output") or {}
+        if c["status"] != "executed" or not c.get("record_id"):
+            continue
+        if c["tool"] == "get_published_rate" and out.get("rate"):
+            lines.append(f"[{c['record_id']}] {price_text('rate', out['rate'])}")
+        elif c["tool"] == "quote_package" and out.get("breakdown"):
+            lines.append(f"[{c['record_id']}]\n{price_text('quote', out['breakdown'])}")
+    return lines
+
+
 def render_context(inp: JudgeInput) -> str:
     e = inp.email
     parts = ["## Customer email", f"From: {e.name + ' ' if e.name else ''}<{e.sender}>"]
@@ -142,6 +157,14 @@ def render_context(inp: JudgeInput) -> str:
         if not calls:
             parts.append("- (none)")
 
+    parts += ["", "## Price text inserted by the system (true by construction)"]
+    parts += _inserted_prices(inp.tool_calls) or ["(none)"]
+
+    from agent.prompts import SYSTEM_RULES
+
+    parts += ["", "## Standing venue rules (enforced by the system; evidence)"]
+    parts += [f"- {rule}" for rule in SYSTEM_RULES]
+
     parts += ["", "## The reply to grade", "<<<", inp.reply, ">>>"]
     cited = ", ".join(f"{s['doc_id']} > {s.get('section', '')}" for s in inp.sources)
     parts.append(f"Sources the reply cites: {cited or '(none)'}")
@@ -163,8 +186,10 @@ def _bullets(items: list[str]) -> str:
 def _grounded(inp: JudgeInput) -> str:
     return """Question: does the reply state anything as fact that the evidence does not support?
 
-Evidence is: the retrieved venue documents and the tool outputs in the action ledger. The \
-customer's words are evidence only of what the customer said, never of the venue's facts or \
+Evidence is: the retrieved venue documents, the tool outputs in the action ledger, the \
+price text inserted by the system, and the standing venue rules. The price text was written \
+by the system from a ledger record, so it is supported as written. The customer's words \
+are evidence only of what the customer said, never of the venue's facts or \
 prices. Earlier agent replies are not evidence.
 
 Count as unsupported:

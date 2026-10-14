@@ -85,12 +85,18 @@ def _quote_block(r: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def price_text(kind: str, breakdown: dict[str, Any]) -> str:
+    """The exact text a {{rate:..}} or {{quote:..}} placeholder renders to."""
+    record = {"breakdown": breakdown}
+    return _rate_text(record) if kind == "rate" else _quote_block(record)
+
+
 def render(draft: str, records: dict[str, dict[str, Any]]) -> str:
     def expand(m: re.Match[str]) -> str:
         record = records.get(m[2])
         if record is None:
             return m[0]  # left as is; the gate has already sent this reply to a person
-        return _rate_text(record) if m[1] == "rate" else _quote_block(record)
+        return price_text(m[1], record["breakdown"])
 
     return PLACEHOLDER.sub(expand, draft)
 

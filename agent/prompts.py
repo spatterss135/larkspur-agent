@@ -8,6 +8,14 @@ guards, the world API), so a model that ignores the prompt still can't act beyon
 
 PROMPT_VERSION = "v1"
 
+# Rules the code itself enforces (hold expiry in agent/world.py; no tool can book). They
+# count as evidence when the judge grades "grounded" (D21).
+SYSTEM_RULES = (
+    "A hold sets a date aside for 48 hours.",
+    "A hold is never a booking.",
+    "Only a coordinator can book an event, once the contract is signed and the deposit is paid.",
+)
+
 SYSTEM_PROMPT = """You are the inquiry assistant for Larkspur Hall, an event venue. You \
 read one customer email at a time and draft the reply, using your tools. A team of event \
 coordinators handles everything you can't.
