@@ -134,3 +134,45 @@ def test_no_eval_case_is_in_the_prompt():
     suite = load_suite()
     for c in suite.cases:
         assert c.email.body[:50] not in SYSTEM_PROMPT, c.id
+
+
+# --- F1: standing rules are rendered, not paraphrased --------------------------------------
+
+
+def test_a_rule_placeholder_renders_the_approved_sentence_and_holds_nothing():
+    from agent.prompts import POLICY_TEXT
+
+    c = ctx()
+    handle_call("search_venue_docs", {"query": "holds"}, c)
+    g = gate("June 13 looks lovely. {{policy:booking}} {{policy:hold}}", c)
+    assert (g.level, g.guards) == (3, {})
+    assert POLICY_TEXT["booking"] in g.text and POLICY_TEXT["hold"] in g.text
+    assert "{{policy" not in g.text
+
+
+def test_a_real_claim_next_to_a_rule_placeholder_still_holds_the_reply():
+    # The guards skip only the placeholder; everything the model typed is scanned as before.
+    c = ctx()
+    handle_call("search_venue_docs", {"query": "holds"}, c)
+    g = gate("Your date is reserved! {{policy:booking}}", c)
+    assert g.level == 1 and "booking_claim" in g.guards
+
+
+def test_a_paraphrased_rule_still_holds_the_reply_as_before():
+    c = ctx()
+    handle_call("search_venue_docs", {"query": "holds"}, c)
+    g = gate("A date is only reserved once the contract is signed.", c)
+    assert g.level == 1 and "booking_claim" in g.guards
+
+
+def test_an_unknown_rule_placeholder_holds_the_reply():
+    g = gate("{{policy:free_upgrade}}", ctx())
+    assert g.level == 1 and g.bad_placeholders == ["{{policy:free_upgrade}}"]
+
+
+def test_the_rule_sentences_match_the_standing_rules_the_judge_accepts():
+    # The judge treats SYSTEM_RULES as evidence (D21); the rendered sentences must say no more.
+    from agent.prompts import POLICY_TEXT, SYSTEM_RULES
+
+    assert POLICY_TEXT["booking"] == SYSTEM_RULES[2]
+    assert POLICY_TEXT["hold"] == f"{SYSTEM_RULES[0]} {SYSTEM_RULES[1]}"
