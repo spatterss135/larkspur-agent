@@ -120,3 +120,12 @@ def test_judge_errors_are_counted_apart_and_left_out_of_judge_rates():
     assert s["judge_errors"] == 1
     assert s["judge"]["judge:tone"]["n"] == 1  # only the real grade from faq-parking
     assert s["judge"]["judge:tone"]["sendable"] == (1, 1)
+
+
+def test_a_run_the_judge_has_not_graded_says_so():
+    from evals.report import render
+
+    saved = {**SAVED, "cases": [row("faq-parking", "normal", True)], "name": "t"}
+    saved["metadata"] = {"judge_version": "judge-v2"}
+    text = render(saved, summarize(saved, SPLITS))
+    assert "not judged yet" in text and "`judge-v2` (uncalibrated)" not in text
