@@ -36,7 +36,10 @@ Full reports: [v1 baseline](reports/v1-baseline.md), [v2](reports/v2-final.md). 
 Same 75 cases and 8 conversations, 2 repetitions each, Claude Haiku 5.5. The holdout cases dropped from 16 to 14, and both failures are new failure modes the fixes didn't generalize to (section 7). Fixing them would turn them into dev cases, so they're listed instead.
 
 - **Recording (≤5 min):** TODO
-- **LangSmith:** TODO links to the v1 vs v2 comparison and a sample trace (made public)
+- **LangSmith** (public, no login):
+  - [v1 vs v2, case by case](https://smith.langchain.com/public/06e2f3ca-cdcd-4e78-8feb-119ecca1091c/d/compare?selectedSessions=75a68937-97ca-44b3-ad0d-573a99c640af%2C964e1c78-f00d-464d-8968-18d53af2d059). In LangSmith, v1's `judge:*` columns come from the uncalibrated judge-v1; the judge rows above grade both versions with judge-v2. The `human_*` columns on v1 are my calibration labels.
+  - [All experiments on the case dataset](https://smith.langchain.com/public/06e2f3ca-cdcd-4e78-8feb-119ecca1091c/d), including the targeted reruns for each fix (`f1-…` to `f4-…`).
+  - [A sample trace](https://smith.langchain.com/public/abf141b6-3085-41fe-bead-5618547c753c/r): a hold request. The agent checks availability, reads the hold policy and requests the hold, which waits for a coordinator's approval; the reply says so.
 - **Cost:** the agent and triage run on Claude Haiku 5.5; the whole eval program, baseline through v2, cost under $10 (D20). Most input tokens were prompt-cache reads.
 
 ## 2. Why this problem
