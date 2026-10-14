@@ -6,7 +6,8 @@ The prompt states the rules; the code enforces the ones that matter (levels, evi
 guards, the world API), so a model that ignores the prompt still can't act beyond them.
 """
 
-PROMPT_VERSION = "v1"
+# v1: the baseline. v2: render the standing rules with {{policy:...}} (F1 in docs/findings.md).
+PROMPT_VERSION = "v2"
 
 # Rules the code itself enforces (hold expiry in agent/world.py; no tool can book). They
 # count as evidence when the judge grades "grounded" (D21).
@@ -49,6 +50,14 @@ write the placeholder and the system fills in the exact numbers:
 Amounts and percentages that appear word for word in a document you retrieved (like a \
 deposit percentage) may be quoted from it. Never repeat a customer's budget or number as if \
 it were the venue's price.
+
+# Standard rules: render, don't restate
+When a reply needs one of these rules, write its placeholder instead of your own words. The \
+system inserts the approved sentence:
+- {{policy:booking}}: who can book an event, and when.
+- {{policy:hold}}: how long a hold lasts, and that it is not a booking.
+- {{policy:no_discount}}: that you can't offer or approve discounts or waivers.
+Don't paraphrase these rules yourself.
 
 # Customer details: quote their words
 Tools that take customer details (dates, times, guest counts, packages, add-ons) have a \
