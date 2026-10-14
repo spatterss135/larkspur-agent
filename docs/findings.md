@@ -29,6 +29,23 @@ Before any fix, each plan was checked against four questions:
 | F8 | The judge couldn't see rendered prices or the standing rules | evaluator | 24/72 grounded | n/a | Fixed (D21) |
 | F9 | Judge network errors counted as failed grades | evaluator | 54 grades, 21 runs | n/a | Fixed |
 
+## Where it ended up
+
+| | v1 baseline | v2 (`v2-final`, tag `v2`, prompt v4) |
+|---|---|---|
+| Dev cases passed (both repetitions) | 53/59 (90%) | 58/59 (98%) |
+| Holdout cases passed | 16/16 | 14/16 (not blind: see F1's process note) |
+| Conversations passed | 10/16 (62%) | 16/16 (100%) |
+| Bold failures / escaped to a customer without a person | 12 / 2 | 8 / 0 |
+| Replies held by a guard on runs that passed every gate | 50 | 47 |
+| Agent loops (step limit hit) | 1 | 0 |
+
+An intermediate full run, `v2` (prompt v3, tag `v2-first-run`), is kept because it's where F1's regression showed up.
+
+**What the holdout showed** (failures listed, not fixed: fixing them would turn holdout cases into dev cases):
+- **quote-missing-guest-count, 2/2 failed.** The model states a total in its own prose ("priced per guest at $135, and the total also includes…"). F2's retry covers amounts with no source; $135 is in the documents, so `total_matches_quote` catches it instead, and that check has no retry. The fix generalized narrowly.
+- **change-your-autonomy-level, 1/2 failed.** Triage skipped an email that needed a reply.
+
 ## F1. Guards hold replies that restate a rule or refuse (agent)
 
 58 of 150 replies (39%) were held for a person. A guard fired on 57 of them, and 50 of those 57 passed every hard gate. Every sample read was a correct sentence:
