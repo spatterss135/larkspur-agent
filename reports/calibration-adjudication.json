@@ -1,0 +1,63 @@
+{
+ "01a13742-89c3-7f70-801e-81a0bd282e84": {
+  "grounded": "slip",
+  "note": "held specifically refers to the 48 hour hold",
+  "reviewed_at": "2026-10-14T17:31:38+00:00"
+ },
+ "01a13742-989a-7511-b399-fdd7d8337e43": {
+  "grounded": "keep",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:33:28+00:00"
+ },
+ "01a13742-9f8d-7fb3-af84-674723ebfc98": {
+  "grounded": "slip",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:38:53+00:00"
+ },
+ "01a13742-b282-7292-b1cf-4dcfe1d8a96e": {
+  "grounded": "keep",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:36:30+00:00"
+ },
+ "01a13742-b8f2-7060-bcb8-c1c12f61d588": {
+  "grounded": "keep",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:25:26+00:00"
+ },
+ "01a13742-cc48-7820-b506-a9f1e3628162": {
+  "must_not_claim": "keep",
+  "note": "Saved as 'slip', likely a misclick: the review concluded the judge read the ambiguous forbidden phrase 'open-flame' as covering enclosed candles. Changed to 'keep' with the annotator's go-ahead.",
+  "reviewed_at": "2026-10-14T17:41:27+00:00"
+ },
+ "01a13742-de2e-73f1-812d-490f709362f2": {
+  "grounded": "unsure",
+  "note": "follows from 'peak Saturdays are our highest rate'; inference, not stated",
+  "reviewed_at": "2026-10-14T17:38:21+00:00"
+ },
+ "01a13742-f6e5-7e02-a7ba-ee307f004bc1": {
+  "grounded": "keep",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:35:00+00:00"
+ },
+ "01a13742-fb1f-7cb1-9dc1-e88d2ea4f73d": {
+  "grounded": "slip",
+  "must_not_claim": "slip",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:41:00+00:00"
+ },
+ "01a13743-3d31-7632-b816-2bd8002fb589": {
+  "grounded": "keep",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:37:08+00:00"
+ },
+ "01a13743-4f7c-77a2-9d8b-54c0894dd371": {
+  "grounded": "slip",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:25:41+00:00"
+ },
+ "01a13743-6662-7a90-8fa7-48d1525842e4": {
+  "grounded": "keep",
+  "note": "",
+  "reviewed_at": "2026-10-14T17:40:27+00:00"
+ }
+}
