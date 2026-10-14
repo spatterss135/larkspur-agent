@@ -282,36 +282,35 @@ def run_experiment(
 
     examples = [e for s in splits for e in client.list_examples(dataset_name=CASES, splits=[s])]
     examples = select_examples(examples, cases, limit)
-    res = evaluate(
-        case_target(lambda: models, retriever, name),
-        data=examples,
-        evaluators=evaluators,
-        experiment_prefix=name,
-        metadata=metadata,
-        num_repetitions=reps,
-        max_concurrency=concurrency,
-    )
-    for row in res:
-        saved["cases"].append(_row(row))
-    saved["case_experiment"] = res.experiment_name
 
-    if conversations:
-        convos = [
-            e for s in splits for e in client.list_examples(dataset_name=CONVERSATIONS, splits=[s])
-        ]
-        convos = select_examples(convos, cases, limit)
+    def run(target, data, evals, prefix):
+        """Rows and experiment name; none when a targeted rerun selected nothing here."""
+        if not data:
+            return [], None
         res = evaluate(
-            conversation_target(lambda: models, retriever, name),
-            data=convos,
-            evaluators=[conversation_evaluator],
-            experiment_prefix=f"{name}-conversations",
+            target,
+            data=data,
+            evaluators=evals,
+            experiment_prefix=prefix,
             metadata=metadata,
             num_repetitions=reps,
             max_concurrency=concurrency,
         )
-        for row in res:
-            saved["conversations"].append(_row(row))
-        saved["conversation_experiment"] = res.experiment_name
+        return [_row(row) for row in res], res.experiment_name
+
+    saved["cases"], saved["case_experiment"] = run(
+        case_target(lambda: models, retriever, name), examples, evaluators, name
+    )
+    if conversations:
+        convos = [
+            e for s in splits for e in client.list_examples(dataset_name=CONVERSATIONS, splits=[s])
+        ]
+        saved["conversations"], saved["conversation_experiment"] = run(
+            conversation_target(lambda: models, retriever, name),
+            select_examples(convos, cases, limit),
+            [conversation_evaluator],
+            f"{name}-conversations",
+        )
 
     out = ROOT / "reports" / f"{name}.json"
     out.parent.mkdir(exist_ok=True)
