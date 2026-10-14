@@ -111,3 +111,12 @@ def test_conversation_errors_are_reported_not_dropped():
     c = summarize(saved, SPLITS)["conversations"]
     assert c["passed"] == (1, 2) and c["failed"] == ["c2"]
     assert c["agent_errors"] == 1 and c["infra_errors"] == 1
+
+
+def test_judge_errors_are_counted_apart_and_left_out_of_judge_rates():
+    err = {"judge:tone": {"score": 0, "comment": "judge_error: OpenAIConnectionError('x')"}}
+    saved = {**SAVED, "cases": SAVED["cases"] + [row("hold-request", "normal", True, extra=err)]}
+    s = summarize(saved, SPLITS)
+    assert s["judge_errors"] == 1
+    assert s["judge"]["judge:tone"]["n"] == 1  # only the real grade from faq-parking
+    assert s["judge"]["judge:tone"]["sendable"] == (1, 1)

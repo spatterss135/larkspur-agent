@@ -33,6 +33,8 @@ class FakeModel:
                 name = config["run_name"].removeprefix("judge:")
                 fake.calls.append({"name": name, "schema": schema, "messages": messages})
                 answer = fake.answers.get(name)
+                if isinstance(answer, list):  # a sequence: one answer per attempt
+                    answer = answer.pop(0)
                 if isinstance(answer, Exception):
                     raise answer
                 return answer if answer is not None else default_answer(schema)
@@ -225,6 +227,21 @@ def test_a_missed_ask_is_cautious_and_not_gated():
     r = by_key(judge_reply(inp, FakeModel({"asked_required": missed})))["asked_required"]
     assert not r.passed and not r.gate and r.direction == "cautious"
     assert "the date" in r.comment and r.score == 0.5
+
+
+@pytest.fixture(autouse=True)
+def no_retry_wait(monkeypatch):
+    import evals.judge
+
+    monkeypatch.setattr(evals.judge, "RETRY_DELAYS", (0, 0))
+
+
+def test_a_dropped_connection_is_retried_before_it_counts_as_a_judge_error():
+    # The v1 baseline lost 54 judge grades to OpenAIConnectionError with no retry.
+    model = FakeModel({"tone": [ConnectionError("dropped"), None]})
+    r = by_key(judge_reply(simple(), model, criteria=["tone"]))["tone"]
+    assert r.passed and r.score == 5
+    assert len([c for c in model.calls if c["name"] == "tone"]) == 2
 
 
 def test_a_judge_error_never_reads_as_a_pass():
