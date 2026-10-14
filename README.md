@@ -125,11 +125,27 @@ Each held reply or hold request gets its own small approval graph (`review` paus
 - **Bold vs. cautious:** each failure is either bold (did or said too much) or cautious (did too little). The report counts **escaped** bold failures separately: the ones that reached a customer or the calendar without a person.
 - **Infrastructure errors** aren't graded. **Agent errors**, such as the model looping, are failures.
 
-**Judge calibration.**
-- I labeled 56 dev replies myself in a LangSmith annotation queue: grounded, forbidden claim, tone.
-- They were split into tuning and checking halves. The 12 cases I'd inspected while changing the judge were forced into the tuning half.
-- Agreement is reported on the checking half, with a 95% Wilson interval. One annotator shows agreement with one person, not independent validity.
-- <!-- TODO(calibration): numbers from reports/calibration-judge-v2.md -->
+**Judge calibration** ([report](reports/calibration-judge-v2.md)).
+- **The set:** 56 dev replies from the baseline, split into tuning and checking halves. The 12 cases I'd inspected while changing the judge were forced into the tuning half. Agreement is reported on the checking half (30 replies) with a 95% Wilson interval. The tuning half isn't labeled yet (see section 9).
+- **Blind first pass.** I labeled the 30 checking-half replies for grounded, forbidden claims and tone on a local page (`make label`) that shows the same evidence the judge sees and hides its verdicts. Labels are stored as LangSmith feedback next to the judge's scores. The first pass was frozen in git before I looked at any judge verdict.
+- **Checking the annotator.** I labeled the known-bad set on the same page, blind (ids, rationale and expected verdicts hidden). I caught 7/10 grounded failures and 6/7 forbidden claims, with no false alarms on the controls. Every grounded miss was a right number with the wrong description, such as a rental rate called the total. So when the judge and I disagree, the mistake may be mine.
+- **Review.** I went through all 13 disagreements with the judge's quoted evidence shown and recorded a decision for each: 5 were my slips, 7 were judge errors and 1 I couldn't decide. Only slips change a label. An AI assistant explained the judge's quotes during the review; the decisions were mine.
+
+| Checking half (30 replies) | Raw (blind) | After review |
+|---|---|---|
+| Grounded: agreement | 19/30 (63%, CI 0.46–0.78) | 23/30 (77%, CI 0.59–0.88) |
+| Forbidden claims: agreement | 28/30 (93%, CI 0.79–0.98) | 29/30 (97%, CI 0.83–0.99) |
+| Judge passed what I failed | **0** | **0** |
+| Tone: same sendable call / within 1 point | 30/30 / 28/30 | (not reviewed) |
+
+Reviewing only the disagreements can only move agreement up, so the raw column is the headline.
+
+- **What it means:** the judge never passed a reply I failed. As a gate, it errs toward sending a reply to a person. Its remaining false fails have named causes:
+  - **Missing inputs.** It isn't given today's date (once it used the real-world date instead of the case's) or the tool descriptions the agent works from (the package names).
+  - **Too literal.** It counts hedges ("may be open, I can check") and meaning-preserving paraphrase ("pickup point" → "can drop off") as unsupported.
+  - **An ambiguous label.** "Open-flame candles are allowed" also matched a reply that allows only enclosed candles.
+- **Its best catch** was a reply saying "I've passed your question along" when no escalation was in the ledger. I missed it on the blind pass.
+- **Not done:** judge-v3 (section 9). Changing the judge against the checking half would fit it to the replies it's measured on.
 
 **How the evaluators were tested.**
 - Each code check has unit tests, including one that proves every case's label can be satisfied.
@@ -155,8 +171,12 @@ Full record: [docs/findings.md](docs/findings.md). Each finding is tagged by sou
 - **F6:** asked "did you get my hold request?", the agent files the request again. A duplicate is blocked by the database in real use, and the agent has no tool to see pending requests.
 - **Free-form refusals still trip the guards.** Sentences like "I'm not able to produce a discounted quote" are held for a person: safe, but extra review.
 - **Small numbers.** With 2 repetitions and 16 holdout cases, one case moves the holdout rate by about 6 points. Targeted reruns use 5 repetitions, which is still small.
-- **One annotator.** Calibration measures agreement with me.
+- **One annotator.** Calibration measures agreement with me, and the known-bad check shows I miss about 3 in 10 "right number, wrong description" errors.
 - **The judge model differs from the agent model** on purpose, so the agent doesn't grade itself. Its blind spots are measured only on the known-bad set and my labels.
+- **The judge's known blind spots** (section 5): no access to today's date or the tool descriptions, and too literal about hedges and paraphrase. Its errors make it over-flag, so they cost review time rather than letting bad replies through.
+- **The judge isn't fully repeatable.** On identical known-bad inputs, its false alarms on the grounded controls were 1/4 in one run and 2/4 in the next. The known-bad numbers are single runs.
+- **The known-bad replies don't look like real ones.** They keep raw price placeholders (`{{rate:R1}}`) and some quote calls have no arguments, while real replies reach the judge with prices rendered. Their catch rates measure a slightly harder task than the judge does on real runs.
+- **Completeness isn't a gate.** A reply that never says which room is open, or assumes a room the customer didn't name, passes both gates. Only the tone score sees it.
 
 ## 8. Evaluating it in production
 
@@ -175,6 +195,9 @@ What exists today, and the plan for the rest:
   - **Gains:** the writer structurally can't act; "grounded" means "supported by the packet", and the judge grades against that same packet; each stage gets its own eval; the writer can run on a stronger model than the gatherer.
   - **Costs:** one more model call per email; the writer can't go back for a missing fact without an edge back to gathering; the handoff must keep every status exactly ("pending", not "done").
   - **Why not now:** I kept the loop for v1 so phase 7's before→after changes one thing at a time. I'd build the split as its own graph and compare it against the loop on the same dataset for pass rate, grounded score, cost and latency.
+- **Judge-v3**, from the calibration review: give the judge today's date and the tool descriptions, allow hedges and paraphrase that keep the meaning, and reword the ambiguous "open-flame" label. Label the tuning half first, change the judge against it only, then re-measure on the checking half.
+- **A handoff-claim guard.** The judge found a reply claiming "I've passed your question along" with no escalation behind it. Like the hold and availability guards, code should hold any reply that claims a handoff the ledger doesn't show, every time.
+- **Rebuild the known-bad items like real runs**, with rendered prices and full tool arguments, so their catch rates measure the task the judge actually does.
 - **A read-only "pending requests" tool** (F6).
 - **An LLM second opinion on guard triggers, only after measuring it.** It would release a held reply when a small model judges the matched sentence isn't a claim. That puts a model in the safety path, so it would ship only if its misses on the known-bad set were measured at zero over a large sample.
 
@@ -209,7 +232,7 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
   - what counts as grounded evidence (D21)
   - the guard fix (rule placeholders instead of negation-aware regexes)
   - keeping the agent loop for v1 instead of splitting gather and draft
-- **I approved every eval label**, and labeled the 56 calibration replies myself.
+- **I approved every eval label.** For calibration I labeled 30 replies and the 22 known-bad items blind, then reviewed each disagreement with the judge. Claude Code built the labeling page; during the review it explained the judge's quoted evidence, and the decisions were mine. It also caught a likely misclick in my review, which I changed and noted in the file.
 - **The process caught AI mistakes:**
   - a loop breaker that refused correct calls (F5)
   - a prompt fix that didn't work (F2)
