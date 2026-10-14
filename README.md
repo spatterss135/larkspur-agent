@@ -262,4 +262,10 @@ uv run python -m evals.experiment --name my-run --reps 2 --case hold-request   #
 
 ## 13. Decision records
 
-See [docs/decisions.md](docs/decisions.md) (D1–D21) and [docs/findings.md](docs/findings.md).
+[docs/decisions.md](docs/decisions.md) has 21 decisions, each with why and what was rejected. A dated status line marks anything that later changed or didn't happen, such as the coordinator screen that wasn't built and the v2 runs that started from uncommitted files. [docs/findings.md](docs/findings.md) has every finding from the eval loop (F1–F9). If you read five:
+
+- [**D5, the trust model**](docs/decisions.md#d5-trust-model-a-per-action-autonomy-ladder): autonomy per action, and why not one global switch.
+- [**D11, architecture**](docs/decisions.md#d11-architecture): why approvals don't pause the agent.
+- [**D15, freezing the plan**](docs/decisions.md#d15-plan-review-round-3-and-the-freeze): when to stop reviewing and let the evals find the rest.
+- [**D20, Haiku and cost**](docs/decisions.md#d20-haiku-55-runs-the-agent-and-triage-cost-is-part-of-the-design): what a first look should cost a client.
+- [**D21, what counts as grounded**](docs/decisions.md#d21-what-counts-as-evidence-for-grounded-judge-v2): a judge change made after reading its output, and how calibration stayed fair.

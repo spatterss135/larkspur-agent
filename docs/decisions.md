@@ -2,6 +2,8 @@
 
 Each decision: what we decided, why, and what we rejected. Numbers (D1–D16) match the references in [implementation-plan.md](implementation-plan.md). The plan was drafted with Claude, reviewed by other models in three rounds, and frozen at v4. D13–D16 record those review rounds.
 
+Each record describes the decision as it was made. Where something later changed or didn't happen, a dated **Status** line says so.
+
 ## D1. Deadline
 Submit by end of Wed 2026-10-14. The minimum submission and slip order are in the plan (§14).
 
@@ -13,7 +15,7 @@ Submit by end of Wed 2026-10-14. The minimum submission and slip order are in th
 No code, data, keys or prompts from my part-time job.
 
 ## D4. The problem: an inquiry agent for a fictional event venue
-- **Why:** evals are only as good as their labels. On a client project I'd work with the client's domain experts to label data and learn how things fail. For a solo take-home there are no experts to borrow, so I picked the domain where I can be that expert: I work on a venue inquiry agent in my part-time role, so the failure cases come from experience (replying to newsletters, "Saturday is locked in" with nothing booked, stating a policy that isn't in the docs), not guesses.
+- **Why:** evals are only as good as their labels. On a client project I'd work with the client's domain experts to label data and learn how things fail. For a solo take-home there are no experts to borrow, so I picked the domain where I can be that expert: I work on a venue inquiry agent in my part-time role, and the failure cases come from failures I've caught in my own evals of that agent (a sales pitch read as a customer inquiry, "Saturday is locked in" with nothing booked, a policy stated that isn't in the docs), not guesses.
 - **Different shape from the day-job agent:** a tool-calling agent that takes actions behind per-action autonomy levels and a human approval step, with evals written before the agent. No code or prompts carried over.
 - **Rejected:** refund/returns support (generic; the failures would be guesses), an HOA policy assistant (mostly Q&A, weak actions), an unfamiliar domain (labels I can't defend).
 
@@ -26,10 +28,12 @@ No code, data, keys or prompts from my part-time job.
 - **Labels have three outcomes:** must handle, must escalate, either is fine.
 - **Promotion and demotion** are documented and simulated: promote per slice after enough approvals with no substantive edits, demote immediately on an error that reached a customer.
 - **Rejected:** one global autonomy switch (one shaky action holds back the safe ones); acting with no checks; the model stating prices or availability itself.
+- **Status (2026-10-14):** promotion and demotion are documented, not built or simulated (README section 8). The approval records they'd use are stored: each decision with its draft, its final version and whether the edit was substantive.
 
 ## D6. Eval unit: email, mostly single messages, plus scripted conversations
 - About 85% of cases are one inbound email, with hand-written earlier messages as context where needed. Five to eight scripted conversations cover what single emails can't: errors that compound, endless clarification, state across turns.
 - **Rejected:** single emails only (silently drops multi-turn failures); an LLM playing the customer (noisy and hard to grade; listed for production).
+- **Status (2026-10-14):** the LLM-played customer isn't in the README's production plan. It's an idea, not planned work.
 
 ## D7. Case schema: criteria are the pass/fail spine
 - Code grades whatever it can (triage, outcome, tool calls and arguments, autonomy levels, end state, numbers). The LLM judge grades only what code can't: groundedness, claims about actions, asking for missing details, tone.
@@ -43,12 +47,14 @@ No code, data, keys or prompts from my part-time job.
 - Tests first for deterministic code. An honest v1, not a deliberately weak one.
 - The judge is calibrated against my labels with a tune/holdout split.
 - A reply only waits for the strictest content it contains. A pending hold never delays a plain availability answer.
+- **Status (2026-10-14):** the coordinator screen wasn't built; it was first in the slip order (plan §14). Approvals run from the command line (`agent.cli pending`, `approve`, `edit`, `reject`) on the approval graph. Calibration labels were collected on a local labeling page (`make label`) and stored as LangSmith feedback, and only the checking half of the calibration set was labeled (README section 5).
 
 ## D9. Models
 - **Agent:** Claude Sonnet 5.5, with Claude Haiku 5.5 run as a comparison experiment, so the choice rests on gate pass rate against cost and latency.
 - **Judge:** GPT-6.1 Sol (a different family from the agent).
 - **Embeddings:** text-embedding-3-small.
 - **Rejected:** a same-family judge; the most expensive judge by default; a single agent model with no comparison.
+- **Status:** superseded by D20. The agent and triage run on Claude Haiku 5.5, and the Sonnet 5.5 comparison wasn't run (README section 9).
 
 ## D10. README: story first, reference last
 The outline in [README.md](../README.md). The "what the evals taught me" section is written from real findings.
@@ -60,9 +66,12 @@ The outline in [README.md](../README.md). The "what the evals taught me" section
 - **Retrieval** is a tool over an in-memory vector store, with ~15 short documents chunked by section. It has its own retrieval eval.
 - **Storage:** SQLite for the checkpointer, the venue's world and the run ledger. Every eval run gets an isolated world.
 - **Rejected:** Deep Agents (built for long open-ended tasks); hand-building the tool loop; a vector database for 15 documents; Postgres (needs Docker for no benefit at this size).
+- **Status (2026-10-14):** cache usage shows per run in the LangSmith traces' token counts; the ledger doesn't store token counts.
 
 ## D12. Build order
 Skeleton → framework spike (thrown away) → venue world → **evals before any agent code** → deterministic core, test-first → agent v1 → baseline (`v1-baseline`) → judge calibration → one fix per finding with a rerun after each (`v2`) → coordinator screen → ship. No prompt change after the baseline without a recorded finding, and no case is edited to make the agent pass.
+
+**Status (2026-10-14):** done in this order, except the coordinator screen, which slipped (D8). `v1-baseline` and `v2` are git tags on the code each run used.
 
 ## D13. Plan review round 1
 Added: the split between read and write tools (only writes go pending); tool statuses; a review list that makes level 2 vs. 3 real; templated follow-ups after a coordinator decides; atomic, idempotent writes; evidence quotes so no required input is invented; deterministic CI with a scripted fake model; a throwaway framework spike; invariants, a state machine and failure behavior.
@@ -77,6 +86,8 @@ Added: a headline that matches the contract (reversible actions can be automated
 ## D16. Checked against the brief after the freeze
 Added: a dev/holdout split (about 15 cases never looked at during the improvement phase), no eval case ever used as a prompt example, public trace links tested in a logged-out browser, the quickstart tested on a fresh clone, results reported in the brief's three categories, and every regression listed.
 
+**Status (2026-10-14):** done. The quickstart passed from a fresh clone with no API keys, and the public LangSmith links load without logging in.
+
 ## D17. Framework spike findings
 A throwaway spike on branch `spike/framework` (never merged) checked the plan's eight risky assumptions against the real libraries (langchain 1.4.5, langgraph 1.2.15, langsmith 0.14.8) and real models. All eight held. What the build relies on:
 - **Interception works.** A `wrap_tool_call` middleware can return a tool result without calling the tool, and it sees the runtime context. So the autonomy middleware can stop writes, and the sender's identity can come from context instead of model arguments.
@@ -89,6 +100,10 @@ A throwaway spike on branch `spike/framework` (never merged) checked the plan's 
 - **Public sharing works with no credentials.** A shared trace loads in full. A shared dataset lists *every experiment* on it, so the before→after comparison is shared through one dataset link. A person still checks the rendered pages in a logged-out browser before submission.
 - **Worth trying later:** LangChain ships `PIIMiddleware` and a trace policy (`omit_payload`). Phase 9 tries these before writing PII masking by hand. `read_run` / `get_run_url` are deprecated in favor of `client.runs.*`, so new code uses the new calls.
 - **Commit before every experiment.** LangSmith stamps each experiment with the git revision it ran from (`<sha>-dirty` if there were uncommitted changes). Running experiments only from a clean tree ties `v1-baseline`, `v2` and every rerun in between to a commit a reviewer can open.
+- **Status (2026-10-14):**
+  - **Caching:** the ledger doesn't store token counts; cache usage is read from the traces.
+  - **PII:** not tried. There's no PII masking.
+  - **Clean tree:** not kept for the v2 runs. LangSmith recorded `668fe6a-dirty` for `v2-final` and `82abde8-dirty` for the earlier `v2`: several Claude sessions were working in one checkout (README section 12), so other files had uncommitted edits when the runs started. No agent, case or evaluator file changed between `668fe6a` and the `v2-final` results commit, so `668fe6a` (tag `v2`) is the code `v2-final` ran. Next time: one worktree per session.
 
 ## D18. Corpus review before the baseline, and failure sources
 - The venue documents were reviewed before any eval ran ([venue/REVIEW.md](../venue/REVIEW.md)). Anything that would make a label arguable was fixed: two careful readers giving different answers means the score built on that label is wrong. Gaps with a clear right answer ("not covered, here's the coordinator") were kept as test cases.
@@ -108,6 +123,7 @@ A throwaway spike on branch `spike/framework` (never merged) checked the plan's 
 - **What it costs in quality, and how we'll know.** Haiku may fail cases a larger model would pass. In phase 7, failing cases are rerun once on Sonnet 5.5 to separate design failures (both models fail) from capability failures (only Haiku fails). Running the full suite on stronger models is listed under next steps in the README.
 - **Kept:** all 75 cases. At about a cent per run, cutting cases would save very little and cost statistical power and approved labels.
 - **Rejected:** a full Sonnet comparison at 3 repetitions (most of the cost, little of the story); dropping cases to save money.
+- **Status (2026-10-14):** the phase 7 reruns on Sonnet 5.5 weren't done. A full Sonnet run is the first next step in README section 9.
 
 
 ## D21. What counts as evidence for "grounded" (judge-v2)
@@ -116,3 +132,4 @@ A throwaway spike on branch `spike/framework` (never merged) checked the plan's 
 - **Rejected:** requiring a retrieved document even for the standing rules (stricter, matches the prompt's "facts come only from search", but turns correct statements into failures and costs phase 7 time); no change (the judge keeps failing text our own code wrote).
 - **Keeping calibration fair.** This change was designed after reading judge output on dev cases, so the 12 cases I inspected (judge reasons or replies) always land in the calibration tuning half. The holdout half is still half of all labeled runs, and its items were never read while designing judge-v2. The baseline report keeps its judge-v1 numbers, labeled as such; `calibrate rejudge` grades the same saved replies with judge-v2 without rerunning the agent.
 - **Link to finding 1.** Once the agent writes the standing rules through placeholders (phase 7), those sentences are system-rendered text and fall under the same rule as prices.
+- **Status (2026-10-14):** F1's rule placeholders were reverted in prompt v4 ([findings.md](findings.md), F1), so the model still writes the standing rules itself. They count as evidence under this decision either way. Calibration results: README section 5.
