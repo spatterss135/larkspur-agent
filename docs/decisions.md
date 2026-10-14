@@ -28,7 +28,12 @@ No code, data, keys or prompts from my part-time job.
 - **Labels have three outcomes:** must handle, must escalate, either is fine.
 - **Promotion and demotion** are documented and simulated: promote per slice after enough approvals with no substantive edits, demote immediately on an error that reached a customer.
 - **Rejected:** one global autonomy switch (one shaky action holds back the safe ones); acting with no checks; the model stating prices or availability itself.
-- **Status (2026-10-14):** promotion and demotion are documented, not built or simulated (README section 8). The approval records they'd use are stored: each decision with its draft, its final version and whether the edit was substantive. Labels also have a fourth outcome, `must_skip`, for emails that need no reply.
+- **Status (2026-10-14):**
+  - **Starting levels:** only holds and tours start at 1. Reads (docs, availability, published rates) and escalation start at 3, and quotes and skips at 2 ([venue/autonomy.yaml](../venue/autonomy.yaml)), because answering and checking are reversible (README section 3).
+  - **Nine actions are built:** the complaint template (`complaint_ack`) became a policy action for F4.
+  - **Bold and cautious are counted per check,** not per action (the report's misses by check and direction).
+  - **Promotion and demotion** are documented, not built or simulated (README section 8). The approval records they'd use are stored: each decision with its draft, its final version and whether the edit was substantive.
+  - **Labels** also have a fourth outcome, `must_skip`, for emails that need no reply.
 
 ## D6. Eval unit: email, mostly single messages, plus scripted conversations
 - About 85% of cases are one inbound email, with hand-written earlier messages as context where needed. Five to eight scripted conversations cover what single emails can't: errors that compound, endless clarification, state across turns.
@@ -132,4 +137,4 @@ A throwaway spike on branch `spike/framework` (never merged) checked the plan's 
 - **Rejected:** requiring a retrieved document even for the standing rules (stricter, matches the prompt's "facts come only from search", but turns correct statements into failures and costs phase 7 time); no change (the judge keeps failing text our own code wrote).
 - **Keeping calibration fair.** This change was designed after reading judge output on dev cases, so the 12 cases I inspected (judge reasons or replies) always land in the calibration tuning half. The holdout half is still half of all labeled runs, and its items were never read while designing judge-v2. The baseline report keeps its judge-v1 numbers, labeled as such; `calibrate rejudge` grades the same saved replies with judge-v2 without rerunning the agent.
 - **Link to finding 1.** Once the agent writes the standing rules through placeholders (phase 7), those sentences are system-rendered text and fall under the same rule as prices.
-- **Status (2026-10-14):** F1's rule placeholders were reverted in prompt v4 ([findings.md](findings.md), F1), so the model still writes the standing rules itself. They count as evidence under this decision either way. Calibration results: README section 5.
+- **Status (2026-10-14):** F1's rule placeholders were reverted in prompt v4 ([findings.md](findings.md), F1), so the model still writes the standing rules itself; they count as evidence under this decision either way. Only the checking half of the calibration set was ever labeled (30 of 56 runs; README section 5), and none of its items were read while designing judge-v2. The judge's remaining blind spots are finding F11.
