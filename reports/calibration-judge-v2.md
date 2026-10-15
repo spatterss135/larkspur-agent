@@ -1,15 +1,15 @@
 # Judge calibration: judge-v2
 
-Human labels found for 30 of 56 runs (dev cases only; holdout cases stay unseen). One annotator: this measures agreement with that person, not independent validity.
+Human labels found for 30 of 56 runs: 30 of 30 in the checking half and 0 of 26 in the tuning half. All are dev cases, so the eval's holdout cases stay unseen. One annotator: this measures agreement with that person, not independent validity.
 
 | Criterion | Split | Agree | 95% CI | False passes | False fails |
 |---|---|---|---|---|---|
-| grounded | tune | 0/0 | 0.00-1.00 | 0 | 0 |
-| grounded | holdout | 19/30 (63%) | 0.46-0.78 | 0 | 11 |
-| must_not_claim | tune | 0/0 | 0.00-1.00 | 0 | 0 |
-| must_not_claim | holdout | 28/30 (93%) | 0.79-0.98 | 0 | 2 |
+| grounded | tuning | not labeled yet | – | – | – |
+| grounded | checking | 19/30 (63%) | 0.46-0.78 | 0 | 11 |
+| must_not_claim | tuning | not labeled yet | – | – | – |
+| must_not_claim | checking | 28/30 (93%) | 0.79-0.98 | 0 | 2 |
 
-## Holdout after review of the disagreements
+## Checking half after review of the disagreements
 
 Reviewed 13 of 13 disagreements with the judge's reasoning shown: 5 my slip (label changed), 7 kept (judge wrong), 1 unsure (kept). Reviewing only disagreements can only move agreement up, so the raw numbers above are the headline.
 
@@ -20,8 +20,8 @@ Reviewed 13 of 13 disagreements with the judge's reasoning shown: 5 my slip (lab
 
 | Tone | Split | Exact | Within 1 | Same sendable call |
 |---|---|---|---|---|
-| tone | tune | 0/0 | 0/0 | 0/0 |
-| tone | holdout | 10/30 | 28/30 | 30/30 |
+| tone | tuning | not labeled yet | – | – |
+| tone | checking | 10/30 | 28/30 | 30/30 |
 
 ## Known-bad set (labeled by construction, reported separately)
 
