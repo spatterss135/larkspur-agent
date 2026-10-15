@@ -112,3 +112,17 @@ def test_adjudication_flips_only_the_labels_the_person_called_a_slip():
         "r2": {"human_grounded": 1, "human_must_not_claim": 1},
     }
     assert labels["r1"]["human_grounded"] == 1  # the first pass is left as it was
+
+
+def test_an_unlabeled_split_says_so_instead_of_zero_of_zero():
+    # The tuning half isn't labeled yet; "0/0" with an interval of 0.00-1.00 reads as broken.
+    from evals.calibrate import _agreement_rows, _table, _tone_rows
+
+    labeled = [{"run_id": "r1", "judge": {"grounded": 1, "must_not_claim": 1, "tone": 4}}]
+    labels = {"r1": {"human_grounded": 1, "human_must_not_claim": 0, "human_tone": 4}}
+    tables = [("tuning", _table([], labels)), ("checking", _table(labeled, labels))]
+    rows = _agreement_rows(tables) + _tone_rows(tables)
+    tuning = [r for r in rows if "| tuning |" in r]
+    assert len(tuning) == 3 and all("not labeled yet" in r and "0/0" not in r for r in tuning)
+    assert "| grounded | checking | 1/1 (100%) |" in rows[1]
+    assert "| must_not_claim | checking | 0/1 (0%) |" in rows[3] and rows[3].endswith("| 1 | 0 |")
