@@ -303,6 +303,38 @@ def known_bad_catch_rates(model: Any = None) -> dict[str, Any]:
     return out
 
 
+def _agreement_rows(tables: list[tuple[str, dict[str, Any]]]) -> list[str]:
+    """One row per gate and split. A split with no labels says so instead of 0/0."""
+    rows = []
+    for crit in GATES:
+        for name, table in tables:
+            a = table[crit]
+            if not a["n"]:
+                rows.append(f"| {crit} | {name} | not labeled yet | – | – | – |")
+                continue
+            lo, hi = a["ci"]
+            pct = f"{a['agree']}/{a['n']} ({100 * a['agree'] / a['n']:.0f}%)"
+            rows.append(
+                f"| {crit} | {name} | {pct} | {lo:.2f}-{hi:.2f} | {a['false_pass']} | "
+                f"{a['false_fail']} |"
+            )
+    return rows
+
+
+def _tone_rows(tables: list[tuple[str, dict[str, Any]]]) -> list[str]:
+    rows = []
+    for name, table in tables:
+        t = table["tone"]
+        if not t["n"]:
+            rows.append(f"| tone | {name} | not labeled yet | – | – |")
+            continue
+        rows.append(
+            f"| tone | {name} | {t['exact']}/{t['n']} | {t['within_1']}/{t['n']} | "
+            f"{t['sendable_agree']}/{t['n']} |"
+        )
+    return rows
+
+
 def report(saved_path: Path, with_known_bad: bool = True) -> Path:
     from evals.judge import JUDGE_VERSION as CURRENT
 
@@ -312,27 +344,26 @@ def report(saved_path: Path, with_known_bad: bool = True) -> Path:
         raise SystemExit(f"the set was judged by {version}; run rejudge for {CURRENT}")
     labels = human_labels([i["run_id"] for i in cal["tune"] + cal["holdout"]])
     tune, hold = _table(cal["tune"], labels), _table(cal["holdout"], labels)
+    # The README calls the halves "tuning" and "checking"; "holdout" is kept for the eval's
+    # holdout cases, which never enter the calibration set.
+    tables = [("tuning", tune), ("checking", hold)]
+
+    def labeled(items: list[dict[str, Any]]) -> int:
+        return sum(1 for i in items if i["run_id"] in labels)
+
     lines = [
         f"# Judge calibration: {version}",
         "",
-        f"Human labels found for {len(labels)} of {len(cal['tune']) + len(cal['holdout'])} runs "
-        "(dev cases only; holdout cases stay unseen). One annotator: this measures agreement "
-        "with that person, not independent validity.",
+        f"Human labels found for {len(labels)} of {len(cal['tune']) + len(cal['holdout'])} runs: "
+        f"{labeled(cal['holdout'])} of {len(cal['holdout'])} in the checking half and "
+        f"{labeled(cal['tune'])} of {len(cal['tune'])} in the tuning half. All are dev cases, so "
+        "the eval's holdout cases stay unseen. One annotator: this measures agreement with that "
+        "person, not independent validity.",
         "",
         "| Criterion | Split | Agree | 95% CI | False passes | False fails |",
         "|---|---|---|---|---|---|",
+        *_agreement_rows(tables),
     ]
-    for crit in GATES:
-        for name, table in (("tune", tune), ("holdout", hold)):
-            a = table[crit]
-            lo, hi = a["ci"]
-            pct = f"{a['agree']}/{a['n']}" + (
-                f" ({100 * a['agree'] / a['n']:.0f}%)" if a["n"] else ""
-            )
-            lines.append(
-                f"| {crit} | {name} | {pct} | {lo:.2f}-{hi:.2f} | {a['false_pass']} | "
-                f"{a['false_fail']} |"
-            )
     if ADJ_FILE.exists():
         decisions = json.loads(ADJ_FILE.read_text(encoding="utf-8"))
         adj = _table(cal["holdout"], adjudicate(labels, decisions))
@@ -344,7 +375,7 @@ def report(saved_path: Path, with_known_bad: bool = True) -> Path:
         disputed = sum(hold[c]["n"] - hold[c]["agree"] for c in GATES)
         lines += [
             "",
-            "## Holdout after review of the disagreements",
+            "## Checking half after review of the disagreements",
             "",
             f"Reviewed {sum(counts.values())} of {disputed} disagreements with the judge's "
             f"reasoning shown: {counts['slip']} my slip (label changed), {counts['keep']} kept "
@@ -366,12 +397,7 @@ def report(saved_path: Path, with_known_bad: bool = True) -> Path:
         "| Tone | Split | Exact | Within 1 | Same sendable call |",
         "|---|---|---|---|---|",
     ]
-    for name, table in (("tune", tune), ("holdout", hold)):
-        t = table["tone"]
-        lines.append(
-            f"| tone | {name} | {t['exact']}/{t['n']} | {t['within_1']}/{t['n']} | "
-            f"{t['sendable_agree']}/{t['n']} |"
-        )
+    lines += _tone_rows(tables)
     if with_known_bad:
         kb = known_bad_catch_rates()
         lines += ["", "## Known-bad set (labeled by construction, reported separately)", ""]
